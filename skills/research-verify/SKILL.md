@@ -32,7 +32,16 @@ just prose. Audit each claim class:
 2. **Source faithfulness** — whether the draft accurately summarizes a source.
 3. **Numerical consistency** — arithmetic, percentages, sample sizes, table-to-text agreement.
 4. **Internal consistency** — terminology, contributions, limitations, method descriptions.
-5. **Unsupported research claims** — novelty, generality, robustness, significance, causality, SOTA.
+5. **Unsupported research claims** — novelty, generality, robustness,
+   significance, causality, SOTA. For each systems/architecture result, trace the
+   exact workload and operating envelope, baseline and resolved configs,
+   warm-up/steady-state rule, repetitions/seeds, distributions/tails, scale and
+   failure runs, and result manifest. For cloud results verify temporal/placement
+   variance; for ML systems verify task-quality parity; for architecture verify
+   simulator fidelity or hardware grounding and the PPA method/assumptions. A
+   build, unit test, or smoke can establish artifact correctness but cannot by
+   itself verify scientific validity; locate the benchmark, testbed, simulation,
+   measurement, training/serving, or hardware evidence that bears the claim.
 6. **Policy/ethics claims** — data consent, privacy, licensing, AI-use disclosure, participant handling.
 
 ## Output
@@ -56,6 +65,10 @@ just prose. Audit each claim class:
 ## Numerical and Internal Consistency
 - [Finding or "No issues found in checked material."]
 
+## Evaluation Evidence Consistency
+- [Workload/envelope, baseline/config, measurement protocol, manifest/provenance,
+  and applicable cloud/quality-parity/simulator-fidelity/PPA finding.]
+
 ## Unsupported or Overstated Claims
 | Claim | Why unsupported | Safer rewrite | Evidence needed |
 |---|---|---|---|
@@ -76,6 +89,8 @@ Severity scale (shared: critical / major / moderate / minor / uncertain):
 
 - Do not fabricate replacements. If a citation is missing, name the type of source needed.
 - Do not declare a claim false unless evidence supports falsity. Use `unverified` when appropriate.
+- Do not mark an empirical claim verified from artifact tests alone; require the
+  claim-bearing evaluation artifact or mark the claim `unverified`.
 - Keep direct quotes short and source-linked when using web sources.
 
 ## State & Handoff

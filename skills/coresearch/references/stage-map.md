@@ -33,8 +33,8 @@ These reasoning stages are owned by the Coresearch router and route via `reasoni
 
 When starting research, classify the work before routing:
 
-- AI/ML/CV: formulation, benchmark, baseline, ablation, reproducibility.
-- Robotics: embodied task, hardware/sim2real, sensing/action/contact/safety, deployment limits.
-- Graphics: representation, visual/physical correctness, authoring control, runtime, failure cases.
-- HCI: practice/material context, design space, study/findings, implications, accessibility.
-- Hybrid: paired technical claim plus design/workflow claim.
+- `systems_cloud` — OSDI, SOSP, NSDI, EuroSys, SoCC: operating need, measured bottleneck, mechanism, representative evaluation, scale/failures/variance/cost, limits.
+- `ml_systems` — MLSys: ML workload and SLO, systems bottleneck, co-design, quality/performance/cost parity, limits.
+- `computer_architecture` — ISCA, MICRO, HPCA, IISWC: workload trend, architectural insight, validated methodology, PPA/complexity tradeoffs, sensitivity.
+
+Then select a venue lens when useful: `general_systems`, `networked_distributed`, `cloud`, `cross_layer`, or `workload_characterization`. ASPLOS uses `cross_layer` and a Hybrid pair of hardware/software claims. `research-qualitative` is an optional method, not a primary field mode.

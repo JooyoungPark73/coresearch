@@ -5,16 +5,26 @@
 Use minimal code, not toy output. For research code, shortest durable architecture wins:
 
 - reuse repo patterns first;
-- keep IO/model/data at adapters;
+- keep workloads, baselines, platforms, models, data, and simulator/testbed IO at adapters;
 - keep config explicit;
 - add one runnable check for non-trivial logic;
 - avoid speculative abstractions.
 
+Use a persistent multi-component architecture only for a research artifact or
+release that genuinely needs it. Such artifacts keep experiment configurations
+explicit, isolate workload and baseline adapters, emit result manifests with
+run IDs and git/config provenance, and provide one command to reproduce each
+claim-bearing table or figure. Production hardening, feature count, and clean
+architecture are not paper contributions by themselves; each implementation
+unit must instantiate an insight, test a hypothesis, or produce claim-bearing
+evidence.
+
 For executable research work, use this fixed minimum loop: implement one
-experiment unit; run one executable minimal smoke; run the actual
-training/inference experiment; fix only from observed result/error; run full
-regression once immediately before finalizing a claim. Full regression is a
-release gate, not a development loop.
+experiment unit; run one executable minimal smoke; run the actual claim-bearing evaluation
+(benchmark, testbed, simulation, measurement, training/serving, or hardware
+run); fix only from observed result/error; run full regression once immediately
+before finalizing a claim. Full regression is a release gate, not a development
+loop.
 
 For long commands, use Coresearch's canonical `execution-safe` policy;
 do not paste raw build/test logs into the main context.

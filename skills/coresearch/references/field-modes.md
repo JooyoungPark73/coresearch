@@ -1,72 +1,61 @@
 # Field Modes and Narrative Spines
 
-Use this when routing `research-design`, `research-write`, `research-review`, or `research-engineer`. Pick one primary mode and, when needed, one secondary mode.
+Use this when routing `research-design`, `research-write`, `research-review`, or `research-engineer`. Pick one primary mode and, when needed, one venue lens.
 
-## AI / ML / CV — technical systems mode
+## Systems / Cloud — `systems_cloud`
 
-Good for learning, optimization, perception, generation, representation, or benchmark-driven work.
-
-Narrative spine:
-
-```text
-technical task → operational bottleneck → method/mechanism → metrics/baselines/ablations → limits/reproducibility
-```
-
-Must foreground formulation, assumptions, datasets/splits, baselines, compute, seeds, ablations, error analysis, limitations, and responsible-use boundaries.
-
-## Robotics — embodied deployment mode
-
-Good for physical systems, control, manipulation, locomotion, sim-to-real, fabrication-to-actuation, or robot design.
+Primary venues: OSDI, SOSP, NSDI, EuroSys, SoCC.
 
 Narrative spine:
 
 ```text
-embodied task → contact/sensing/action/safety bottleneck → control/design mechanism → hardware or realistic-sim evidence → deployment limits
+operating need → measured bottleneck → design insight → mechanism/system → claim-bearing evaluation → limits
 ```
 
-Must foreground robot/platform, task environment, resets, safety, calibration, sensor/actuator constraints, morphology-control coupling, sim2real assumptions, hardware trials, failures, and reproducibility.
+Must foreground representative workloads, operating envelope, baseline and configuration fairness, platform and topology, warmup and repetitions, tail behavior, scale, failure model, variance, cost when claimed, and limits. For SoCC work, make multitenancy, cloud variability, scale, cost, and failures explicit when the claims depend on them. For NSDI work, make topology, network conditions, distributed failure assumptions, and end-to-end behavior explicit.
 
-## Graphics / Visual Computing — representation and artifact mode
+## ML Systems — `ml_systems`
 
-Good for geometry, simulation, rendering, animation, character motion, physical fabrication, visual authoring, or computational design.
+Primary venue: MLSys.
 
 Narrative spine:
 
 ```text
-visual/physical/authoring challenge → representation bottleneck → computational method → visual/physical evidence → failure cases and runtime
+ML workload/SLO → systems bottleneck → co-design → quality/performance/cost frontier → limits
 ```
 
-Must foreground representation, geometric/physical correctness, visual quality, controllability, comparisons, ablations, galleries, runtime/memory, implementation detail, and failure cases.
+Must foreground model and dataset/workload versions, quality parity, SLOs, latency/throughput/tail metrics, resource and cost accounting, training/serving configuration, baseline and tuning fairness, scale, ablations, repetitions, and limits. A systems improvement measured at unequal model quality is not a valid efficiency comparison unless the quality tradeoff is itself the stated claim.
 
-## HCI / Technical HCI — design-computing mode
+## Computer Architecture / Workloads — `computer_architecture`
 
-Good for creative tools, workflows, studies, tangible interaction, fabrication, education, end-user programming, or human-centered systems.
+Primary venues: ISCA, MICRO, HPCA, IISWC.
 
 Narrative spine:
 
 ```text
-practice/material/context → underexplored design opportunity → toolkit/system/artifact → examples/study/findings → implications
+workload trend → architectural insight → mechanism → validated methodology → PPA/complexity tradeoffs → sensitivity
 ```
 
-Must foreground audience, practice, material constraints, design rationale, user agency, artifacts made, study protocol or design process evidence, qualitative themes, accessibility, ethics, and scoped implications.
+Must foreground representative workloads, configuration disclosure, simulator or model fidelity and validation, warmup and measurement windows, repetitions, baseline fairness, power/performance/area assumptions, complexity and feasibility, sensitivity, and limits. For IISWC work, measurement or workload characterization may be the primary contribution when it yields reusable findings, methodology, traces, or benchmarks.
 
-## Hybrid mode — dual-claim contract
+## Venue lenses
 
-Use for Graphics+HCI, AI+HCI, Robotics+HCI, or design-computing systems with technical mechanisms.
+Record one of these when it materially sharpens the mode:
 
-Do not average tones. Sequence them:
+- `general_systems`: end-to-end operating need, mechanism, and representative evaluation; typical for OSDI, SOSP, and EuroSys.
+- `networked_distributed`: topology, protocols, consistency/failure assumptions, scale, and network conditions; typical for NSDI and distributed-systems work.
+- `cloud`: multitenancy, elasticity, variance, failures, scale, and cost; typical for SoCC.
+- `cross_layer`: paired hardware/software claims with matched evidence; use for ASPLOS.
+- `workload_characterization`: rigorous measurement, representativeness, methodology, and implications; use for IISWC-style work.
 
-1. Start with human/material/creative practice.
-2. Narrow to a concrete technical bottleneck.
-3. State two linked claims:
-   - technical claim: what the system computes, generates, optimizes, controls, or fabricates under constraints;
-   - design claim: what people can inspect, steer, revise, reject, appropriate, or understand.
-4. Evaluate both claims with matching evidence.
+### Hybrid — ASPLOS cross-layer contract
 
-Every paragraph should connect workflow and mechanism, not alternate between disconnected “tool” and “algorithm” stories.
+Do not average hardware and software tones. State two linked claims: what the hardware mechanism makes possible under explicit constraints, and what the software/runtime/compiler exposes or exploits. Evaluate both claims, their interface, and cross-layer tradeoffs; two disconnected contributions do not make a cross-layer paper.
 
 ## Style guardrails
 
-- Ha-style technical systems writing: precise, operational, measurable. “Our method enables X under constraint Y using mechanism Z; evidence W supports the claim.”
-- Oh-style design-computing writing: material/practice-centered, situated, generative. “Our toolkit enables audience A to explore/make/understand X through practice Y, revealing implication Z.”
+- **Ha**-style technical systems writing: mechanism-first, precise, operational, measurable. “Our system enables X under operating constraint Y using mechanism Z; evaluation W supports the claim.”
+- **Oh**-style measurement/workload writing: context, findings, implications, and scoped transfer. “Across operating context A, measurement method B reveals X, implying Y within boundary Z.”
+- Preserve Alan’s distinction: use Ha for mechanism-led papers, Oh for measurement and workload studies, and Hybrid for paired hardware/software claims.
 - Avoid unsupported words: novel, robust, intuitive, general, efficient, expressive, seamless, significant, SOTA.
+- `research-qualitative` may support mixed-method evidence when appropriate, but it is an optional method rather than a field mode.

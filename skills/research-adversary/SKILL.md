@@ -29,20 +29,31 @@ Run each lens; record evidence, not vibes.
 - **Retrieval bias** — framing-privileged terms, prominent venues only, negative studies hard to find, recent obscures historical, adjacent-field terminology.
 - **Selection bias** — narrative-supporting inclusion, inconsistent dismissal standards, successful-only.
 - **Citation bias** — copied without checking original, partial-sentence support, speculation promoted to fact, survey cited instead of primary.
-- **Methodological bias** — benchmark favors a representation, user study favors novelty, expert population, excluded failures, superficial-similarity metrics.
+- **Methodological bias** — workload or benchmark favors the proposed system;
+  operating envelope excludes unfavorable load/scale; baseline/config/resource
+  parity is missing; warm-up, repetitions, distributions/tails, overload, or
+  failures are omitted. For cloud results, inspect temporal/placement variance;
+  for ML systems, task-quality parity; for architecture, simulator fidelity and
+  power-area-performance (PPA) assumptions. Also inspect novelty-favoring user
+  studies, expert populations, excluded failures, and superficial metrics.
 - **Funding/incentive** — identify → inspect design → examine safeguards → evaluate independently. Potential incentive is NOT invalid.
 - **Researcher confirmation** — search vocab from assumptions, preferred-method default, post-hoc reframing, strength-designed eval.
 - **Narrative bias** — clean-story forcing, removed uncertainty, venue-exaggeration, weak findings merged into one broad claim.
 
 Per claim: what falsifies it? was that searched? alternative mechanism? survives
-strongest baseline? holds outside the benchmark? cited evidence primary +
-independent? omits conditions? claim type (causal/comparative/descriptive/
-speculative)? what would a skeptic attack first?
+strongest baseline under the same workload, operating envelope, configuration,
+and budget? holds outside the benchmark and at scale/failure boundaries? warm-up,
+repetitions, tails, and variance visible? cloud placement/time controlled? ML
+quality held constant? simulator and PPA evidence grounded? cited evidence
+primary + independent? omits conditions? claim type
+(causal/comparative/descriptive/speculative)? what would a skeptic attack first?
 
 ## Output
 
 - Claim Under Review (evidence ids supporting + contradicting)
-- Retrieval / Selection-Citation / Methodological / Funding-Incentive bias risks
+- Retrieval / Selection-Citation / Methodological / Funding-Incentive bias risks,
+  including applicable workload-envelope, baseline/config, measurement, cloud,
+  quality-parity, simulator-fidelity, and PPA threats
 - Alternative Explanations
 - Missing Counterevidence
 - Strongest Skeptical Interpretation — mandatory `skeptic_first_attack:` the single thing a skeptic attacks first
@@ -57,6 +68,7 @@ speculative)? what would a skeptic attack first?
 - use skepticism as a substitute for evidence;
 - apply stronger standards only to opposing findings;
 - reject inconvenient results;
+- accept a passing build, test, or smoke as evidence for a scientific claim;
 - invent untestable alternative explanations;
 - surviving claim relies on a bias you cannot rule out → downgrade confidence, name residual risk.
 

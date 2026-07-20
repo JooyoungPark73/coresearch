@@ -75,12 +75,87 @@ assert 'PaperSmith' not in agents
 assert '/project_brief.md' not in agents
 assert 'Do not create separate `.agents/` chats' in agents
 
+field_modes = Path('skills/coresearch/references/field-modes.md').read_text()
+router = Path('skills/coresearch/SKILL.md').read_text()
+venue_groups = {
+    'systems/cloud': ('OSDI', 'SOSP', 'NSDI', 'EuroSys', 'SoCC'),
+    'ml-systems': ('MLSys',),
+    'architecture/workload': ('ISCA', 'MICRO', 'HPCA', 'IISWC'),
+    'cross-layer': ('ASPLOS',),
+}
+for group, venues in venue_groups.items():
+    for venue in venues:
+        assert venue in agents, f'template missing {group} venue: {venue}'
+        assert venue in field_modes, f'field modes missing {group} venue: {venue}'
+for mode in ('Systems / Cloud', 'ML Systems', 'Computer Architecture'):
+    assert mode in agents, f'template missing primary mode: {mode}'
+    assert mode in field_modes, f'field modes missing primary mode: {mode}'
+for legacy_heading in (
+    '**Graphics / Visual Computing:**',
+    '**AI / ML / Computer Vision:**',
+    '**Robotics:**',
+    '**HCI / Technical HCI:**',
+):
+    assert legacy_heading not in agents, f'template still advertises legacy primary mode: {legacy_heading}'
+for legacy_list in ('AI / Robotics / Graphics / HCI', 'AI/ML/CV, Robotics, Graphics'):
+    assert legacy_list not in router, f'router still advertises legacy primary modes: {legacy_list}'
+
+contract = Path('skills/coresearch/references/research-contract.md').read_text()
+ledger = Path('skills/coresearch/references/state-ledger.md').read_text()
+schema_contract = (
+    'field_mode: systems_cloud|ml_systems|computer_architecture',
+    'venue_lens: general_systems|networked_distributed|cloud|cross_layer|workload_characterization',
+    'intended_contribution: method|system|representation|theory|dataset|benchmark|empirical_finding|design_knowledge|architecture|measurement_characterization',
+)
+for line in schema_contract:
+    assert line in contract, f'research contract missing schema line: {line}'
+    assert line in ledger, f'state ledger missing synchronized schema line: {line}'
+
+evidence = Path('skills/coresearch/references/evidence-grounding.md').read_text()
+for field in (
+    'evidence_kind: literature|experiment|artifact|trace|dataset',
+    'claim_class: capability|correctness|performance|scalability|efficiency|reliability|cost|quality_performance_tradeoff|power_area_performance|generality|measurement|causal',
+    'support_locator:',
+    'artifact_path:',
+    'run_ids:',
+    'config_or_manifest:',
+    'evaluation_context:',
+):
+    assert field in evidence, f'evidence schema missing: {field}'
+assert 'passage and location may be null only' in evidence, 'non-literature provenance rule missing'
+assert 'experiment_state:' not in ledger, 'domain refit must not add a new experiment state machine'
+
+scenario_contracts = {
+    'skills/research-design/SKILL.md': (
+        'OSDI', 'reusable research insight', 'Claim class',
+    ),
+    'skills/coresearch/references/field-modes.md': (
+        'For SoCC work', 'multitenancy', 'cloud variability',
+        'quality/performance/cost frontier',
+    ),
+    'skills/research-audit/SKILL.md': (
+        'simulator', 'power-area-performance', 'warm-up', 'baseline',
+    ),
+    'skills/research-review/SKILL.md': (
+        'IISWC measurement/workload characterization',
+        'primary research contribution',
+    ),
+}
+for rel, phrases in scenario_contracts.items():
+    body = ' '.join(Path(rel).read_text().split())
+    for phrase in phrases:
+        assert phrase in body, f'{rel} missing acceptance-scenario contract: {phrase}'
+
+for named_style in ('Alan', 'Ha', 'Oh'):
+    assert named_style in agents, f'template dropped requested named style: {named_style}'
+    assert named_style in field_modes, f'field modes dropped requested named style: {named_style}'
+
 # Experiment work must stay experiment-first: implement, minimal smoke, real
 # run, evidence-driven fix, then one release-gate regression pass.
 experiment_policy = [
     'implement one experiment unit',
     'run one executable minimal smoke',
-    'run the actual training/inference experiment',
+    'run the actual claim-bearing evaluation',
     'fix only from observed result/error',
     'run full regression once immediately before finalizing a claim',
 ]
@@ -128,6 +203,16 @@ for rel in (
     text = ' '.join(Path(rel).read_text().lower().split())
     for rule in cadence_policy:
         assert rule in text, f'{rel} missing cadence policy: {rule}'
+
+research_first_rule = 'a passing build or test establishes artifact correctness, not scientific validity.'
+for rel in (
+    'templates/research/AGENTS.md',
+    'skills/coresearch/SKILL.md',
+    'skills/research-engineer/SKILL.md',
+    'skills/research-loop/SKILL.md',
+):
+    text = ' '.join(Path(rel).read_text().lower().split())
+    assert research_first_rule in text, f'{rel} missing research-first validity guard'
 
 template_text = ' '.join(agents.lower().split())
 assert 'test-verify loops' not in template_text
@@ -432,7 +517,10 @@ pass "harness init shorthand/target-override bridge dry/apply/idempotent"
 
 # omx-conditional bridge: default bridges when omx present; CORESEARCH_OMX_CHECK=0 seam skips when absent; --bridge forces.
 omx_present_default="$(mktemp -d)"
-./harness init "$omx_present_default" -y </dev/null >/tmp/research-skills-harness-init-omx-present.txt
+omx_stub_dir="$(mktemp -d)"
+printf '#!/usr/bin/env sh\nexit 0\n' > "$omx_stub_dir/omx"
+chmod +x "$omx_stub_dir/omx"
+PATH="$omx_stub_dir:$PATH" ./harness init "$omx_present_default" -y </dev/null >/tmp/research-skills-harness-init-omx-present.txt
 grep -q 'omx detected' /tmp/research-skills-harness-init-omx-present.txt || fail "harness init default did not report omx detection"
 grep -q 'RESEARCH_AGENT_SKILLS:START' "$omx_present_default/AGENTS.md" || fail "harness init default did not bridge when omx present"
 
@@ -450,7 +538,7 @@ pass "harness init omx-conditional bridge: present/default bridges, absent/defau
 
 noninteractive_init="$(mktemp -d)"
 printf 'ORIGINAL\n' > "$noninteractive_init/AGENTS.md"
-(cd "$noninteractive_init" && "$ROOT_DIR/harness" init </dev/null) >/tmp/research-skills-harness-init-nontty.txt
+(cd "$noninteractive_init" && PATH="$omx_stub_dir:$PATH" "$ROOT_DIR/harness" init </dev/null) >/tmp/research-skills-harness-init-nontty.txt
 grep -q 'Dry run only' /tmp/research-skills-harness-init-nontty.txt || fail "harness init non-TTY did not stay dry-run"
 ! grep -q 'Interactive project setup' /tmp/research-skills-harness-init-nontty.txt || fail "harness init non-TTY opened wizard"
 grep -q '^ORIGINAL$' "$noninteractive_init/AGENTS.md" || fail "harness init non-TTY modified existing AGENTS.md"

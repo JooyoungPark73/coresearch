@@ -26,11 +26,22 @@ research-audit.
 
 First decide whether a genuine disagreement exists. If not, say so and stop.
 
-- **A. Normalize claims** — "Under conditions X, intervention Y affects outcome Z through mechanism M."
+- **A. Normalize claims** — "Under conditions X, intervention Y affects outcome
+  Z through mechanism M." Normalize workloads, operating envelope,
+  baseline/config/resource parity, metrics, warm-up and repetitions,
+  distributions/tails, scale, and failure regimes before declaring disagreement.
+  For cloud evidence include temporal/placement variance; for ML systems include
+  task-quality parity; for architecture include simulator fidelity or hardware
+  grounding and PPA methodology.
 - **B. Classify disagreement** — factual / causal / measurement / scope / objective / terminology / implementation.
 - **C. Dominant thesis** — by citation prevalence, later-method adoption, benchmark conventions, repeated evidence, field-standard assumptions. Citation count alone insufficient.
-- **D. Counterevidence** — negative results, new-population failure, stronger baseline, confound, alternative mechanism, deployment failure, benchmark artifact.
-- **E. Mechanistic bridge** — boundary-condition / multi-mechanism / measurement / temporal / population / representation synthesis.
+- **D. Counterevidence** — negative results, new-population or new-workload
+  failure, stronger fair baseline, confound, alternative mechanism, deployment
+  or scale/failure, cloud-variance, quality-parity, simulator, or benchmark artifact.
+- **E. Mechanistic bridge** — boundary-condition / multi-mechanism / measurement
+  / temporal / population / workload / representation synthesis. Derive a
+  claim-bearing benchmark, testbed, simulation, measurement, training/serving,
+  or hardware evaluation that can distinguish the explanations.
 
 ## Output
 
@@ -40,7 +51,9 @@ First decide whether a genuine disagreement exists. If not, say so and stop.
 - Nature of the Disagreement — mandatory `disagreement_type:` **one of** `factual|causal|measurement|scope|objective|terminology|implementation` (from step B)
 - Mechanistic Synthesis: mechanism, boundary conditions, predictions
 - Unresolved Evidence (what the synthesis cannot absorb)
-- Research Opportunity: testable question, required experiment, potential contribution
+- Research Opportunity: testable question, required evaluation, workloads and
+  operating envelope, fair baselines/configs, applicable systems controls,
+  potential contribution
 
 Confidence three-dim on Dominant Position and on the Synthesis separately.
 
@@ -49,6 +62,9 @@ Confidence three-dim on Dominant Position and on the Synthesis separately.
 - sources address different questions (no real disagreement) → `disagreement_type=objective`, no synthesis;
 - evidence too weak to name a dominant view;
 - apparent contradiction is terminological → `disagreement_type=terminology`, stop;
+- performance results use incomparable workload/envelope, baseline/config,
+  quality, cloud-variance, simulator-fidelity, or PPA conditions → classify the
+  mismatch before synthesizing;
 - bridge is unsupported speculation;
 - no experiment would distinguish the explanations.
 

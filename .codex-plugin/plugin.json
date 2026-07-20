@@ -11,19 +11,23 @@
     "academic-writing",
     "autoresearch",
     "claims",
+    "cloud-systems",
+    "computer-architecture",
     "experiments",
+    "ml-systems",
     "omx",
     "papers",
     "reproducibility",
     "research",
     "review",
-    "venue-fit"
+    "venue-fit",
+    "workload-characterization"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Coresearch",
     "shortDescription": "Coresearch router plus research planning, writing, review, and reproducibility skills.",
-    "longDescription": "A lean, cumulative Codex/OMX research-agent bundle for AI/ML/CV, Graphics/Visual Computing, Robotics, HCI, and hybrid research work. The coresearch router chooses the right stage, field mode, and role skill, then routes to complete skills for paper design, review, rewriting, related work, rebuttals, autonomous research loops, claim verification, research engineering, and figures. It runs standalone; optional OMX acceleration ($autoresearch, $team, $ralplan) is available when an OMX install is present. It avoids shim aliases and forced .agents chat folders, and uses .omx state only for explicit OMX workflows.",
+    "longDescription": "A lean, cumulative Codex/OMX research-agent bundle for systems and cloud, ML systems, computer architecture, workload characterization, and ASPLOS-style cross-layer research. The coresearch router chooses the right stage, field mode, and role skill, then routes to complete skills for paper design, review, rewriting, related work, rebuttals, autonomous research loops, claim verification, research engineering, and figures. It runs standalone; optional OMX acceleration ($autoresearch, $team, $ralplan) is available when an OMX install is present. It avoids shim aliases and forced .agents chat folders, and uses .omx state only for explicit OMX workflows.",
     "developerName": "Alan Synn",
     "category": "Productivity",
     "capabilities": [
@@ -31,8 +35,9 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Use Coresearch to design this paper for CHI reviewers.",
-      "Review this draft for NeurIPS readiness.",
+      "Use Coresearch to design this systems paper for OSDI reviewers.",
+      "Audit this architecture draft for ISCA methodology and workload coverage.",
+      "Review this ML serving paper for MLSys readiness.",
       "Design an autonomous research loop for this experiment idea.",
       "Verify the claims, citations, and numbers in this draft."
     ]

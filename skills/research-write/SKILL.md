@@ -1,6 +1,6 @@
 ---
 name: research-write
-description: Rewrite research paper sections with venue-aware argument, structure, and claim calibration. Use for abstracts, introductions, related work, methods, systems, evaluations, findings, discussions, limitations, conclusions, captions, and contribution bullets. Outputs polished text first, then concise diagnostics and remaining evidence risks.
+description: Rewrite systems/cloud, ML-systems, and computer-architecture paper sections with venue-aware argument, structure, and claim calibration. Use for abstracts, introductions, related work, methods, systems, evaluations, findings, discussions, limitations, conclusions, captions, and contribution bullets. Outputs polished text first, then concise diagnostics and remaining evidence risks.
 ---
 
 # research-write — Paper Section Rewriter
@@ -9,39 +9,49 @@ Rewrite paper text to be clearer, more rigorous, and reviewer-evaluable; preserv
 
 ## What & When
 
-Rewrites and calibrates paper sections for AI, Graphics, Robotics, HCI, or hybrid
-venues — abstracts, introductions, related work, methods/systems,
+Rewrites and calibrates paper sections for `systems_cloud` (OSDI, SOSP, NSDI,
+EuroSys, SoCC), `ml_systems` (MLSys), `computer_architecture` (ISCA, MICRO,
+HPCA, IISWC), or an ASPLOS `cross_layer` lens — abstracts, introductions, related work, methods/systems,
 evaluations/findings, discussions, limitations, conclusions, captions,
 contribution bullets — matching each field's narrative while preserving author
 intent and supplied evidence. Use when: "rewrite this section", "tighten the
 argument", "make reviewer-ready", "explain a concept / decompose a mechanism".
 Not for: inventing results/citations/participants/datasets/baselines/novelty;
-acceptance scoring → research-review.
+acceptance scoring → research-review. Research-qualitative is an optional
+method, not a primary venue mode or a substitute for technical evidence.
 
 ## Procedure
 
-Pick a spine (Ha technical systems / Oh design-computing / hybrid dual-claim);
-match field tone — AI/Robotics precise/measurable, HCI situated/material-centered,
-Graphics representation/artifact-centered; infer venue if missing and state it.
+Pick a spine (Ha technical systems / Oh context-findings-implications / Hybrid
+ASPLOS paired hardware/software); use Ha for a mechanism and evidence argument.
+Use Oh for measurement/workload-characterization papers, including IISWC, where
+context → findings → implications is the primary contribution. Use Hybrid for
+paired hardware and software/system claims connected by a cross-layer mechanism. Match mode
+tone — systems operational and measurable, ML systems parity-aware, architecture
+configuration- and fidelity-explicit, ASPLOS cross-layer and causal; infer venue if missing and state it.
 Inputs: venue/mode, contribution, evidence + limitations, word limit, voice
 constraints. Five passes → field rules; polished text first, diagnostics second.
 - **Argument** — align title, abstract, intro, contributions, conclusion around one central claim.
 - **Structure** — make each section's role explicit; cut paragraphs not serving the claim.
 - **Evidence** — soften claims that exceed supplied evidence.
-- **Venue** — adjust norms for AI/ML/CV, Robotics, Graphics, HCI, or hybrid.
+- **Venue** — adjust norms for OSDI/SOSP/NSDI/EuroSys/SoCC, MLSys, ISCA/MICRO/HPCA/IISWC, or ASPLOS.
 - **Style** — strip hype, vague nouns, promotional and unsupported language.
 
 **Field rewrite rules:**
-- AI/ML/CV — make the bottleneck measurable; name formulation, baselines,
-  ablations, datasets/splits, compute, error modes when supplied.
-- Robotics — foreground embodied constraints: platform, sensing/action/contact,
-  resets, safety, calibration, hardware or realistic-sim evidence, deployment.
-- Graphics — foreground representation, geometric/physical correctness, authoring
-  control, visual quality, runtime, galleries, comparisons, failure cases.
-- HCI — foreground audience, practice, material/context, user agency,
-  study/findings, artifacts, accessibility, design implications.
-- Hybrid — connect workflow and mechanism in every paragraph; separate technical
-  claim from design/workflow claim.
+- Systems/Cloud (`systems_cloud`) — state the systems bottleneck and mechanism;
+  name representative workloads, operating envelope, baseline/configuration
+  fairness, scale, failures, tail behavior, cost, and cloud variance when supplied.
+- ML Systems (`ml_systems`) — state model/task/data/hardware scope and quality
+  parity before throughput, latency, energy, or cost gains; preserve convergence
+  and output-quality qualifications.
+- Computer Architecture/Workloads (`computer_architecture`) — name workload and
+  configuration selection, warmup/sampling/repetitions, simulator fidelity or
+  hardware validation, sensitivity, and the source/model for PPA claims.
+- ASPLOS (`cross_layer`) — make the cross-layer dependency and causal mechanism
+  explicit; show how software workloads and hardware effects are co-evaluated.
+- Optional research-qualitative — report only method-backed insights and negative
+  cases; keep this method separate from the Ha/Oh/Hybrid spine choice and from
+  the primary technical or measurement claim.
 
 **Section patterns (the write modes):**
 - Abstract — contribution, problem/context, method/system/study, strongest
@@ -50,13 +60,14 @@ constraints. Five passes → field rules; polished text first, diagnostics secon
   opportunity/gap → proposed approach → evidence → contribution bullets.
 - Related Work — turn annotated bibliography into synthesis. Per stream: what it
   enabled, the assumption that matters, how this paper builds on or differs.
-- Method or System — explain mechanism, not just interface: inputs, outputs,
-  representation, pipeline, constraints, eval-relevant implementation details,
-  failure modes. HCI systems organize by workflow stage: what users do, what the
-  system does, why the feature exists, what mechanism enables it.
+- Method or System — explain mechanism, not just components: inputs, outputs,
+  state, control/data path, invariants, constraints, evaluation-relevant
+  implementation details, operating envelope, and failure modes.
 - Evaluation or Findings — lead each result with an analytical claim, then
-  evidence, interpretation, implication. Not chronological unless sequence is
-  the finding.
+  evidence, interpretation, implication. State workload representativeness,
+  fair configurations, warmup/repetitions, dispersion and tails, scale/failures,
+  and cloud variance; add ML quality parity or simulator-fidelity/PPA evidence
+  when the mode requires it. Not chronological unless sequence is the finding.
 - Discussion and Limitations — generalize carefully. Per limitation: what it
   affects, what it does not, what future evidence would test.
 
@@ -84,7 +95,10 @@ claims beyond supplied evidence. Emit as prose, then the same diagnostics.
 - would require inventing references, numbers, participants, datasets, baselines, or results;
 - "novel", "first", "SOTA", "significant", "robust", or "general" asserted without evidence;
 - request is to rewrite into product language;
-- HCI rewrite drops human agency (users inspect, select, revise, reject, redirect, fabricate, appropriate system outputs);
+- an engineering milestone (builds, integrates, deploys, passes tests) is rewritten as a research contribution without claim-bearing evidence;
+- a performance claim obscures workload/configuration scope, warmup/repetition policy, relevant tails or variance, or fairness caveats supplied by the author;
+- an ML-systems efficiency claim drops quality-parity conditions, or an architecture claim drops simulator-fidelity/PPA qualifications;
+- optional qualitative evidence is generalized beyond its sampled context or used to replace technical evaluation;
 - concept decomposition adds a claim not in supplied evidence, or the worked example diverges from the formal definition.
 
 ## State & Handoff

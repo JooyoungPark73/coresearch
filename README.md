@@ -36,7 +36,7 @@ Use `coresearch` as the broad research router; use the role skills directly for 
 
 Coresearch uses canonical names only: `coresearch` and `research-*` role skills. File-format output (`.pptx`/`.docx`/`.xlsx`/web) is produced by the user with external tools; Coresearch owns research content, not format mechanics. No shim aliases are installed or managed.
 
-Primary research modes: AI/ML/CV, Robotics, Graphics/Visual Computing, HCI/Technical HCI, and hybrids that need both technical and design/workflow evidence.
+Primary research modes: Systems/Cloud (OSDI, SOSP, NSDI, EuroSys, SoCC), ML Systems (MLSys), Computer Architecture/Workload Characterization (ISCA, MICRO, HPCA, IISWC), and an ASPLOS cross-layer lens.
 
 ### 1. Install the `harness` command
 
@@ -343,6 +343,9 @@ It checks:
 - stray carriage-return characters in markdown, Python, shell, JSON, and wrapper files;
 - skill frontmatter and expected skill catalog;
 - OMX marker contracts in `templates/research/AGENTS.md`;
+- systems/cloud, ML-systems, architecture/workload, and ASPLOS cross-layer venue contracts;
+- synchronized research-contract/ledger modes and contribution enums;
+- research-first guards that keep artifact correctness distinct from scientific evidence;
 - root `AGENTS.md` remains bundle-development guidance, not the installable research template;
 - research-survey crawler safety flags and dry-run behavior;
 - user copy install and bridge idempotency;

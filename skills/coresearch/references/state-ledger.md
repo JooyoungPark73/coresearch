@@ -10,7 +10,9 @@ finish. Runtime = the user project (NOT inside skills/, NOT a `.agents/` forest)
 project:
   title: string
   research_question: string
-  intended_contribution: method|system|representation|theory|dataset|benchmark|empirical_finding|design_knowledge
+  field_mode: systems_cloud|ml_systems|computer_architecture
+  venue_lens: general_systems|networked_distributed|cloud|cross_layer|workload_characterization
+  intended_contribution: method|system|representation|theory|dataset|benchmark|empirical_finding|design_knowledge|architecture|measurement_characterization
   target_venues: [string]
 current_stage: string
 completed_skills: [string]
@@ -19,7 +21,10 @@ blocked_by: [{ skill, reason }]
 source_state:        # per source_id
   - { id, state: retrieved|screened|fully_read|audited|missing, notes }
 claim_state:         # per claim_id
-  - { id, state: supported|contradicted|unresolved|rejected, confidence }
+  - id: string
+    claim_class: capability|correctness|performance|scalability|efficiency|reliability|cost|quality_performance_tradeoff|power_area_performance|generality|measurement|causal
+    state: supported|contradicted|unresolved|rejected
+    confidence: high|medium|low
 gap_state:
   candidates: [string]
   falsified: [{ gap, reason }]
@@ -40,6 +45,16 @@ stop_conditions: [string]
 
 - Read the ledger first. If `claim_state` already has a rejected direction for
   the same claim with the same evidence, do not regenerate — surface it.
+- On re-entry to a legacy ledger with no `project.field_mode`, infer it from the
+  target venue and load-bearing claim, then record only that field: OSDI, SOSP,
+  NSDI, EuroSys, and SoCC map to `systems_cloud`; MLSys maps to `ml_systems`;
+  ISCA, MICRO, HPCA, and IISWC map to `computer_architecture`. For ASPLOS, use
+  the primary hardware, systems, or ML-systems claim and retain
+  `venue_lens: cross_layer`. A missing venue lens in an older ledger does not
+  invalidate it; record the lens at the next framing update.
+- Preserve old records in place. Existing contribution values retain their
+  meanings, missing evidence kinds default to `literature`, and expanded claim
+  and evidence fields are required only for records created after this contract.
 - Update only the keys your skill touched. Never blanket-overwrite.
 - On finish: set `active_skill` null; add the skill to `completed_skills` only if
   absent; replace (do not duplicate) any `next_actions` entry your skill already

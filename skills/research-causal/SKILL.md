@@ -30,7 +30,12 @@ proxy, collider, latent_variable, measurement_variable, selection_variable.
 1. state outcome → 2. candidate causes → 3. mediators → 4. moderators/boundaries
 → 5. confounders → 6. proxies/measurement error → 7. selection-affected variables
 → 8. mark unsupported edges → 9. propose intervention/natural experiment → 10.
-distinguishing predictions.
+distinguishing predictions. For systems claims, encode workload and operating
+envelope, baseline/config/resource parity, warm-up/cache state, repetition and
+tail behavior, scale/failure regime, and cloud time/placement as possible causes,
+moderators, or confounders. For ML systems, separate systems effects from model
+quality; for architecture, separate simulated effects from simulator error and
+PPA-model assumptions.
 
 ## Output — three views over one model
 
@@ -45,6 +50,12 @@ one is `correlational` at best, never `causal`.
 **View C — Proxy and Measurement Audit:** Target Construct | Observed Proxy |
 Why Proxy | Failure Mode | Alternative Measurement.
 
+For each distinguishing evaluation, state the intervention, fixed workload and
+configuration, operating envelope, baseline parity, repetitions, measurements,
+and failure conditions. Require task-quality parity for ML-systems comparisons;
+require simulator-fidelity or hardware validation and explicit
+power-area-performance (PPA) methodology for architecture claims.
+
 Confidence three-dim per edge and per hypothesis.
 
 ## Reject when (gate 5)
@@ -52,6 +63,8 @@ Confidence three-dim per edge and per hypothesis.
 - an edge labeled `causal` without an identification_strategy → downgrade to `correlational`;
 - View C empty (proxy presented as the target construct);
 - competing hypotheses given no distinguishing predictions;
+- a claimed systems cause is indistinguishable from workload, warm-up, placement,
+  scale, failure, quality, simulator, or PPA confounding;
 - no feasible intervention AND no controlled mechanism test → hypotheses go to `hypothesis_state.unidentifiable`, not promoted to causal.
 
 ## State & Handoff

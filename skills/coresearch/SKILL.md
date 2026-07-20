@@ -10,13 +10,13 @@ Use this as the first-stop router for research work. Keep it small: classify sta
 ## Good for
 
 - Broad research requests where the right role skill is unclear.
-- Starting or re-scoping AI, Graphics, Robotics, HCI, or hybrid research projects.
+- Starting or re-scoping systems/cloud, ML systems, computer architecture/workload, or ASPLOS-style cross-layer research projects.
 - Choosing between paper design, writing, review, survey, engineering, rebuttal, verification, and autonomous-loop work.
 
 ## Must do
 
 - Pick one primary research stage and one primary skill.
-- Select a field mode when design, writing, review, or engineering quality depends on AI / Robotics / Graphics / HCI norms.
+- Select `systems_cloud`, `ml_systems`, or `computer_architecture` when design, writing, review, or engineering quality depends on field norms; add a venue lens when useful.
 - Keep `coresearch` as a central triage unit: route, load only needed references, hand off, then re-enter on the next stage.
 - Preserve evidence discipline: separate fact, inference, recommendation, and unknown.
 - Agents are allowed when they reduce wall-clock time or cover disjoint work. Use the fewest needed; every agent gets an owned scope, expected output, and stop condition. Never add agents merely to re-check the same change.
@@ -31,16 +31,17 @@ Use this as the first-stop router for research work. Keep it small: classify sta
 
 1. Identify research stage: intake, idea, survey, design, prototype, evidence, manuscript, review, rebuttal, release.
 2. Pick the smallest role skill from the catalog.
-3. Pick field mode: AI / Robotics / Graphics / HCI / hybrid.
+3. Pick field mode: `systems_cloud` for OSDI/SOSP/NSDI/EuroSys/SoCC, `ml_systems` for MLSys, or `computer_architecture` for ISCA/MICRO/HPCA/IISWC; use the `cross_layer` venue lens for ASPLOS.
 4. Load only the needed reference below.
 5. Use OMX workflows only when their lifecycle matters.
 6. Keep facts, inference, and recommendations separate.
 
 For executable research work, use the minimum experiment loop: implement one
-experiment unit; run one executable minimal smoke; run the actual
-training/inference experiment; fix only from observed result/error; run full
-regression once immediately before finalizing a claim. Full regression is a
-release gate, not a development loop.
+experiment unit; run one executable minimal smoke; run the actual claim-bearing evaluation
+(benchmark, testbed, simulation, measurement, training/serving, or
+hardware run); fix only from observed result/error; run full regression once
+immediately before finalizing a claim. Full regression is a release gate, not a
+development loop. A passing build or test establishes artifact correctness, not scientific validity.
 
 Execution budget: run one smallest targeted check after a behavior-changing
 edit; run broad regression/review/verifier once at the claim boundary; rerun a
@@ -54,7 +55,7 @@ checks without new output.
 
 - Read [stage-map.md](references/stage-map.md) when starting/reframing a project.
 - Read [routing.md](references/routing.md) when choosing a skill or OMX lane.
-- Read [field-modes.md](references/field-modes.md) when venue tone, narrative, evidence, or architecture depends on AI/Robotics/Graphics/HCI norms.
+- Read [field-modes.md](references/field-modes.md) when venue tone, narrative, evidence, or architecture depends on systems/cloud, ML-systems, architecture/workload, or cross-layer norms.
 - Read [research-rules.md](references/research-rules.md) when screening importance, contribution type, field object, or claim-evidence fit.
 - Read [reasoning-skills.md](references/reasoning-skills.md) when routing among the analytical skills (research-gap, research-dialectic, research-causal, research-qualitative, research-audit, research-adversary) or sequencing a multi-skill pipeline.
 - Read [research-contract.md](references/research-contract.md) at run start to capture the orchestrator input contract (topic, intended contribution, independent-group floor, output path).
@@ -103,3 +104,5 @@ review); do not chain from inside the lane.
 - Do not bulk-load every research skill.
 - Do not invent citations, venues, results, participants, metrics, or code behavior.
 - Do not fork OMX runtime skills into Coresearch unless the user explicitly asks for adoption.
+- Treat `research-qualitative` as an optional method, never as a primary field mode.
+- Require each implementation unit to instantiate an insight, test a hypothesis, or produce claim-bearing evidence; code, features, build success, and production hardening are not contributions by themselves.

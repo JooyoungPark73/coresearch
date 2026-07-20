@@ -1,6 +1,6 @@
 ---
 name: research-survey
-description: Verified literature survey and related-work synthesis for research topics. Use when the user asks for related work, papers on a topic, citation categories, a literature map, survey writing, or paper recommendations. Requires real-paper verification, crawler-compatible evidence tables when useful, and explicit metadata/PDF confidence; never fabricates citations, venues, or paper claims.
+description: Verified literature survey and related-work synthesis for systems/cloud, ML-systems, and computer-architecture topics. Use when the user asks for related work, papers on a topic, citation categories, a literature map, survey writing, or paper recommendations. Requires real-paper verification, crawler-compatible evidence tables when useful, and explicit metadata/PDF confidence; never fabricates citations, venues, or paper claims.
 ---
 
 # research-survey — Literature Survey & Related Work
@@ -11,8 +11,9 @@ papers. Default is an in-chat Markdown survey; LaTeX/BibTeX only on request.
 ## What & When
 
 Verified related work, literature maps, paper recommendations, citation
-categories, survey prose, closest-competitor search (AI / Robotics / Graphics /
-HCI / hybrid), crawler roadmaps when full-text verification is needed. Use when:
+categories, survey prose, closest-competitor search for `systems_cloud` (OSDI,
+SOSP, NSDI, EuroSys, SoCC), `ml_systems` (MLSys), `computer_architecture`
+(ISCA, MICRO, HPCA, IISWC), and ASPLOS `cross_layer` work, crawler roadmaps when full-text verification is needed. Use when:
 "related work", "papers on X", "literature map", "survey", "citation
 categories", "closest competitors", "what should I cite".
 Not for: batch PDF download → in-skill crawler
@@ -20,11 +21,13 @@ Not for: batch PDF download → in-skill crawler
 fixed draft/source fact-check → `research-verify`; gaps worth a paper
 (importance × tractability × novelty, with falsification) → `research-gap`.
 research-survey maps the field; it does not judge or falsify gaps.
+Research-qualitative work is included only as an optional method stream when it
+directly informs the scoped systems question, not as a primary field mode.
 
 ## Procedure
 
 Verify existence and metadata before citing. Synthesize by mechanism, research
-question, field object, or contribution type — never chronology by default.
+question, field object, contribution type, or evaluation regime — never chronology by default.
 Keep metadata-only papers out of detailed method/result/limitation claims.
 
 **Search policy.** OMX `researcher` posture when available: official /
@@ -54,8 +57,8 @@ Never upgrade beyond `METADATA VERIFIED` without inspected paper text.
 3. **Evidence ledger** — candidates in a crawler-compatible roadmap table (or equivalent in-chat table) before synthesis.
 4. **Verify each candidate** — title, authors, venue/year, DOI/arXiv/OpenReview/proceedings link when possible; assign verification status.
 5. **Crawl or inspect text when needed** — crawler for batch open-access PDFs when a roadmap file exists; otherwise inspect official PDFs/full text directly.
-6. **Classify** — group by mechanism, research question, or contribution type, not chronology.
-7. **Synthesize from evidence** — what each stream enabled, its assumptions, how the user's project differs or builds on it. Metadata-only papers stay out of detailed result claims.
+6. **Classify** — group by mechanism, research question, contribution type, or evaluation regime, not chronology. Use the canonical mode/lens vocabulary when useful: `systems_cloud`, `ml_systems`, `computer_architecture`; `general_systems`, `networked_distributed`, `cloud`, `cross_layer`, `workload_characterization`.
+7. **Synthesize from evidence** — what each stream enabled, its assumptions, and how the user's project differs or builds on it. For claim-bearing comparisons, extract only from inspected text: workload representativeness and operating envelope; baseline/configuration fairness; warmup/repetitions and tail treatment; scale/failure/cloud variance; ML quality parity; simulator fidelity and PPA methodology. Metadata-only papers stay out of these detailed claims.
 8. **Identify risks** — closest competitors, missing citations, novelty overlap, weak positioning.
 9. **Output sources** — links used + crawler command/output summary when run.
 
@@ -150,6 +153,10 @@ Before final output, reject or fix:
 - guessed author list;
 - paper-result claim not supported by its abstract, paper text, or verified metadata;
 - method/result/limitation claim from a metadata-only paper;
+- evaluation-comparability claim (workload/envelope, configuration fairness,
+  repetitions/tails, scale/failures/variance, quality parity, simulator fidelity,
+  or PPA) not supported by inspected full text;
+- engineering implementation status presented as the paper's research insight;
 - fuzzy crawler or DOI match treated as a verified paper;
 - crawler "not found" paper cited as established evidence unless independently verified elsewhere;
 - `PDF VERIFIED` or `FULL TEXT VERIFIED` marked without actually inspecting local PDFs or official full text;
