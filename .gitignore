@@ -1,6 +1,4 @@
 # Runtime and local scratch artifacts; not part of the installable research skill bundle.
-.omx/
-.omc/
 tmp/
 .tmp/
 .DS_Store

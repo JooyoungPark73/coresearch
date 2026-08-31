@@ -6,8 +6,8 @@ description: Venue-calibrated simulated review and score forecast for systems/cl
 # research-review — Venue Review & Score Forecast
 
 Act as a strict but fair author-side reviewer; provide explicit scores. Not for
-confidential official peer review unless venue policy permits. In OMX this is a
-verification surface: may block completion when score-moving evidence gaps remain.
+confidential official peer review unless venue policy permits. This review may
+block claim-bearing completion when score-moving evidence gaps remain.
 
 ## What & When
 
@@ -93,8 +93,10 @@ Mandatory fields:
 
 ## State & Handoff
 
-State: review produced; score-moving evidence gaps block OMX completion until
-closed. Next: research-write (revision prose) / research-verify (citation faithfulness) / research-audit (methodology attack). Carry forward variance and unanswered author-questions as warnings. In
+State: review produced; score-moving evidence gaps block claim-bearing
+completion until closed. Next: research-write (revision prose) /
+research-verify (citation faithfulness) / research-audit (methodology attack).
+Carry forward variance and unanswered author-questions as warnings. In
 a multi-skill run, also seed `quality_state` (unsupported_claims /
 missing_counterevidence / unresolved_methodology_issues) from the score-moving
 gaps (state-ledger.md); standalone, the review above is enough.

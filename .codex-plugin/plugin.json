@@ -1,21 +1,19 @@
 {
   "name": "coresearch",
   "version": "1.0.0",
-  "description": "Central Coresearch router plus OMX-compatible research-agent skills for paper design, review, surveys, rebuttals, autonomous loops, claim verification, reproducible engineering, and figures.",
+  "description": "Standalone Coresearch router and research skills for paper design, review, surveys, rebuttals, durable loops, claim verification, and reproducible engineering.",
   "author": {
-    "name": "Alan Synn"
+    "name": "JooYoung Park"
   },
   "license": "MIT",
   "keywords": [
     "coresearch",
     "academic-writing",
-    "autoresearch",
     "claims",
     "cloud-systems",
     "computer-architecture",
     "experiments",
     "ml-systems",
-    "omx",
     "papers",
     "reproducibility",
     "research",
@@ -27,8 +25,8 @@
   "interface": {
     "displayName": "Coresearch",
     "shortDescription": "Coresearch router plus research planning, writing, review, and reproducibility skills.",
-    "longDescription": "A lean, cumulative Codex/OMX research-agent bundle for systems and cloud, ML systems, computer architecture, workload characterization, and ASPLOS-style cross-layer research. The coresearch router chooses the right stage, field mode, and role skill, then routes to complete skills for paper design, review, rewriting, related work, rebuttals, autonomous research loops, claim verification, research engineering, and figures. It runs standalone; optional OMX acceleration ($autoresearch, $team, $ralplan) is available when an OMX install is present. It avoids shim aliases and forced .agents chat folders, and uses .omx state only for explicit OMX workflows.",
-    "developerName": "Alan Synn",
+    "longDescription": "A lean, cumulative research-agent bundle for Codex and Claude Code across systems and cloud, ML systems, computer architecture, workload characterization, and ASPLOS-style cross-layer research. The coresearch router selects one research stage and complete skill, while fixed native roles execute bounded planning, retrieval, reading, implementation, experiments, diagnosis, synthesis, and independent verification. Durable missions share one ledger and one mission, sandbox, and result contract across both hosts.",
+    "developerName": "JooYoung Park",
     "category": "Productivity",
     "capabilities": [
       "Interactive",

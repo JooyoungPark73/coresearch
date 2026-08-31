@@ -25,8 +25,8 @@ prefer primary sources.
 Check against supplied sources, code/data/logs, or primary web sources. For each
 finding classify severity (scale below) and mark it false / unsupported /
 unverified / ambiguous / source-faithful; offer safer rewrites only when
-evidence supports them. In OMX workflows, return PASS/FAIL/PARTIAL evidence, not
-just prose. Audit each claim class:
+evidence supports them. Return PASS/FAIL/PARTIAL evidence, not just prose.
+Audit each claim class:
 
 1. **Citation existence** — title, authors, venue, year, DOI/arXiv/OpenReview.
 2. **Source faithfulness** — whether the draft accurately summarizes a source.
@@ -95,8 +95,9 @@ Severity scale (shared: critical / major / moderate / minor / uncertain):
 
 ## State & Handoff
 
-Artifact: the Claim Check above. OMX role: verifier surface returning
-PASS/FAIL/PARTIAL evidence; Residual Risk is the hand-forward. In a multi-skill
+Artifact: the Claim Check above. An independent `coresearch-verifier` returns
+PASS/FAIL/PARTIAL evidence at a claim boundary; Residual Risk is the
+hand-forward. In a multi-skill
 run, also write `claim_state.{supported|contradicted|unresolved|rejected}` per
 finding to the orchestrator ledger (state-ledger.md); standalone, the Claim
 Check is enough.

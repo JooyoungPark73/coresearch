@@ -14,6 +14,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RESEARCH_TEMPLATE = ROOT / "templates" / "research" / "AGENTS.md"
 SKILL_MANIFEST = ROOT / "skills" / "manifest.json"
+AGENT_MANIFEST = ROOT / "agents" / "manifest.json"
+ROLE_MARKER = "coresearch-managed: role-description-version="
 
 
 def skill_manifest() -> dict:
@@ -24,12 +26,23 @@ def owned_skill_names() -> list[str]:
     return [item["name"] for item in skill_manifest()["owned"]]
 
 
+def agent_manifest() -> dict:
+    return json.loads(AGENT_MANIFEST.read_text())
+
+
+def roles() -> list[dict]:
+    return agent_manifest()["roles"]
+
+
+def role_names() -> list[str]:
+    return [item["name"] for item in roles()]
+
+
 SKILLS = owned_skill_names()
+ROLES = role_names()
 
 START = "<!-- RESEARCH_AGENT_SKILLS:START -->"
 END = "<!-- RESEARCH_AGENT_SKILLS:END -->"
-OMX_SIGNATURE = "# oh-my-codex - Intelligent Multi-Agent Orchestration"
-OMX_RUNTIME_MARKER = "<!-- OMX:RUNTIME:START -->"
 
 
 def codex_home(value: str | None = None) -> Path:
@@ -46,10 +59,11 @@ def default_bin_dir() -> Path:
 
 def bridge_block() -> str:
     role_skills = ", ".join(f"`{name}`" for name in owned_skill_names() if name != "coresearch")
+    native_roles = ", ".join(f"`{name}`" for name in role_names())
     return f"""{START}
 Coresearch skills are installed. For broad academic research tasks, load `coresearch` first; for narrow tasks, load the smallest matching skill: {role_skills}.
-For native subagents or team lanes, use installed OMX agent roles and pass Coresearch stage, skill, field, evidence, scope, validation, confidentiality context, and active Ponytail/Caveman mode when relevant.
-Keep research work cumulative in the current thread. Do not create `.agents/` chats or paper-state forests. Use `.omx/` only for explicit OMX workflows, hooks, recovery, or checkpointing. Verify current venue rules and citations from official/primary sources when exactness matters.
+Bounded native roles are installed: {native_roles}. Give each assignment one fixed role, a unique ID, dependencies, the primary skill and field mode, claim/evidence target, owned and read-only scope, confidentiality limits, expected artifact, validation, stop condition, and active working modes. Independent assignments may run concurrently; the parent owns joins, integration, and verification. Role results return to the parent, which re-enters `coresearch` before selecting another stage.
+Keep durable research state in `docs/research/decisions/ledger.yaml`; use `docs/research/runs/<run-id>/` for mission, sandbox, and result artifacts, with one schema-version-2 `role_runs` entry per attempted assignment. Do not create provider-specific state forests. Verify current venue rules and citations from official or primary sources when exactness matters.
 {END}
 """
 
@@ -232,43 +246,6 @@ def explicit_init_mode(args: argparse.Namespace) -> str | None:
     return None
 
 
-INSTALL_HINT = """omx not detected on PATH. The OMX-aware bridge assumes omx (oh-my-codex).
-Install omx via your preferred package manager, e.g.:
-  npm:   npm install -g oh-my-codex
-  bun:   bun install -g oh-my-codex
-then run `omx setup`. See omx's own docs for other channels.
-In this Claude session you can run a command with a leading `!` (e.g. `! npm i -g oh-my-codex`).
-After installing, re-run `harness init` to apply the OMX-aware bridge.
-Bridge skipped for now -- Coresearch runs standalone without omx."""
-
-
-def omx_available() -> bool:
-    """True iff a usable `omx` is on PATH. CORESEARCH_OMX_CHECK=0 forces False (test seam)."""
-    if os.environ.get("CORESEARCH_OMX_CHECK", "1") == "0":
-        return False
-    return bool(shutil.which("omx"))
-
-
-def should_apply_bridge(*, force: bool) -> bool:
-    """Decide whether to write the OMX-aware bridge. omx present or explicit force -> apply;
-    otherwise notify (and, on a TTY, offer to install omx) and skip. Prints its own messages."""
-    if omx_available():
-        print("omx detected on PATH; OMX-aware bridge will be used.")
-        return True
-    if force:
-        print("INFO omx not detected; using bridge anyway (explicit --bridge/--global-bridge).")
-        return True
-    print("omx not detected on PATH.")
-    if sys.stdin.isatty():
-        if prompt_bool("Install omx (oh-my-codex) to enable OMX acceleration?", False):
-            print(INSTALL_HINT)
-        else:
-            print("Skipping OMX-aware bridge. Coresearch runs standalone.")
-        return False
-    print("Skipping OMX-aware bridge (omx not detected). Install omx (oh-my-codex) to enable it.")
-    return False
-
-
 def apply_interactive_init(args: argparse.Namespace) -> None:
     print("# Interactive project setup")
     target = prompt_text("Target directory", arg_target(args))
@@ -309,7 +286,7 @@ def apply_interactive_init(args: argparse.Namespace) -> None:
 
 def assert_no_broken_repo_symlinks() -> list[Path]:
     broken: list[Path] = []
-    skip = {".git", "tmp", ".omx", "__pycache__"}
+    skip = {".git", ".tmp", "tmp", "__pycache__"}
     for path in ROOT.rglob("*"):
         if any(part in skip for part in path.relative_to(ROOT).parts):
             continue
@@ -318,25 +295,24 @@ def assert_no_broken_repo_symlinks() -> list[Path]:
     return broken
 
 
-def _install_skill_roots(codex: Path, claude: Path) -> list[Path]:
-    """Candidate installed skill surfaces scanned for broken symlinks.
+def _install_roots(codex: Path, claude: Path) -> list[Path]:
+    """Candidate installed skill and role surfaces scanned for broken links.
 
     Tolerant of absent directories; callers filter by existence. Shared by
     broken_install_symlinks (the scan) and cmd_doctor (the report label) so
     the scanned set and the reported set cannot drift apart.
     """
-    agents = (Path.home() / ".agents").expanduser()
     return [
         codex / "skills",
+        codex / "agents",
         claude / "skills",
-        agents / "skills",
-        agents,
+        claude / "agents",
     ]
 
 
 def broken_install_symlinks(codex: Path, claude: Path) -> list[Path]:
     broken: list[Path] = []
-    for root in _install_skill_roots(codex, claude):
+    for root in _install_roots(codex, claude):
         if not root.is_dir():
             continue
         for entry in root.iterdir():
@@ -345,28 +321,198 @@ def broken_install_symlinks(codex: Path, claude: Path) -> list[Path]:
     return broken
 
 
+REMOVED_SKILLS = {
+    "paper-design", "paper-survey", "paper-figures", "paper-rewrite",
+    "paper-review", "paper-proofread", "rebuttal-plan", "claim-check",
+    "pdf-crawl", "research-guidelines", "pptx", "research-pdfs",
+}
+
+
+def _remove_entry(path: Path) -> None:
+    if path.is_symlink() or path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(path)
+
+
+def _link_target(path: Path) -> Path:
+    target = Path(os.readlink(path))
+    if not target.is_absolute():
+        target = path.parent / target
+    return target.resolve(strict=False)
+
+
+def _inside(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve(strict=False).relative_to(parent.resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def _is_managed_entry(path: Path, kind: str) -> bool:
+    if path.is_symlink():
+        target = _link_target(path)
+        source_root = ROOT / ("skills" if kind == "skill" else "agents")
+        return _inside(target, source_root)
+    if kind == "skill":
+        return path.is_dir() and (path / "_coresearch").exists()
+    return path.is_file() and ROLE_MARKER in path.read_text(errors="replace")
+
+
+def _install_entry(src: Path, dst: Path, *, mode: str, kind: str, force: bool) -> bool:
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists() or dst.is_symlink():
+        if _is_managed_entry(dst, kind) or force:
+            _remove_entry(dst)
+        else:
+            print(f"Refusing to replace unrelated {kind}: {dst}", file=sys.stderr)
+            print("Use --force only for an intentional replacement.", file=sys.stderr)
+            return False
+    if mode == "symlink":
+        dst.symlink_to(src.resolve(), target_is_directory=src.is_dir())
+    elif src.is_dir():
+        shutil.copytree(src, dst)
+    else:
+        shutil.copy2(src, dst)
+    print(f"Installed {kind}: {dst}")
+    return True
+
+
+def _recognized_removed_skill(path: Path) -> bool:
+    if _is_managed_entry(path, "skill"):
+        return True
+    if not path.is_dir() or not (path / "SKILL.md").is_file():
+        return False
+    text = (path / "SKILL.md").read_text(errors="replace")
+    return bool(re.search(rf"(?m)^name:\s*['\"]?{re.escape(path.name)}['\"]?\s*$", text)) and (
+        "compatibility shim" in text.lower()
+        or any(token in text for token in (
+            "Complete research planning workflow for paper ideas",
+            "Verified literature survey and related-work synthesis for research topics",
+            "Research figure planning and caption architecture",
+            "Rewrite research paper sections with venue-aware argument",
+            "Venue-calibrated simulated review and score forecast for research papers",
+            "Final line-level proofreading workflow for academic manuscripts",
+            "Factual verification and hallucination detection for research text",
+            "Batch-download open-access PDFs",
+            "Compact behavioral guidelines for research assistance",
+            "Coresearch-owned PowerPoint workflow",
+        ))
+    )
+
+
+def _prune_removed_skills(root: Path) -> None:
+    for name in sorted(REMOVED_SKILLS):
+        dst = root / name
+        if not dst.exists() and not dst.is_symlink():
+            continue
+        if _recognized_removed_skill(dst):
+            _remove_entry(dst)
+            print(f"Pruned removed Coresearch skill: {dst}")
+        else:
+            print(f"WARN unrelated legacy-name skill preserved: {dst}", file=sys.stderr)
+
+
+def _prune_removed_roles(root: Path, provider: str) -> None:
+    suffix = ".toml" if provider == "codex" else ".md"
+    expected = {f"{name}{suffix}" for name in ROLES}
+    if not root.is_dir():
+        return
+    for dst in sorted(root.glob(f"coresearch-*{suffix}")):
+        if dst.name in expected:
+            continue
+        if _is_managed_entry(dst, "role"):
+            _remove_entry(dst)
+            print(f"Pruned removed Coresearch role: {dst}")
+        else:
+            print(f"WARN unrelated Coresearch-named role preserved: {dst}", file=sys.stderr)
+
+
+def _provider_root(args: argparse.Namespace, provider: str) -> Path:
+    if args.scope == "project":
+        if not args.project_dir:
+            project = Path.cwd()
+        else:
+            project = Path(args.project_dir).expanduser().resolve()
+        project.mkdir(parents=True, exist_ok=True)
+        return project / (".codex" if provider == "codex" else ".claude")
+    return codex_home(args.codex_home) if provider == "codex" else claude_home(args.claude_home)
+
+
+def _write_bridge(path: Path) -> None:
+    old = path.read_text() if path.exists() else ""
+    new = upsert_bridge_text(old)
+    if old == new:
+        print(f"Bridge already current: {path}")
+        return
+    backup = backup_file(path)
+    atomic_write(path, new)
+    print(f"Updated bridge: {path}")
+    if backup:
+        print(f"Backup: {backup}")
+
+
 def cmd_install(args: argparse.Namespace) -> int:
-    script = ROOT / "scripts" / "install.sh"
-    cmd = [str(script), "--scope", args.scope, "--surface", args.surface, "--mode", args.mode]
-    if args.codex_home:
-        cmd += ["--codex-home", str(codex_home(args.codex_home))]
-    if args.claude_home:
-        cmd += ["--claude-home", str(claude_home(args.claude_home))]
-    if args.project_dir:
-        cmd += ["--project-dir", str(Path(args.project_dir).expanduser().resolve())]
+    providers = ["codex", "claude"] if args.surface == "both" else [args.surface]
+    failures = 0
+    installed: list[Path] = []
+    for provider in providers:
+        root = _provider_root(args, provider)
+        skills_root = root / "skills"
+        roles_root = root / "agents"
+        _prune_removed_skills(skills_root)
+        _prune_removed_roles(roles_root, provider)
+        for name in SKILLS:
+            if not _install_entry(
+                ROOT / "skills" / name,
+                skills_root / name,
+                mode=args.mode,
+                kind="skill",
+                force=args.force,
+            ):
+                failures += 1
+        suffix = ".toml" if provider == "codex" else ".md"
+        for name in ROLES:
+            if not _install_entry(
+                ROOT / "agents" / provider / f"{name}{suffix}",
+                roles_root / f"{name}{suffix}",
+                mode=args.mode,
+                kind="role",
+                force=args.force,
+            ):
+                failures += 1
+        installed.extend((skills_root, roles_root))
+
+    project = Path(args.project_dir).expanduser().resolve() if args.project_dir else Path.cwd().resolve()
     if args.global_bridge:
-        cmd.append("--global-bridge")
+        _write_bridge(codex_home(args.codex_home) / "AGENTS.md")
     if args.project_bridge:
-        cmd.append("--project-bridge")
-    if args.force:
-        cmd.append("--force")
-    return subprocess.call(cmd)
+        _write_bridge(project / "AGENTS.md")
+    if getattr(args, "full_project_agents", False):
+        if args.scope != "project":
+            print("--full-project-agents requires --scope project", file=sys.stderr)
+            return 2
+        path = project / "AGENTS.md"
+        if path.exists():
+            print(f"Project AGENTS.md already exists; not replacing: {path}", file=sys.stderr)
+        else:
+            atomic_write(path, RESEARCH_TEMPLATE.read_text())
+            print(f"Installed full research project AGENTS.md: {path}")
+
+    print()
+    print("Install target(s): " + ", ".join(str(path) for path in installed))
+    print(f"Mode: {args.mode}")
+    print(f"Scope: {args.scope}")
+    print(f"Surface: {args.surface}")
+    print("Restart Codex or Claude Code to reload skill and role metadata.")
+    return 3 if failures else 0
 
 
 def cmd_link(args: argparse.Namespace) -> int:
     args.scope = "user"
     args.mode = "symlink"
-    args.force = True
+    args.force = False
     if not hasattr(args, "surface") or not args.surface:
         args.surface = "codex"
     return cmd_install(args)
@@ -428,10 +574,6 @@ def cmd_init(args: argparse.Namespace) -> int:
     if should_interactive_init(args):
         apply_interactive_init(args)
 
-    # omx-conditional bridge: skip the OMX-aware bridge when omx is absent unless --bridge forces it.
-    if args.mode == "bridge" and not should_apply_bridge(force=explicit_init_mode(args) == "bridge"):
-        return 0
-
     target = Path(arg_target(args)).expanduser().resolve()
     if not target.exists():
         if args.apply:
@@ -479,8 +621,6 @@ def cmd_global(args: argparse.Namespace) -> int:
     home = codex_home(args.codex_home)
     path = home / "AGENTS.md"
     old = path.read_text() if path.exists() else ""
-    if not args.remove and not should_apply_bridge(force=True):
-        return 0
     new = remove_bridge_text(old) if args.remove else upsert_bridge_text(old)
     label = "remove-bridge" if args.remove else "bridge"
     diff = unified_diff(old, new, str(path) + " (current)", str(path) + f" ({label})")
@@ -596,6 +736,78 @@ def skill_status(home: Path) -> list[str]:
     return rows
 
 
+def _frontmatter(text: str) -> dict[str, object]:
+    if not text.startswith("---\n") or "\n---\n" not in text[4:]:
+        return {}
+    raw = text[4:].split("\n---\n", 1)[0]
+    data: dict[str, object] = {}
+    current: str | None = None
+    for line in raw.splitlines():
+        if line.startswith("  - ") and current:
+            value = data.setdefault(current, [])
+            if isinstance(value, list):
+                value.append(line[4:])
+        elif ": " in line:
+            current, value = line.split(": ", 1)
+            data[current] = value.strip().strip("\"'")
+        elif line.endswith(":"):
+            current = line[:-1]
+            data[current] = []
+    return data
+
+
+def parse_role_definition(path: Path, provider: str) -> dict[str, object]:
+    if not path.is_file():
+        return {}
+    text = path.read_text(errors="replace")
+    if provider == "claude":
+        return _frontmatter(text)
+    result: dict[str, object] = {}
+    for key in ("name", "description", "model", "model_reasoning_effort", "sandbox_mode"):
+        match = re.search(rf'(?m)^{key}\s*=\s*"([^"\n]+)"\s*$', text)
+        if match:
+            result[key] = match.group(1)
+    return result
+
+
+def role_status(home: Path, provider: str) -> list[str]:
+    rows: list[str] = []
+    suffix = ".toml" if provider == "codex" else ".md"
+    by_name = {item["name"]: item for item in roles()}
+    roles_root = home / "agents"
+    for name in ROLES:
+        dst = roles_root / f"{name}{suffix}"
+        src = ROOT / "agents" / provider / f"{name}{suffix}"
+        pin = by_name[name]["providers"][provider]
+        kind = "missing"
+        if dst.is_symlink():
+            target = _link_target(dst)
+            if not dst.exists():
+                kind = f"symlink:BROKEN -> {target}"
+            elif target != src.resolve():
+                kind = f"symlink:OTHER -> {target}"
+            else:
+                kind = f"symlink:OK -> {target}"
+        elif dst.exists():
+            kind = f"copy/file -> {dst}" if dst.is_file() else f"path:BROKEN -> {dst}"
+        config = parse_role_definition(dst, provider)
+        effort_key = "model_reasoning_effort" if provider == "codex" else "effort"
+        observed = (config.get("model"), config.get(effort_key))
+        expected = (pin["model"], pin["effort"])
+        if dst.exists() and observed != expected:
+            kind += f" CONFIG-MISMATCH requested={expected[0]}/{expected[1]} observed={observed[0]}/{observed[1]}"
+        elif dst.exists():
+            kind += f" model={expected[0]} effort={expected[1]}"
+        rows.append(f"{name}: {kind}")
+
+    if roles_root.is_dir():
+        expected_files = {f"{name}{suffix}" for name in ROLES}
+        for entry in sorted(roles_root.glob(f"coresearch-*{suffix}")):
+            if entry.name not in expected_files and _is_managed_entry(entry, "role"):
+                rows.append(f"{entry.stem}: orphaned-coresearch-role -> {entry}")
+    return rows
+
+
 def global_agents_status(home: Path) -> list[str]:
     path = home / "AGENTS.md"
     rows = [f"global AGENTS: {path}"]
@@ -603,28 +815,17 @@ def global_agents_status(home: Path) -> list[str]:
         rows.append("  missing")
         return rows
     text = path.read_text(errors="replace")
-    is_omx = OMX_SIGNATURE in text and OMX_RUNTIME_MARKER in text
-    rows.append(f"  omx-signature: {'yes' if is_omx else 'no'}")
-    template = ROOT / "tmp" / "oh-my-codex" / "templates" / "AGENTS.md"
-    if template.exists():
-        tpl = template.read_text()
-        exact = text == tpl
-        normalized = text.rstrip("\n") == tpl.rstrip("\n")
-        if exact:
-            rows.append("  exact-local-template-match: yes")
-        elif normalized:
-            rows.append("  exact-local-template-match: yes (trailing-newline-only)")
-        else:
-            rows.append("  exact-local-template-match: no")
     rows.append(f"  research-bridge: {'yes' if START in text and END in text else 'no'}")
     return rows
 
 
 def cmd_status(args: argparse.Namespace) -> int:
     home = codex_home(args.codex_home)
+    claude = claude_home(getattr(args, "claude_home", None))
     target = Path(arg_target(args)).expanduser().resolve()
     print(f"Repo: {ROOT}")
     print(f"CODEX_HOME: {home}")
+    print(f"CLAUDE_HOME: {claude}")
     print(f"Project target: {target}")
     print()
     for row in global_agents_status(home):
@@ -635,19 +836,23 @@ def cmd_status(args: argparse.Namespace) -> int:
         text = project_agents.read_text(errors="replace")
         print(f"project AGENTS: {project_agents}")
         print(f"  research-bridge: {'yes' if START in text and END in text else 'no'}")
-        print(f"  full-research-template: {'yes' if 'OMX Research Agent System' in text else 'no'}")
+        exact_template = text.rstrip("\n") == RESEARCH_TEMPLATE.read_text().rstrip("\n")
+        print(f"  full-research-template: {'yes' if exact_template else 'no'}")
     else:
         print(f"project AGENTS: missing ({project_agents})")
     print()
-    print("Installed research skills:")
+    print("Installed research skills (codex):")
     for row in skill_status(home):
         print("  " + row)
-    claude = claude_home(getattr(args, "claude_home", None))
-    claude_skills = claude / "skills"
-    if claude_skills.is_dir() and any((claude_skills / n).exists() for n in SKILLS):
-        print("Installed research skills (claude surface):")
-        for row in skill_status(claude):
-            print("  " + row)
+    print("Installed native roles (codex):")
+    for row in role_status(home, "codex"):
+        print("  " + row)
+    print("Installed research skills (claude):")
+    for row in skill_status(claude):
+        print("  " + row)
+    print("Installed native roles (claude):")
+    for row in role_status(claude, "claude"):
+        print("  " + row)
     return 0
 
 
@@ -702,8 +907,6 @@ def iter_skill_dirs(root: Path, *, recursive: bool) -> list[Path]:
 
 def classify_skill(name: str, surface: str, manifest: dict, skill_dir: Path) -> str:
     owned = {item["name"] for item in manifest["owned"]}
-    external = set(manifest.get("external_routes", []))
-    preferences = set(manifest.get("preferences", []))
     plugin_surface = surface in {"codex-cache", "claude-marketplace", "claude-cache"}
     if surface == "codex-system":
         return "system"
@@ -723,10 +926,6 @@ def classify_skill(name: str, surface: str, manifest: dict, skill_dir: Path) -> 
         return "plugin-overlap" if plugin_surface else "owned"
     if name.startswith(("coresearch", "research-")):
         return "plugin-overlap" if plugin_surface else "owned-unmarked"
-    if name in preferences or name.startswith(("caveman", "ponytail")) or name == "cavecrew":
-        return "preference"
-    if name in external or name.startswith("omx-"):
-        return "external-route"
     return "unknown"
 
 
@@ -760,105 +959,309 @@ def cmd_inventory(args: argparse.Namespace) -> int:
                     ]
                 )
             )
+    print()
+    print("# Coresearch native role inventory")
+    print("surface\tclass\tname\tkind\tpath\trequested-model\trequested-effort")
+    role_map = {item["name"]: item for item in roles()}
+    for provider, home in (("codex", codex_home(args.codex_home)), ("claude", claude_home(args.claude_home))):
+        suffix = ".toml" if provider == "codex" else ".md"
+        root = home / "agents"
+        for name in ROLES:
+            path = root / f"{name}{suffix}"
+            if not path.exists() and not path.is_symlink():
+                continue
+            kind = "symlink" if path.is_symlink() else "file"
+            klass = "owned" if _is_managed_entry(path, "role") else "unrelated"
+            pin = role_map[name]["providers"][provider]
+            print("\t".join((f"{provider}-user", klass, name, kind, str(path), pin["model"], pin["effort"])))
     return 0
 
 
-def cmd_doctor(args: argparse.Namespace) -> int:
-    home = codex_home(args.codex_home)
-    claude = claude_home(getattr(args, "claude_home", None))
-    target = Path(arg_target(args)).expanduser().resolve()
+def validate_source_roles() -> list[str]:
     failures: list[str] = []
+    manifest = agent_manifest()
+    if manifest.get("schema_version") != 1:
+        failures.append("agents/manifest.json schema_version must be 1")
+    if manifest.get("role_description_version") != 2:
+        failures.append("agents/manifest.json role_description_version must be 2")
+    manifest_roles = manifest.get("roles", [])
+    if len(manifest_roles) != 8 or {item.get("name") for item in manifest_roles} != set(ROLES):
+        failures.append("agents/manifest.json must contain exactly the eight Coresearch roles")
+        return failures
+
+    forbidden = {"gpt-5.6", "opus", "sonnet", "haiku", "inherit"}
+    for role in manifest_roles:
+        name = role["name"]
+        capability = role.get("capability")
+        if capability not in {"read-only", "workspace-write"}:
+            failures.append(f"{name}: invalid capability {capability!r}")
+        for skill in role.get("skills", []):
+            if not (ROOT / "skills" / skill / "SKILL.md").is_file():
+                failures.append(f"{name}: missing referenced skill {skill}")
+        for provider in ("codex", "claude"):
+            suffix = ".toml" if provider == "codex" else ".md"
+            path = ROOT / "agents" / provider / f"{name}{suffix}"
+            if not path.is_file():
+                failures.append(f"{name}: missing {provider} definition {path}")
+                continue
+            config = parse_role_definition(path, provider)
+            pin = role["providers"][provider]
+            effort_key = "model_reasoning_effort" if provider == "codex" else "effort"
+            if config.get("name") != name:
+                failures.append(f"{path}: name mismatch {config.get('name')!r}")
+            if config.get("model") != pin["model"]:
+                failures.append(f"{path}: model mismatch requested={pin['model']} observed={config.get('model')}")
+            if config.get(effort_key) != pin["effort"]:
+                failures.append(f"{path}: effort mismatch requested={pin['effort']} observed={config.get(effort_key)}")
+            if config.get("model") in forbidden:
+                failures.append(f"{path}: rolling or inherited model alias is forbidden")
+            text = path.read_text(errors="replace")
+            if ROLE_MARKER not in text:
+                failures.append(f"{path}: Coresearch ownership marker missing")
+            if provider == "codex":
+                expected_sandbox = "workspace-write" if capability == "workspace-write" else "read-only"
+                if config.get("sandbox_mode") != expected_sandbox:
+                    failures.append(f"{path}: sandbox_mode must be {expected_sandbox}")
+                if not all(skill in text for skill in role.get("skills", [])):
+                    failures.append(f"{path}: relevant skill list drifted from manifest")
+            else:
+                tools = set(config.get("tools", []))
+                skills = config.get("skills", [])
+                if skills != role.get("skills", []):
+                    failures.append(f"{path}: skill list drifted from manifest")
+                if capability == "read-only":
+                    if tools & {"Edit", "Write"} or config.get("permissionMode") != "plan":
+                        failures.append(f"{path}: read-only role exposes write capability")
+                elif not {"Edit", "Write"}.issubset(tools) or config.get("permissionMode") != "acceptEdits":
+                    failures.append(f"{path}: writable role lacks explicit edit capability")
+    return failures
+
+
+def _json_values(value: object, keys: set[str]) -> list[str]:
+    found: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key.lower() in keys and isinstance(child, str):
+                found.append(child)
+            found.extend(_json_values(child, keys))
+    elif isinstance(value, list):
+        for child in value:
+            found.extend(_json_values(child, keys))
+    return found
+
+
+def _one_unique(values: list[str]) -> str | None:
+    unique = list(dict.fromkeys(values))
+    return unique[0] if len(unique) == 1 else None
+
+
+def _probe_observed(output: str) -> tuple[str | None, str | None, str | None]:
+    documents: list[object] = []
+    for line in output.splitlines():
+        try:
+            documents.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    models: list[str] = []
+    efforts: list[str] = []
+    observed_roles: list[str] = []
+    for document in documents:
+        models.extend(_json_values(document, {"model", "model_id", "model_name"}))
+        efforts.extend(_json_values(document, {"effort", "reasoning_effort", "model_reasoning_effort"}))
+        observed_roles.extend(
+            value
+            for value in _json_values(document, {"agent_type", "agent_name", "role_name", "role"})
+            if value in ROLES
+        )
+    return _one_unique(observed_roles), _one_unique(models), _one_unique(efforts)
+
+
+def probe_role_routing(providers: list[str], homes: dict[str, Path]) -> tuple[list[str], list[str]]:
+    reports: list[str] = []
+    failures: list[str] = []
+    for provider in providers:
+        executable = shutil.which(provider)
+        if not executable:
+            for role in roles():
+                pin = role["providers"][provider]
+                reports.append(
+                    f"routing provider={provider} role={role['name']} requested={pin['model']}/{pin['effort']} "
+                    "observed_role=null observed=null/null status=static-only"
+                )
+            failures.append(f"{provider} named-role probes are static-only: CLI not found")
+            continue
+        for role in roles():
+            name = role["name"]
+            pin = role["providers"][provider]
+            model = pin["model"]
+            effort = pin["effort"]
+            marker = f"CORESEARCH_ROLE_PROBE {name}"
+            if provider == "codex":
+                command = [
+                    executable, "exec", "--json",
+                    f"Spawn exactly the custom agent named {name}. The child must reply exactly "
+                    f"{marker}. Return that child reply unchanged and do not perform the probe yourself.",
+                ]
+            else:
+                command = [
+                    executable, "--agent", name, "--print", "--output-format", "json",
+                    f"Reply exactly {marker}.",
+                ]
+            env = os.environ.copy()
+            if provider == "codex":
+                env["CODEX_HOME"] = str(homes[provider])
+            else:
+                env["CLAUDE_HOME"] = str(homes[provider])
+                env["CLAUDE_CONFIG_DIR"] = str(homes[provider])
+            try:
+                proc = subprocess.run(
+                    command,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    env=env,
+                    timeout=120,
+                )
+            except subprocess.TimeoutExpired:
+                reports.append(
+                    f"routing provider={provider} role={name} requested={model}/{effort} "
+                    "observed_role=null observed=null/null status=mismatch"
+                )
+                failures.append(f"{provider} named-role probe timed out for {name} after 120 seconds")
+                continue
+            observed_role, observed_model, observed_effort = _probe_observed(proc.stdout)
+            if proc.returncode != 0:
+                status = "mismatch"
+                failures.append(f"{provider} named-role probe failed for {name} (exit {proc.returncode})")
+            elif marker not in proc.stdout:
+                status = "mismatch"
+                failures.append(f"{provider} named-role probe for {name} returned no completion marker")
+            elif observed_role is not None and observed_role != name:
+                status = "mismatch"
+                failures.append(f"{provider} role mismatch requested={name} observed={observed_role}")
+            elif observed_model is not None and observed_model != model:
+                status = "mismatch"
+                failures.append(f"{provider} model mismatch for {name} requested={model} observed={observed_model}")
+            elif observed_effort is not None and observed_effort != effort:
+                status = "mismatch"
+                failures.append(f"{provider} effort mismatch for {name} requested={effort} observed={observed_effort}")
+            elif observed_role is None or observed_model is None or observed_effort is None:
+                status = "static-only"
+                failures.append(
+                    f"{provider} did not expose complete role/model/effort metadata for {name}"
+                )
+            else:
+                status = "verified"
+            reports.append(
+                f"routing provider={provider} role={name} requested={model}/{effort} "
+                f"observed_role={observed_role or 'null'} "
+                f"observed={observed_model or 'null'}/{observed_effort or 'null'} status={status}"
+            )
+    return reports, failures
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    user_codex = codex_home(args.codex_home)
+    user_claude = claude_home(getattr(args, "claude_home", None))
+    target_value = getattr(args, "project_dir", None) or arg_target(args)
+    target = Path(target_value).expanduser().resolve()
+    scope = getattr(args, "scope", "user")
+    if scope == "project":
+        codex = target / ".codex"
+        claude = target / ".claude"
+    else:
+        codex = user_codex
+        claude = user_claude
+    providers = ["codex", "claude"] if args.surface == "both" else [args.surface]
+    homes = {"codex": codex, "claude": claude}
+    failures = validate_source_roles()
     warnings: list[str] = []
 
-    print("# Research Harness Doctor")
+    print("# Coresearch Harness Doctor")
     print(f"Repo: {ROOT}")
-    print(f"CODEX_HOME: {home}")
+    print(f"CODEX_HOME: {codex}")
+    print(f"CLAUDE_HOME: {claude}")
     print(f"Project target: {target}")
+    print(f"Install scope: {scope}")
+    print(f"Surface audit: {args.surface}")
     print()
 
-    global_path = home / "AGENTS.md"
-    if not global_path.exists():
-        warnings.append("global AGENTS.md missing")
+    if failures:
+        print(f"Static role contract: FAIL ({len(failures)} issue(s))")
     else:
-        text = global_path.read_text(errors="replace")
-        if OMX_SIGNATURE in text and OMX_RUNTIME_MARKER in text:
-            print("PASS global AGENTS has OMX signature")
-        else:
-            failures.append("global AGENTS does not look like OMX default")
-        if START in text and END in text:
-            print("INFO global research bridge installed")
-        else:
-            print("INFO global research bridge not installed")
+        print("PASS static role manifest and all 16 native definitions")
 
-    for row in skill_status(home):
-        if "symlink:OK" in row:
-            print("PASS " + row)
-        elif "BROKEN" in row or "missing" in row:
-            failures.append("bad skill install: " + row)
-        else:
-            warnings.append("non-symlink or external skill: " + row)
+    if os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL"):
+        failures.append("CLAUDE_CODE_SUBAGENT_MODEL overrides Coresearch Claude role pins")
+    else:
+        print("PASS Claude subagent model override is unset")
 
-    # Verify the Claude surface too, but only when a Coresearch install is
-    # actually present there — a codex-only install must not fail because the
-    # claude surface is empty.
-    claude_skills = claude / "skills"
-    if claude_skills.is_dir() and any((claude_skills / n).exists() for n in SKILLS):
-        for row in skill_status(claude):
-            if "symlink:OK" in row:
-                print("PASS [claude] " + row)
-            elif "BROKEN" in row or "missing" in row:
-                failures.append("bad claude skill install: " + row)
+    for provider in providers:
+        home = homes[provider]
+        for row in skill_status(home):
+            if "symlink:OK" in row or "copy/dir" in row:
+                print(f"PASS [{provider}] skill {row}")
             else:
-                warnings.append("[claude] non-symlink or external skill: " + row)
-    else:
-        print("INFO claude surface not installed (codex-only install)")
+                failures.append(f"bad {provider} skill install: {row}")
+        for row in role_status(home, provider):
+            if ("symlink:OK" in row or "copy/file" in row) and "CONFIG-MISMATCH" not in row:
+                print(f"PASS [{provider}] role {row}")
+            else:
+                failures.append(f"bad {provider} role install: {row}")
 
     broken_repo_links = assert_no_broken_repo_symlinks()
     if broken_repo_links:
-        for link in broken_repo_links:
-            failures.append(f"broken repo symlink: {link}")
+        failures.extend(f"broken repo symlink: {link}" for link in broken_repo_links)
     else:
         print("PASS no broken symlinks in repo")
 
-    scanned_install_roots = [r for r in _install_skill_roots(home, claude) if r.is_dir()]
-    broken_install_links = broken_install_symlinks(home, claude)
+    scanned_install_roots = [root for root in _install_roots(codex, claude) if root.is_dir()]
+    broken_install_links = broken_install_symlinks(codex, claude)
     if broken_install_links:
-        for link in broken_install_links:
-            failures.append(f"broken install symlink: {link}")
+        failures.extend(f"broken install symlink: {link}" for link in broken_install_links)
     else:
-        scanned = ", ".join(str(r) for r in scanned_install_roots) or "none present"
+        scanned = ", ".join(str(root) for root in scanned_install_roots) or "none present"
         print(f"PASS no broken symlinks in install surfaces ({scanned})")
+
+    global_path = user_codex / "AGENTS.md"
+    if global_path.exists():
+        text = global_path.read_text(errors="replace")
+        print(f"INFO global research bridge: {'installed' if START in text and END in text else 'not installed'}")
+    else:
+        warnings.append("global AGENTS.md missing")
+
+    project_agents = target / "AGENTS.md"
+    if project_agents.exists():
+        text = project_agents.read_text(errors="replace")
+        exact = text.rstrip("\n") == RESEARCH_TEMPLATE.read_text().rstrip("\n")
+        if START in text and END in text:
+            print("PASS project AGENTS has research bridge")
+        elif exact:
+            print("PASS project AGENTS is the full research template")
+        else:
+            print("INFO project AGENTS exists without a Coresearch bridge or full template")
+    else:
+        print("INFO project AGENTS missing")
 
     command_path = shutil.which(args.command_name)
     if command_path:
         resolved = Path(command_path).resolve(strict=False)
-        if resolved in {(ROOT / "harness").resolve(), (ROOT / "bin" / "harness").resolve(), (ROOT / "scripts" / "harness.py").resolve()}:
+        repo_launchers = {
+            (ROOT / "harness").resolve(), (ROOT / "bin" / "harness").resolve(),
+            (ROOT / "scripts" / "harness.py").resolve(),
+        }
+        if resolved in repo_launchers:
             print(f"PASS command `{args.command_name}` resolves to this repo: {command_path}")
         else:
             warnings.append(f"command `{args.command_name}` resolves elsewhere: {command_path}")
     else:
         warnings.append(f"command `{args.command_name}` not found on PATH")
 
-    if shutil.which("omx"):
-        proc = subprocess.run(["omx", "--version"], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        if proc.returncode == 0:
-            print("PASS omx available: " + proc.stdout.splitlines()[0])
-        else:
-            warnings.append("omx exists but `omx --version` failed")
-    else:
-        warnings.append("omx not found on PATH")
-
-    project_agents = target / "AGENTS.md"
-    if project_agents.exists():
-        text = project_agents.read_text(errors="replace")
-        if START in text and END in text:
-            print("PASS project AGENTS has research bridge")
-        elif "OMX Research Agent System" in text:
-            print("PASS project AGENTS is full research template")
-        else:
-            print("INFO project AGENTS exists without research bridge/full prompt")
-    else:
-        print("INFO project AGENTS missing")
+    if args.probe_models:
+        reports, probe_failures = probe_role_routing(providers, homes)
+        for report in reports:
+            print(report)
+        failures.extend(probe_failures)
 
     if args.validate:
         code = subprocess.call([str(ROOT / "scripts" / "validate.sh")])
@@ -872,7 +1275,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print("FAIL " + failure)
     if failures:
         print(f"Doctor result: FAIL ({len(failures)} failure(s), {len(warnings)} warning(s))")
-        return 1 if args.strict else 0
+        return 1 if args.strict or args.probe_models else 0
     print(f"Doctor result: PASS ({len(warnings)} warning(s))")
     return 0
 
@@ -892,9 +1295,9 @@ def cmd_update(args: argparse.Namespace) -> int:
             project_dir=None,
             scope=getattr(args, "scope", "user"),
             mode=getattr(args, "mode", "symlink"),
-            force=True,
+            force=False,
         )
-        code = cmd_link(link_args)
+        code = cmd_install(link_args)
         if code != 0:
             return code
     if not args.no_validate:
@@ -906,18 +1309,19 @@ def cmd_update(args: argparse.Namespace) -> int:
 
 
 def cmd_repair(args: argparse.Namespace) -> int:
+    project_dir = arg_target(args) if getattr(args, "scope", "user") == "project" else None
     link_args = argparse.Namespace(
         codex_home=args.codex_home,
         claude_home=getattr(args, "claude_home", None),
         surface=getattr(args, "surface", "codex"),
         global_bridge=args.global_bridge,
         project_bridge=False,
-        project_dir=None,
+        project_dir=project_dir,
         scope=getattr(args, "scope", "user"),
         mode=getattr(args, "mode", "symlink"),
-        force=True,
+        force=False,
     )
-    code = cmd_link(link_args)
+    code = cmd_install(link_args)
     if code != 0:
         return code
     if not args.no_self_install:
@@ -931,11 +1335,15 @@ def cmd_repair(args: argparse.Namespace) -> int:
     doctor_args = argparse.Namespace(
         codex_home=args.codex_home,
         claude_home=getattr(args, "claude_home", None),
+        surface=getattr(args, "surface", "codex"),
+        scope=getattr(args, "scope", "user"),
+        project_dir=project_dir,
         target=arg_target(args),
         target_arg=None,
         command_name=args.name,
         strict=True,
         validate=False,
+        probe_models=False,
     )
     return cmd_doctor(doctor_args)
 
@@ -944,7 +1352,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="harness", description="Coresearch install/init/status harness")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    install = sub.add_parser("install", help="Install skills via scripts/install.sh")
+    install = sub.add_parser("install", help="Install Coresearch skills and native roles")
     install.add_argument("--scope", choices=["user", "project"], default="user")
     install.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     install.add_argument("--mode", choices=["copy", "symlink"], default="copy")
@@ -953,10 +1361,11 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument("--project-dir")
     install.add_argument("--global-bridge", action="store_true")
     install.add_argument("--project-bridge", action="store_true")
+    install.add_argument("--full-project-agents", action="store_true", help="install the full project template when AGENTS.md is absent")
     install.add_argument("--force", action="store_true")
     install.set_defaults(func=cmd_install)
 
-    link = sub.add_parser("link", help="Symlink user-scope skills so repo edits reflect locally")
+    link = sub.add_parser("link", help="Symlink user-scope skills and native roles so repo edits reflect locally")
     link.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     link.add_argument("--codex-home")
     link.add_argument("--claude-home")
@@ -1010,27 +1419,31 @@ def build_parser() -> argparse.ArgumentParser:
     add_apply_flag(rollback)
     rollback.set_defaults(func=cmd_rollback)
 
-    status = sub.add_parser("status", help="Show global/project/skill install status")
+    status = sub.add_parser("status", help="Show global/project/skill/role install status")
     status.add_argument("--codex-home")
     status.add_argument("--claude-home")
     status.add_argument("target_arg", nargs="?", help="target directory (default: .)")
     status.add_argument("--target", help="target directory (overrides positional target)")
     status.set_defaults(func=cmd_status)
 
-    inventory = sub.add_parser("inventory", help="Audit Codex/Claude skills and classify Coresearch ownership")
+    inventory = sub.add_parser("inventory", help="Audit Codex/Claude skills and native roles")
     inventory.add_argument("--codex-home")
     inventory.add_argument("--claude-home")
     inventory.add_argument("--include-plugins", action="store_true", help="also scan Claude plugin marketplaces/cache")
     inventory.set_defaults(func=cmd_inventory)
 
-    doctor = sub.add_parser("doctor", help="Run install/runtime checks")
+    doctor = sub.add_parser("doctor", help="Run install and exact role-routing checks")
     doctor.add_argument("--codex-home")
     doctor.add_argument("--claude-home")
+    doctor.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
+    doctor.add_argument("--scope", choices=["user", "project"], default="user")
+    doctor.add_argument("--project-dir")
     doctor.add_argument("target_arg", nargs="?", help="target directory (default: .)")
     doctor.add_argument("--target", help="target directory (overrides positional target)")
     doctor.add_argument("--command-name", default="harness")
     doctor.add_argument("--strict", action="store_true", help="return nonzero on failures")
     doctor.add_argument("--validate", action="store_true", help="also run scripts/validate.sh")
+    doctor.add_argument("--probe-models", action="store_true", help="spend network/tokens to invoke each named role and compare host-reported role/model/effort metadata with the manifest")
     doctor.set_defaults(func=cmd_doctor)
 
     repair = sub.add_parser("repair", help="Relink skills, reinstall harness command, validate, and run strict doctor")

@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "role_description_version": 2,
+  "bundle": "coresearch",
+  "roles": [
+    {
+      "name": "coresearch-planner",
+      "responsibility": "Research architecture, hypothesis and evaluation planning, and durable goal decomposition.",
+      "capability": "read-only",
+      "skills": [
+        "coresearch",
+        "research-design",
+        "research-loop"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-sol",
+          "effort": "xhigh"
+        },
+        "claude": {
+          "model": "claude-opus-5",
+          "effort": "xhigh"
+        }
+      }
+    },
+    {
+      "name": "coresearch-researcher",
+      "responsibility": "Broad retrieval, current official documentation, literature discovery, and multi-source comparison.",
+      "capability": "read-only",
+      "skills": [
+        "coresearch",
+        "research-survey",
+        "research-verify"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-terra",
+          "effort": "high"
+        },
+        "claude": {
+          "model": "claude-sonnet-5",
+          "effort": "high"
+        }
+      }
+    },
+    {
+      "name": "coresearch-reader",
+      "responsibility": "Narrow paper and documentation reading, metadata extraction, abstraction, and evidence extraction.",
+      "capability": "read-only",
+      "skills": [
+        "coresearch",
+        "research-survey",
+        "research-verify",
+        "research-audit"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-luna",
+          "effort": "low"
+        },
+        "claude": {
+          "model": "claude-haiku-4-5-20251001",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "name": "coresearch-implementer",
+      "responsibility": "Clear, bounded code, configuration, and test changes.",
+      "capability": "workspace-write",
+      "skills": [
+        "coresearch",
+        "research-engineer"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-luna",
+          "effort": "medium"
+        },
+        "claude": {
+          "model": "claude-haiku-4-5-20251001",
+          "effort": "medium"
+        }
+      }
+    },
+    {
+      "name": "coresearch-experimenter",
+      "responsibility": "Mechanical experiment setup and execution, provenance, and result capture.",
+      "capability": "workspace-write",
+      "skills": [
+        "coresearch",
+        "research-engineer",
+        "research-loop"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-luna",
+          "effort": "medium"
+        },
+        "claude": {
+          "model": "claude-haiku-4-5-20251001",
+          "effort": "medium"
+        }
+      }
+    },
+    {
+      "name": "coresearch-debugger",
+      "responsibility": "Difficult root-cause analysis after observed implementation or experiment failures.",
+      "capability": "read-only",
+      "skills": [
+        "coresearch",
+        "research-engineer",
+        "research-audit"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-sol",
+          "effort": "high"
+        },
+        "claude": {
+          "model": "claude-opus-5",
+          "effort": "high"
+        }
+      }
+    },
+    {
+      "name": "coresearch-synthesizer",
+      "responsibility": "Bounded consolidation of already-resolved evidence into scoped claims and conclusions.",
+      "capability": "read-only",
+      "skills": [
+        "coresearch",
+        "research-dialectic",
+        "research-write"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-sol",
+          "effort": "low"
+        },
+        "claude": {
+          "model": "claude-opus-5",
+          "effort": "low"
+        }
+      }
+    },
+    {
+      "name": "coresearch-verifier",
+      "responsibility": "Independent claim, methodology, implementation, and completion verification.",
+      "capability": "read-only",
+      "skills": [
+        "coresearch",
+        "research-verify",
+        "research-audit",
+        "research-adversary"
+      ],
+      "providers": {
+        "codex": {
+          "model": "gpt-5.6-sol",
+          "effort": "xhigh"
+        },
+        "claude": {
+          "model": "claude-opus-5",
+          "effort": "xhigh"
+        }
+      }
+    }
+  ]
+}

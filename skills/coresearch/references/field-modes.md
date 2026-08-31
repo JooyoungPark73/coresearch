@@ -56,6 +56,6 @@ Do not average hardware and software tones. State two linked claims: what the ha
 
 - **Ha**-style technical systems writing: mechanism-first, precise, operational, measurable. “Our system enables X under operating constraint Y using mechanism Z; evaluation W supports the claim.”
 - **Oh**-style measurement/workload writing: context, findings, implications, and scoped transfer. “Across operating context A, measurement method B reveals X, implying Y within boundary Z.”
-- Preserve Alan’s distinction: use Ha for mechanism-led papers, Oh for measurement and workload studies, and Hybrid for paired hardware/software claims.
+- Preserve JooYoung’s distinction: use Ha for mechanism-led papers, Oh for measurement and workload studies, and Hybrid for paired hardware/software claims.
 - Avoid unsupported words: novel, robust, intuitive, general, efficient, expressive, seamless, significant, SOTA.
 - `research-qualitative` may support mixed-method evidence when appropriate, but it is an optional method rather than a field mode.

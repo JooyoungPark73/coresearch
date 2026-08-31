@@ -24,22 +24,26 @@ Per-invocation load: analytical/audit skills = skill + `evidence-grounding.md`; 
 
 Coresearch uses canonical `coresearch` and `research-*` names only. Old `paper-*`, `claim-check`, `pdf-crawl`, `rebuttal-plan`, and `research-guidelines` shims are intentionally not managed by this harness. File-format output (`.pptx`/`.docx`/`.xlsx`/web) is produced by the user with external tools; no format-mechanics skill is owned.
 
-## Native agent roles
+## Native role catalog
 
-Skill names are not native `agent_type` names. When delegating, use installed OMX roles (`explore`, `researcher`, `executor`, `test-engineer`, `verifier`, `critic`, `code-reviewer`, `writer`, etc.) and pass the Coresearch stage/skill/field/evidence context in the handoff. `worker` is team-runtime-only, not a generic route.
+Skill names and native role names are different namespaces. `coresearch` may
+delegate bounded assignments to eight installed provider-neutral roles, with
+one fixed role per assignment. The parent may run independent assignments
+concurrently and owns their joins and integration:
 
-## Optional OMX acceleration (when installed)
+- `coresearch-planner`
+- `coresearch-researcher`
+- `coresearch-reader`
+- `coresearch-implementer`
+- `coresearch-experimenter`
+- `coresearch-debugger`
+- `coresearch-synthesizer`
+- `coresearch-verifier`
 
-Coresearch skills complete standalone. These OMX lanes are optional acceleration the user can invoke when an OMX install is present; the bundle never depends on them.
-
-- `$autoresearch` / `$deep-interview --autoresearch`: validator-gated autonomous loop execution after `research-loop` designs the mission.
-- `$ralplan`: executable code/system plan with tradeoffs.
-- `$team` / `$ultragoal`: parallel implementation with durable checkpoints. (`$swarm` is deprecated upstream; prefer `$team`.)
-- `$ralph`: persistent single-owner completion for an approved loop.
-- `$best-practice-research`: upstream docs/practice lookup.
-- `$ultraqa`: hostile QA after implementation.
-- `$autopilot`: OMX runtime skill Coresearch does not fork.
-
-Caveman/Ponytail behavior is inlined in [omx-pony-caveman.md](omx-pony-caveman.md); no external preference skill is required.
+The canonical responsibilities, capabilities, intended skills, exact provider
+models, and efforts live in [`agents/manifest.json`](../../../agents/manifest.json).
+Use [agent-routing.md](agent-routing.md) for selection, bounded handoff, and
+re-entry rules. Use [execution-adapters.md](execution-adapters.md) for Codex
+goal and Claude session continuation.
 
 File-format output (`.docx`/`.pdf`/`.pptx`/`.xlsx`/web) is owned by the user via external tools; Coresearch owns research content and claim integrity, not format mechanics. Do not bulk-copy proprietary external-skill text into this repo.

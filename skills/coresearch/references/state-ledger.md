@@ -39,6 +39,9 @@ quality_state:
   unresolved_methodology_issues: [string]
 next_actions: [string]
 stop_conditions: [string]
+execution_state:      # optional; old ledgers without it remain valid
+  active_run: { id, mission_path, host, status }
+  completed_runs: [{ id, result_path, status }]
 ```
 
 ## Read/update protocol
@@ -55,6 +58,8 @@ stop_conditions: [string]
 - Preserve old records in place. Existing contribution values retain their
   meanings, missing evidence kinds default to `literature`, and expanded claim
   and evidence fields are required only for records created after this contract.
+  A ledger without `execution_state` remains valid; add that optional section
+  only when a durable run needs it.
 - Update only the keys your skill touched. Never blanket-overwrite.
 - On finish: set `active_skill` null; add the skill to `completed_skills` only if
   absent; replace (do not duplicate) any `next_actions` entry your skill already
@@ -85,7 +90,7 @@ update only the subkeys your skill reasoned about.
 
 Canonical: `docs/research/decisions/ledger.yaml` under the user's `output_path`
 project (spec §4, §15). skills never write state inside their own directory.
-OMX missions may mirror checkpoints under `.omx/specs/<mission>/`, and
-`$ultragoal` may wrap the same ledger — when an OMX run is active those are
-convenience copies; `ledger.yaml` stays the canonical Coresearch state. A
-non-OMX consumer reads and writes `ledger.yaml` only.
+Durable run artifacts live under `docs/research/runs/<run-id>/`, but they do
+not replace the ledger. Every host and skill reads and writes the same
+`ledger.yaml`, updating only its authorized keys with the idempotent protocol
+above. Do not create a provider-specific state forest.

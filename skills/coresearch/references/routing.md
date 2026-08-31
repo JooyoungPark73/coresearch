@@ -11,7 +11,7 @@ Pick one primary skill.
 - `research-verify`: citation, number, source-faithfulness audit.
 - `research-rebuttal`: reviewer response strategy.
 - `research-engineer`: research code, experiments, datasets, benchmarks, artifact release.
-- `research-loop`: hypotheses, validators, sandbox, `$autoresearch` mission design.
+- `research-loop`: hypotheses, validators, sandbox, and host-neutral durable mission design.
 - `research-survey` owns open-access PDF batch download via its in-skill crawler.
 - Analytical skills (`research-gap`, `research-dialectic`, `research-causal`, `research-qualitative`, `research-audit`, `research-adversary`) → see [reasoning-skills.md](reasoning-skills.md).
 
@@ -22,21 +22,16 @@ Pick one primary skill.
 
 File-format output (`.docx`/`.pdf`/`.pptx`/`.xlsx`/web) is owned by the user via external tools; Coresearch owns research content and claim integrity, not format mechanics.
 
-## OMX lanes
+## Native role and host routing
 
-Optional acceleration when an OMX install is present — owned skills complete standalone without them. Invoke a lane only when its lifecycle matters.
+Select at most one fixed role per bounded assignment when delegation materially
+improves quality, speed, or safety. The parent may run multiple independent
+assignments concurrently and owns their dependency joins and integration. Use
+[agent-routing.md](agent-routing.md) for the eight-role catalog, capability
+boundaries, escalation, and required handoff fields.
 
-- `$best-practice-research`: upstream docs/practice lookup before architecture choices.
-- `$ralplan`: executable code/system plan with tradeoffs.
-- `$team + $ultragoal`: parallel implementation with durable checkpoints.
-- `$autoresearch`: validator-gated research execution only after mission + validator exist.
-- `$deep-interview`: clarify a vague research goal into a testable spec before design/loop work.
-- `$ultraqa`: hostile QA after implementation when e2e risk matters.
-
-Lane budget: choose one execution lane per phase. Add another lane only when it
-produces a distinct artifact or materially reduces wall-clock time; never stack
-lanes to re-verify an unchanged result.
-
-Do not use `$autoresearch` for ordinary planning lookup. Feed its approved artifact back into `$ralplan` when architecture follows.
-
-On terminal, every OMX lane re-enters `coresearch` to route the next research stage; lanes are executors, not routers (see omx-pony-caveman.md §Re-entry to coresearch).
+Use [execution-adapters.md](execution-adapters.md) when a durable run needs
+Codex goal continuation or Claude Code session continuation. Choose one host
+adapter for a run. Host execution owns continuation; `coresearch` remains the
+only stage router and every terminal role or run returns here before the next
+skill is selected.

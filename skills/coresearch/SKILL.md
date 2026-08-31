@@ -1,6 +1,6 @@
 ---
 name: coresearch
-description: Central Coresearch router for Alan's academic research, paper, literature, figure, slide, rebuttal, claim verification, research-engineering, and autonomous research-loop work. Use when a request is broad, says Coresearch, starts or manages a research project, asks which paper/research skill to use, mentions research stages, or needs OMX/Ponytail/Caveman-aware routing across research skills.
+description: Central Coresearch router for academic research, papers, literature, rebuttals, claim verification, research engineering, and validator-gated research-loop work. Use when a request is broad, starts or manages a research project, asks which research skill to use, needs stage, fixed-role, or host-adapter routing, or explicitly activates the Ponytail or Caveman working mode.
 ---
 
 # Coresearch
@@ -20,11 +20,12 @@ Use this as the first-stop router for research work. Keep it small: classify sta
 - Keep `coresearch` as a central triage unit: route, load only needed references, hand off, then re-enter on the next stage.
 - Preserve evidence discipline: separate fact, inference, recommendation, and unknown.
 - Agents are allowed when they reduce wall-clock time or cover disjoint work. Use the fewest needed; every agent gets an owned scope, expected output, and stop condition. Never add agents merely to re-check the same change.
+- Use one fixed role per bounded assignment. The parent may run independent assignments concurrently, but owns dependency joins, integration, cancellation, and post-integration verification.
 
 ## Not for
 
 - Low-level `.docx`, `.pdf`, `.pptx`, `.xlsx`, or web-app mechanics — the user invokes an external format tool directly; Coresearch owns research content, not format mechanics.
-- Replacing OMX runtime skills such as `$autopilot`, `$team`, `$ultragoal`, `$ultraqa`, or `$autoresearch`.
+- Replacing the native host's general planning, coding, or session-continuation features.
 - Bulk-loading every skill or creating `.agents/` state forests.
 
 ## Quick workflow
@@ -33,8 +34,9 @@ Use this as the first-stop router for research work. Keep it small: classify sta
 2. Pick the smallest role skill from the catalog.
 3. Pick field mode: `systems_cloud` for OSDI/SOSP/NSDI/EuroSys/SoCC, `ml_systems` for MLSys, or `computer_architecture` for ISCA/MICRO/HPCA/IISWC; use the `cross_layer` venue lens for ASPLOS.
 4. Load only the needed reference below.
-5. Use OMX workflows only when their lifecycle matters.
-6. Keep facts, inference, and recommendations separate.
+5. Record any explicitly requested Ponytail or Caveman working mode and pass it through bounded handoffs.
+6. Select a fixed native role only for a bounded assignment that materially improves quality, speed, or safety.
+7. Keep facts, inference, and recommendations separate.
 
 For executable research work, use the minimum experiment loop: implement one
 experiment unit; run one executable minimal smoke; run the actual claim-bearing evaluation
@@ -54,16 +56,37 @@ checks without new output.
 ## References
 
 - Read [stage-map.md](references/stage-map.md) when starting/reframing a project.
-- Read [routing.md](references/routing.md) when choosing a skill or OMX lane.
+- Read [routing.md](references/routing.md) when choosing a skill, fixed role, or host adapter.
 - Read [field-modes.md](references/field-modes.md) when venue tone, narrative, evidence, or architecture depends on systems/cloud, ML-systems, architecture/workload, or cross-layer norms.
 - Read [research-rules.md](references/research-rules.md) when screening importance, contribution type, field object, or claim-evidence fit.
 - Read [reasoning-skills.md](references/reasoning-skills.md) when routing among the analytical skills (research-gap, research-dialectic, research-causal, research-qualitative, research-audit, research-adversary) or sequencing a multi-skill pipeline.
 - Read [research-contract.md](references/research-contract.md) at run start to capture the orchestrator input contract (topic, intended contribution, independent-group floor, output path).
-- Read [state-ledger.md](references/state-ledger.md) when orchestrating a multi-skill run or maintaining cross-skill state (it is the canonical state; OMX `.omx/specs` and `$ultragoal` only mirror it).
+- Read [state-ledger.md](references/state-ledger.md) when orchestrating a multi-skill run or maintaining canonical cross-skill state.
 - Read [evidence-grounding.md](references/evidence-grounding.md) for claims, citations, evidence, the integrity floor, or confidential material.
 - Read [execution-safe.md](references/execution-safe.md) before long builds, tests, training, evaluation, benchmarks, or commands with potentially large output.
-- Read [omx-pony-caveman.md](references/omx-pony-caveman.md) when `$autoresearch`, `$ponytail`, `$caveman`, `$team`, `$ultragoal`, or native subagents affect execution.
-- Read [skill-catalog.md](references/skill-catalog.md) when auditing overlaps or optional OMX acceleration routes.
+- Read [agent-routing.md](references/agent-routing.md) when native role selection, bounded handoff, escalation, or re-entry affects execution.
+- Read [execution-adapters.md](references/execution-adapters.md) when Codex goal or Claude Code session continuation is required.
+- Read [ponytail.md](references/ponytail.md) when the user or mission explicitly requests minimal durable research engineering.
+- Read [caveman.md](references/caveman.md) when the user or mission explicitly requests communication compression.
+- Read [skill-catalog.md](references/skill-catalog.md) when auditing skill and fixed-role ownership.
+
+## Optional working modes
+
+Ponytail and Caveman are provider-neutral modifiers, not research stages,
+skills, roles, model tiers, or permissions. Activate them only through an
+explicit user request or a mission `working_modes` declaration. Each accepts
+`off`, `lite`, or `full` and lasts only for the current task or mission.
+
+- Ponytail minimizes durable engineering surface while preserving the primary
+  skill's implementation, provenance, validation, and claim-bearing evidence
+  contract.
+- Caveman compresses communication while preserving required reasoning,
+  evidence, uncertainty, safety, and output fields.
+
+Keep the primary research route unchanged. Pass active levels into every
+bounded role handoff and durable mission; they never change role or model
+selection. If a mode conflicts with a scientific, safety, or artifact
+contract, the contract wins and the conflict returns to the parent.
 
 ## Default routes
 
@@ -74,7 +97,7 @@ checks without new output.
 - Venue review/score forecast → `research-review`.
 - Rebuttal/discussion response → `research-rebuttal`.
 - Code/experiments/artifact release → `research-engineer`.
-- Hypotheses/validators/autonomous loop design → `research-loop` (standalone mission contract; `$autoresearch` execution is optional, only when OMX is installed and validator mode exists).
+- Hypotheses/validators/durable loop design → `research-loop` (one host-neutral mission contract for Codex and Claude Code).
 - Experiment scope split (when two apply): which evidence supports each claim (plan) → `research-design`; hypotheses/validators/stop-conditions → `research-loop`; implement the experiment code → `research-engineer`.
 - Literature gap / next paper / "is this novel" / where are contradictions → `research-gap`.
 - Why papers disagree + a reconciling mechanism → `research-dialectic`.
@@ -84,6 +107,7 @@ checks without new output.
 - Explain a concept / decompose a mechanism → `research-write` (concept-decomposition mode).
 - Qualitative coding → themes (interviews, open responses) → `research-qualitative`.
 - Workflow stall diagnosis (stalled, repeating, weak synthesis) → read [reasoning-skills.md](references/reasoning-skills.md) §Stall diagnosis; routes back into the skills above.
+- Explicit Ponytail or Caveman request → keep the current primary research route and load only the requested working-mode reference.
 - If two routes match: fact-check/number/citation → `research-verify` over `research-audit`; 'review' = venue score → `research-review`, methodology soundness → `research-audit`; experiment PLAN → `research-design`, hypotheses/validators → `research-loop`, implement code → `research-engineer`.
 
 ## Re-entry
@@ -92,17 +116,22 @@ checks without new output.
 output and any ledger keys (state-ledger.md), return here to re-classify the
 stage and route the next skill — do not chain skill-to-skill on `Next:` hints
 alone. Role-skill `Next:` lines are conveniences; the `## Default routes` map
-above is canonical and complete. OMX lanes (e.g. `$autoresearch`, `$ralplan`,
-`$team`, `$ultragoal`, `$deep-interview`; full set in
-[routing.md](references/routing.md) §OMX lanes) and native subagents: on
-terminal, re-enter `coresearch` to route the follow-up stage (write-up, verify,
-review); do not chain from inside the lane.
+above is canonical and complete. Native roles and durable host runs are
+executors, not stage routers. On terminal status, return their artifact or
+result to the parent, update only authorized ledger keys, and re-enter
+`coresearch` to route the follow-up stage; do not chain from inside a role or
+host continuation.
+
+Active working modes remain scoped to the current task or mission and must be
+passed explicitly to a new role or host continuation. Re-entry does not turn
+them into global defaults.
 
 ## Guardrails
 
 - Do not create `.agents/` state forests.
 - Do not bulk-load every research skill.
 - Do not invent citations, venues, results, participants, metrics, or code behavior.
-- Do not fork OMX runtime skills into Coresearch unless the user explicitly asks for adoption.
+- Do not recreate a generic workflow engine inside Coresearch.
+- Do not let a working mode override research routing, role/model selection, evidence, validation, safety, or required artifact fields.
 - Treat `research-qualitative` as an optional method, never as a primary field mode.
 - Require each implementation unit to instantiate an insight, test a hypothesis, or produce claim-bearing evidence; code, features, build success, and production hardening are not contributions by themselves.

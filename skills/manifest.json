@@ -77,17 +77,5 @@
       "role": "adversary",
       "group": "verify"
     }
-  ],
-  "external_routes": [
-    "autopilot",
-    "autoresearch",
-    "best-practice-research",
-    "deep-interview",
-    "ralph",
-    "ralplan",
-    "swarm",
-    "team",
-    "ultragoal",
-    "ultraqa"
   ]
 }

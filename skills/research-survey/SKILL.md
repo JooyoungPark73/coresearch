@@ -30,9 +30,11 @@ Verify existence and metadata before citing. Synthesize by mechanism, research
 question, field object, contribution type, or evaluation regime — never chronology by default.
 Keep metadata-only papers out of detailed method/result/limitation claims.
 
-**Search policy.** OMX `researcher` posture when available: official /
-proceedings / source-backed first, version/date awareness, links in the final
-answer. Prefer primary sources: (1) paper PDFs, publisher pages,
+**Search policy.** Use `coresearch-reader` for bounded extraction from known
+sources and `coresearch-researcher` for discovery or multi-source comparison.
+Search official, proceedings, and source-backed material first; preserve
+version/date awareness and links in the final answer. Prefer primary sources:
+(1) paper PDFs, publisher pages,
 arXiv/OpenReview/ACM/IEEE/official proceedings; (2) DBLP, Semantic Scholar,
 OpenReview, Google Scholar snippets when accessible; (3) project pages/blogs
 only as secondary evidence. Do not cite without verified existence and key

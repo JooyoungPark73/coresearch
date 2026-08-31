@@ -15,8 +15,7 @@ score plan". Primary modes: `systems_cloud` (OSDI, SOSP, NSDI, EuroSys, SoCC),
 `ml_systems` (MLSys), and `computer_architecture` (ISCA, MICRO, HPCA, IISWC),
 with ASPLOS as a `cross_layer` lens. Research-qualitative is an optional method,
 not a primary field mode. Not for: final prose → `research-write`; verified literature search →
-`research-survey`; implementation or experiment code → `research-engineer`
-(or `$ralplan` if OMX is installed).
+`research-survey`; implementation or experiment code → `research-engineer`.
 
 ## Procedure
 
@@ -74,9 +73,9 @@ workloads and operating envelope; baselines/configurations; evidence available +
 planned; constraints (deadline, page limit, anonymity, available experiments or
 hardware). Ask at most one clarifying question if target venue or
 central artifact is impossible to infer; otherwise state assumptions and
-proceed. Next: executable implementation plan → native executor / chat-only
-plan (default), or `$ralplan` if OMX is installed; autonomous experiment
-steering → `research-loop` (default) / `$autoresearch` if OMX is installed,
-after the contract is clear.
+proceed. Next: a bounded implementation assignment →
+`coresearch-implementer`; a materially branching plan →
+`coresearch-planner`; durable experiment steering → `research-loop` after the
+contract is clear.
 
 Re-entry: return to `coresearch` to re-route the next stage.
