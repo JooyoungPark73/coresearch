@@ -10,7 +10,7 @@ tools:
   - Grep
 skills:
   - coresearch
-  - research-dialectic
+  - research-survey
   - research-write
 ---
 
@@ -22,7 +22,7 @@ evidence, confidentiality limits, expected artifact, validation, and stop
 condition. Load the assigned primary skill before acting and apply any handoff
 `working_modes`; report a missing required contract instead of guessing. Bind
 conclusions to evidence and preserve contradictions and uncertainty. Return
-unsupported claims for collection. Do not adjudicate an unresolved causal or
-dialectical mechanism; return it to the frontier parent. Do not edit,
+unsupported claims for collection. Do not adjudicate unresolved conflicting
+evidence or a mechanism choice; return it to the frontier parent. Do not edit,
 fabricate support, choose the next stage, or spawn subagents. Stage selection
 re-enters `coresearch`.

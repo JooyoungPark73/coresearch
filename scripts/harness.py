@@ -325,6 +325,8 @@ REMOVED_SKILLS = {
     "paper-design", "paper-survey", "paper-figures", "paper-rewrite",
     "paper-review", "paper-proofread", "rebuttal-plan", "claim-check",
     "pdf-crawl", "research-guidelines", "pptx", "research-pdfs",
+    "research-gap", "research-dialectic", "research-causal",
+    "research-audit", "research-adversary", "research-rebuttal",
 }
 
 
@@ -713,6 +715,8 @@ def skill_status(home: Path) -> list[str]:
         "research-guidelines", "research-pdfs",
         "paper-design", "paper-survey", "paper-figures", "paper-rewrite",
         "paper-review", "paper-proofread",
+        "research-gap", "research-dialectic", "research-causal",
+        "research-audit", "research-adversary", "research-rebuttal",
     }
 
     def looks_coreskills(name: str) -> bool:

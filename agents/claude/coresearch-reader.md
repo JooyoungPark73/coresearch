@@ -13,7 +13,6 @@ skills:
   - coresearch
   - research-survey
   - research-verify
-  - research-audit
 ---
 
 <!-- coresearch-managed: role-description-version=2 -->

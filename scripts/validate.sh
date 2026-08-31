@@ -118,18 +118,23 @@ def frontmatter(path):
 
 expected_skills = {
     "coresearch", "research-design", "research-survey", "research-loop",
-    "research-gap", "research-dialectic", "research-causal",
     "research-engineer", "research-qualitative", "research-write",
-    "research-review", "research-rebuttal", "research-verify",
-    "research-audit", "research-adversary",
+    "research-review", "research-verify",
+}
+retired_skills = {
+    "research-gap", "research-dialectic", "research-causal",
+    "research-audit", "research-adversary", "research-rebuttal",
 }
 skill_manifest = json.loads(Path("skills/manifest.json").read_text())
 owned = [item["name"] for item in skill_manifest["owned"]]
-assert len(owned) == 15 and set(owned) == expected_skills
+assert len(owned) == 9 and set(owned) == expected_skills
 assert "external_routes" not in skill_manifest
 assert "aliases" not in skill_manifest and "companions" not in skill_manifest
+for name in retired_skills:
+    assert not (Path("skills") / name).exists(), name
 
-required_sections = ["## What & When", "## Procedure", "## Output", "## Reject when", "## State & Handoff"]
+entrypoint_words = 0
+description_words = 0
 for name in owned:
     skill_dir = Path("skills") / name
     path = skill_dir / "SKILL.md"
@@ -138,11 +143,23 @@ for name in owned:
     text = path.read_text()
     match = re.match(r"^---\n(.*?)\n---\n", text, re.S)
     assert match, path
-    assert re.search(rf"(?m)^name:\s*{re.escape(name)}\s*$", match.group(1)), path
-    if name != "coresearch":
-        positions = [text.find(heading) for heading in required_sections]
-        assert all(position >= 0 for position in positions) and positions == sorted(positions), (path, positions)
-        assert "Re-entry: return to `coresearch`" in text, path
+    front = match.group(1)
+    assert re.search(rf"(?m)^name:\s*{re.escape(name)}\s*$", front), path
+    desc_match = re.search(r"(?m)^description:\s*(.+)$", front)
+    assert desc_match, path
+    description = desc_match.group(1).strip()
+    assert len(description) <= 220 and len(description.split()) <= 35, (path, description)
+    for custom in ("version:", "depends_on:", "produces:"):
+        assert custom not in front, (path, custom)
+    words = len(text.split())
+    entrypoint_words += words
+    description_words += len(description.split())
+    limit = 650 if name == "coresearch" else 500 if name == "research-qualitative" else 700
+    assert words <= limit, (path, words, limit)
+assert entrypoint_words <= 5500, entrypoint_words
+assert description_words <= 320, description_words
+qualitative = Path("skills/research-qualitative/SKILL.md").read_text().lower()
+assert "explicit" in qualitative and "optional" in qualitative
 
 manifest = json.loads(Path("agents/manifest.json").read_text())
 assert manifest["schema_version"] == 1
@@ -194,18 +211,83 @@ for role in roles.values():
         assert model not in {"gpt-5.6", "opus", "sonnet", "haiku", "inherit"}, (role["name"], provider, model)
         assert role["providers"][provider]["effort"] in {"low", "medium", "high", "xhigh"}
 
-contract = " ".join(Path("skills/coresearch/references/research-contract.md").read_text().lower().split())
+evidence_contract = " ".join(Path("skills/coresearch/references/evidence-grounding.md").read_text().lower().split())
 for phrase in (
     "no major claim without supporting evidence",
-    "no novelty without closest-work comparison",
+    "no novelty without closest-work",
     "no causal language without identification",
 ):
-    assert phrase in contract, phrase
+    assert phrase in evidence_contract, phrase
 router = Path("skills/coresearch/SKILL.md").read_text()
-assert "first-stop router" in router
-assert "one primary research stage and one primary skill" in router
+router_lower = router.lower()
+assert "one primary skill" in router_lower
+assert "causal formulation without supplied evidence is design" in router_lower
+assert "testing a supplied causal claim" in router_lower
+for skill in expected_skills:
+    assert f"`{skill}`" in router, skill
+for retired in retired_skills:
+    assert f"`{retired}`" not in router, retired
+for removed_ref in (
+    "routing.md", "stage-map.md", "reasoning-skills.md", "skill-catalog.md",
+    "research-contract.md", "research-rules.md",
+):
+    assert not (Path("skills/coresearch/references") / removed_ref).exists(), removed_ref
 engineer = Path("skills/research-engineer/SKILL.md").read_text().lower()
 assert "implementation" in engineer and "experiment" in engineer and "research insight" in engineer
+
+merged_refs = {
+    "skills/coresearch/references/causal-reasoning.md": (
+        "identification strategy", "competing explanations", "proxy",
+    ),
+    "skills/research-design/references/gap-analysis.md": (
+        "importance", "tractability", "novelty", "absence classification",
+    ),
+    "skills/research-survey/references/conflict-synthesis.md": (
+        "dominant position", "counterevidence", "disagreement type",
+    ),
+    "skills/research-survey/references/crawler-usage.md": (
+        "dry run", "open-access", "30 papers",
+    ),
+    "skills/research-loop/references/mission-schema.md": (
+        "mission.md", "sandbox.md", "validators", "stop conditions",
+    ),
+    "skills/research-loop/references/result-schema.md": (
+        "schema_version", "role_runs", "static-only",
+    ),
+    "skills/research-review/references/rebuttal.md": (
+        "score movement", "review-by-review", "multiple distinct reviews", "do not promise",
+    ),
+    "skills/research-verify/references/methodology-audit.md": (
+        "revised defensible claim", "experimental unit", "baseline", "abstract-only; partial audit",
+    ),
+    "skills/research-verify/references/adversarial-audit.md": (
+        "retrieval bias", "missing counterevidence", "claim that survives",
+    ),
+}
+for rel, phrases in merged_refs.items():
+    path = Path(rel)
+    assert path.is_file(), path
+    normalized = " ".join(path.read_text().lower().split())
+    for phrase in phrases:
+        assert phrase in normalized, (path, phrase)
+
+mode_contracts = {
+    "research-design": ("paper design", "gap analysis", "causal hypothesis"),
+    "research-survey": ("literature map", "conflict synthesis"),
+    "research-review": ("assessment", "response"),
+    "research-verify": ("fact", "methodology", "adversarial", "causal"),
+}
+for skill, modes in mode_contracts.items():
+    text = (Path("skills") / skill / "SKILL.md").read_text().lower()
+    for mode in modes:
+        assert mode in text, (skill, mode)
+
+all_entrypoints = "\n".join((Path("skills") / name / "SKILL.md").read_text().lower() for name in owned)
+for phrase, limit in (
+    ("operating envelope", 5), ("quality parity", 4),
+    ("simulator fidelity", 4), ("warmup", 4),
+):
+    assert all_entrypoints.count(phrase) <= limit, (phrase, all_entrypoints.count(phrase))
 
 writer_path = Path("skills/research-write/SKILL.md")
 writer = writer_path.read_text()
@@ -305,14 +387,18 @@ for phrase in ("assignment_id", "depends_on", "join", "multiple independent assi
 loop = Path("skills/research-loop/SKILL.md").read_text()
 adapter = Path("skills/coresearch/references/execution-adapters.md").read_text()
 ledger = Path("skills/coresearch/references/state-ledger.md").read_text()
+mission_schema = Path("skills/research-loop/references/mission-schema.md").read_text()
+result_schema = Path("skills/research-loop/references/result-schema.md").read_text()
 assert "working_modes" in adapter
 for artifact in (
     "docs/research/runs/<run-id>/mission.md",
     "docs/research/runs/<run-id>/sandbox.md",
     "docs/research/runs/<run-id>/result.json",
 ):
-    assert artifact in loop and artifact in adapter, artifact
-match = re.search(r"New runs use result schema version 2:\n\n```json\n(.*?)\n```", loop, re.S)
+    assert artifact in mission_schema + result_schema and artifact in adapter, artifact
+assert "[mission-schema.md](references/mission-schema.md)" in loop
+assert "[result-schema.md](references/result-schema.md)" in loop
+match = re.search(r"```json\n(.*?)\n```", result_schema, re.S)
 assert match, "research-loop result schema example missing"
 result_example = json.loads(match.group(1))
 assert result_example["schema_version"] == 2
@@ -330,15 +416,33 @@ for field in (
     "role_runs", "artifacts", "validators", "claim_evidence", "ledger_updates",
     "remaining_risks", "stop_reason",
 ):
-    assert field in loop and field in adapter, field
-assert "schema version 1" in loop.lower() and "remains valid" in loop.lower()
+    assert field in result_schema and field in adapter, field
+assert "schema version 1" in result_schema.lower() and "remains valid" in result_schema.lower()
 assert "assignment_id" in adapter and "depends_on" in adapter
 for phrase in ("hypotheses", "evaluation contract", "validators", "sandbox", "retry/fix budget", "stop conditions"):
-    assert phrase.lower() in loop.lower(), phrase
+    assert phrase.lower() in mission_schema.lower(), phrase
 assert "docs/research/decisions/ledger.yaml" in ledger
 assert "A ledger without `execution_state` remains valid" in ledger
 assert "active_run: { id, mission_path, host, status }" in ledger
 assert "completed_runs: [{ id, result_path, status }]" in ledger
+bootstrap_contract = " ".join(ledger.lower().split())
+loop_contract = " ".join(loop.lower().split())
+for phrase in (
+    "if the ledger does not exist", "create its parent directories",
+    "never overwrite an existing ledger", "ordinary in-chat work",
+    "initialize it once",
+):
+    assert phrase in bootstrap_contract, phrase
+for phrase in (
+    "if the canonical ledger does not exist", "initialize it once",
+    "never replace an existing ledger",
+):
+    assert phrase in loop_contract, phrase
+for key in (
+    "completed_skills: []", "blocked_by: []", "source_state: []",
+    "claim_state: []", "next_actions: []", "stop_conditions: []",
+):
+    assert key in ledger, key
 assert "/goal Execute docs/research/runs/<run-id>/mission.md" in adapter
 assert "same `mission.md` and `sandbox.md`" in adapter
 
@@ -389,6 +493,19 @@ assert plugin["skills"] == "./skills/"
 for forbidden in ("agents", "prompts", "hooks"):
     assert forbidden not in plugin
 
+compact_active = [
+    Path("AGENTS.md"), Path("README.md"), Path("DESIGN.md"),
+    Path("templates/research/AGENTS.md"), Path(".codex-plugin/plugin.json"),
+    Path("skills/manifest.json"), Path("agents/manifest.json"),
+]
+compact_active.extend(sorted(Path("skills").rglob("*.md")))
+compact_active.extend(sorted(Path("agents").rglob("*.toml")))
+compact_active.extend(sorted(Path("agents").rglob("*.md")))
+for path in compact_active:
+    text = path.read_text(errors="replace")
+    for retired in retired_skills:
+        assert retired not in text, (path, retired)
+
 legacy = "o" + "mx"
 active = [
     Path("AGENTS.md"), Path("README.md"), Path("DESIGN.md"),
@@ -415,7 +532,7 @@ assert "probe-models" in Path("scripts/harness.py").read_text()
 assert Path("docs/migrations/from-" + legacy + ".md").is_file()
 print(f"checked {checked} relative skill links")
 PY
-pass "15-skill research contracts, 8-role parity, DESIGN, documentation drift, and zero active coupling"
+pass "9-skill compact contracts, 8-role parity, DESIGN, documentation drift, and zero active coupling"
 
 SKILLS=()
 while IFS= read -r name; do SKILLS+=("$name"); done < <(python3 - <<'PY'
@@ -458,6 +575,20 @@ verify_provider_install() {
   for writer_ref in argument-architecture.md systems-paper-delivery.md semantic-revision.md; do
     [[ -f "$root/skills/research-write/references/$writer_ref" ]] || \
       fail "$provider install missing research-write reference $writer_ref at $root"
+  done
+  local compact_ref
+  for compact_ref in \
+    coresearch/references/causal-reasoning.md \
+    research-design/references/gap-analysis.md \
+    research-survey/references/conflict-synthesis.md \
+    research-survey/references/crawler-usage.md \
+    research-loop/references/mission-schema.md \
+    research-loop/references/result-schema.md \
+    research-review/references/rebuttal.md \
+    research-verify/references/methodology-audit.md \
+    research-verify/references/adversarial-audit.md; do
+    [[ -f "$root/skills/$compact_ref" ]] || \
+      fail "$provider install missing compact reference $compact_ref at $root"
   done
   for name in "${ROLES[@]}"; do
     [[ -f "$root/agents/$name$suffix" ]] || fail "$provider install missing role $name at $root"
@@ -521,12 +652,29 @@ stale="$TMP_ROOT/stale"
 mkdir -p "$stale/skills/paper-design" "$stale/agents"
 printf '%s\n' 'coresearch' > "$stale/skills/paper-design/_coresearch"
 printf '%s\n' '---' 'name: paper-design' 'description: compatibility shim retained for migration' '---' > "$stale/skills/paper-design/SKILL.md"
+for retired in research-gap research-causal research-audit research-adversary research-rebuttal; do
+  mkdir -p "$stale/skills/$retired"
+  printf '%s\n' 'coresearch' > "$stale/skills/$retired/_coresearch"
+  printf '%s\n' '---' "name: $retired" 'description: retired compacted skill' '---' > "$stale/skills/$retired/SKILL.md"
+done
+ln -s "$ROOT_DIR/skills/research-dialectic" "$stale/skills/research-dialectic"
 printf '%s\n' '# coresearch-managed: role-description-version=1' 'name = "coresearch-old"' > "$stale/agents/coresearch-old.toml"
 printf '%s\n' 'unrelated' > "$stale/agents/coresearch-external.toml"
 ./harness install --scope user --surface codex --mode copy --codex-home "$stale" >"$TMP_ROOT/stale.log" 2>&1
 [[ ! -e "$stale/skills/paper-design" ]] || fail "recognized stale skill was not pruned"
+for retired in research-gap research-dialectic research-causal research-audit research-adversary research-rebuttal; do
+  [[ ! -e "$stale/skills/$retired" && ! -L "$stale/skills/$retired" ]] || \
+    fail "retired Coresearch skill was not pruned: $retired"
+done
 [[ ! -e "$stale/agents/coresearch-old.toml" ]] || fail "recognized stale role was not pruned"
 [[ -f "$stale/agents/coresearch-external.toml" ]] || fail "unrelated stale-name role was removed"
+
+unrelated_retired="$TMP_ROOT/unrelated-retired"
+mkdir -p "$unrelated_retired/skills/research-gap"
+printf '%s\n' '---' 'name: research-gap' 'description: unrelated user-owned analysis skill' '---' > "$unrelated_retired/skills/research-gap/SKILL.md"
+./harness install --scope user --surface codex --mode copy --codex-home "$unrelated_retired" >"$TMP_ROOT/unrelated-retired.log" 2>&1
+grep -q 'unrelated user-owned analysis skill' "$unrelated_retired/skills/research-gap/SKILL.md" || \
+  fail "unrelated retired-name skill was changed"
 pass "external entries are preserved; explicit force and recognized stale-entry pruning are bounded"
 
 repair_codex="$TMP_ROOT/repair-codex"

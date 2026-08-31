@@ -1,104 +1,56 @@
 ---
 name: research-review
-description: Venue-calibrated simulated review and score forecast for systems/cloud, ML-systems, and computer-architecture papers. Use when the user asks to review, critique, score, triage, forecast acceptance, identify acceptance risks, simulate reviewers, or assess submission readiness for OSDI, SOSP, NSDI, EuroSys, SoCC, MLSys, ISCA, MICRO, HPCA, IISWC, ASPLOS, or related venues.
+description: Assess a paper's venue readiness and score movement, or plan an evidence-bounded response to supplied reviews; not a substitute for independent methodology verification.
 ---
 
-# research-review — Venue Review & Score Forecast
+# Research review
 
-Act as a strict but fair author-side reviewer; provide explicit scores. Not for
-confidential official peer review unless venue policy permits. This review may
-block claim-bearing completion when score-moving evidence gaps remain.
+Act as a strict, fair author-side reviewer. Choose assessment or response mode;
+do not mix response promises into an ordinary manuscript assessment.
 
-## What & When
+## Modes
 
-Venue-calibrated simulated review, acceptance-risk triage, score forecast,
-reviewer-modeling, submission readiness — for `systems_cloud`, `ml_systems`,
-`computer_architecture` (including IISWC `measurement_characterization` as a
-primary contribution), and ASPLOS `cross_layer` papers. Use when: "review", "critique", "score", "triage", "forecast acceptance",
-"identify acceptance risks", "simulate reviewers", "assess submission readiness";
-finding score-moving evidence gaps and rewrite priorities.
+| Mode | Use when | Conditional reference |
+| --- | --- | --- |
+| **Assessment** | critique, score forecast, acceptance risk, or submission readiness | shared evidence and field contracts |
+| **Response** | reviewer comments, scores, meta-review, or discussion feedback exist | [rebuttal.md](references/rebuttal.md) |
 
-Not for: replacement prose → research-write;
-citation/source faithfulness → research-verify.
+Use [evidence-grounding.md](../coresearch/references/evidence-grounding.md) for
+claim/evidence alignment and [field-modes.md](../coresearch/references/field-modes.md)
+for applicable venue methodology. Official score forms and policies must be
+checked from current official sources; otherwise label the scale `INTERNAL`.
 
-Inputs: manuscript text, figures, captions, supplement, code, results, author
-notes. If key inputs are missing, score lower-confidence and state what could not
-be checked.
+## Assessment method
 
-## Procedure
-
-Use official scales if the current venue form is verified; otherwise label scales
-`INTERNAL` — memorized mappings go stale each cycle. One internal anchor; map to
-an official scale only after verifying the target venue's current form:
-
-- **INTERNAL 1–6:** 6 strong accept, 5 accept, 4 borderline accept, 3
-  borderline reject, 2 reject, 1 strong reject; rate quality/clarity/significance/
-  originality 1–4 when useful.
-
-State score/recommendation, confidence, variance, blockers, and movement
-conditions. Judge claim-evidence alignment, not just writing quality. Flag
-confidentiality/policy limits before using official reviews.
-
-Review dimensions — always assess:
-
-- clarity of contribution; venue fit;
-- novelty/originality relative to supplied or verified related work; claim-evidence alignment;
-- technical soundness and research insight; baselines/comparisons and configuration fairness or rationale for absence;
-- reproducibility and implementation detail; writing and figure effectiveness;
-- ethics/data/participant/societal issues when relevant; limitations and failure cases.
-
-Evaluation contract — always audit the applicable rows:
-
-- representative workloads and explicit operating envelope;
-- fair baseline versions, tuning, resources, hardware/software configurations, and cost accounting;
-- warmup, repetitions, statistical/variance treatment, distributions and tail metrics;
-- scale, overload, failure/recovery behavior, and cloud temporal/instance variance for systems/cloud claims;
-- task/model/data quality or convergence parity before ML-systems throughput, latency, energy, or cost claims;
-- simulator fidelity/calibration, sampling methodology, sensitivity, hardware validation where feasible, and defensible PPA models for architecture claims;
-- a genuine cross-layer mechanism and end-to-end co-evaluation for ASPLOS claims;
-- for IISWC measurement/workload characterization, the representativeness,
-  measurement validity, findings, and implications as the primary research
-  contribution; do not require a new mechanism when none is claimed;
-- research-qualitative rigor only when that optional method bears a claim; never require it by default.
-
-Borderline discipline — for any borderline score, explicitly state: what real
-contribution supports acceptance; what evidence/novelty/clarity gap supports
-rejection; what would move the paper up; what would move the paper down.
+1. Summarize the paper's actual claim and contributions.
+2. Evaluate significance, originality, technical soundness, evidence fit,
+   reproducibility, clarity, venue fit, and relevant ethics or limitations.
+3. Tie every strength and weakness to a claim or evidence item. Engineering
+   completion alone cannot close a research-evidence gap.
+4. State recommendation, confidence, likely reviewer variance, blockers, and
+   concrete score-up and score-down conditions.
+5. For a borderline result, explain both the real contribution supporting
+   acceptance and the gap supporting rejection.
 
 ## Output
 
-Mandatory fields:
+For assessment, return:
 
-- **Recommendation:** Overall score/recommendation; Confidence (1–5 or official);
-  Reviewer stance (strong accept / accept / borderline / reject); Likely variance (low / medium / high); Submission-ready now (yes / no / borderline).
-- **Summary:** 2–4 sentences describing what the paper claims and contributes.
-- **Claimed Contributions:** numbered list.
-- **Strengths:** each tied to specific evidence.
-- **Weaknesses:** each tied to claim/evidence.
-- **Score Rationale:** why this score, not one level higher or lower.
-- **Score Movement Conditions:** "Would increase if" (concrete evidence, rewrite, or analysis); "Would decrease if" (concrete risk or missing support).
-- **Top Acceptance Risks:** ranked, ~5.
-- **Required Revisions Ranked by Score Impact:** table — Impact | Revision | Evidence affected | Feasibility.
-- **Questions for Authors:** answers that could move the score.
-- **Venue-Specific Score Sheet:** the relevant venue dimensions.
-- **Meta-review Forecast:** likely decision-level synthesis, disagreement pattern, correctable vs fundamental negatives, and likely decision path; keep committee roles venue-neutral unless the current form is verified.
+- recommendation, scale provenance, confidence, variance, and readiness;
+- summary and claimed contributions;
+- evidence-tied strengths and weaknesses;
+- rationale for this score rather than one level higher or lower;
+- ranked acceptance risks and revisions by score impact;
+- questions for authors and likely decision-level synthesis.
 
-## Reject when
+For response mode, follow the conditional reference. Always distinguish
+confirmed evidence, feasible additions, and unsupported promises. Default to
+in-chat output; write files only when requested or mission-declared.
 
-- score/recommendation missing confidence, variance, blockers, or movement conditions;
-- borderline score missing any of the four required statements (accept support / reject support / up-mover / down-mover);
-- official scale cited without current-form verification, or without flagging confidentiality/policy limits.
-- review accepts engineering completion, a single favorable configuration, or a mean-only result as sufficient support for the central research claim;
-- applicable workload, operating-envelope, fairness, warmup/repetition, tail, scale/failure/variance, quality-parity, or simulator/PPA risk is omitted from the assessment.
+## Boundaries
 
-## State & Handoff
-
-State: review produced; score-moving evidence gaps block claim-bearing
-completion until closed. Next: research-write (revision prose) /
-research-verify (citation faithfulness) / research-audit (methodology attack).
-Carry forward variance and unanswered author-questions as warnings. In
-a multi-skill run, also seed `quality_state` (unsupported_claims /
-missing_counterevidence / unresolved_methodology_issues) from the score-moving
-gaps (state-ledger.md); standalone, the review above is enough.
-
-Re-entry: return to `coresearch` to re-route the next stage.
+Review forecasts reception; verification determines factual or methodological
+support. Do not use a memorized official scale, omit uncertainty when inputs are
+partial, fight every reviewer sentence, or promise work the user has not
+confirmed feasible and venue rules do not allow. Confidential official peer
+review is handled only when policy permits.

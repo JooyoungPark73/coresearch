@@ -50,8 +50,7 @@
       "skills": [
         "coresearch",
         "research-survey",
-        "research-verify",
-        "research-audit"
+        "research-verify"
       ],
       "providers": {
         "codex": {
@@ -110,7 +109,7 @@
       "skills": [
         "coresearch",
         "research-engineer",
-        "research-audit"
+        "research-verify"
       ],
       "providers": {
         "codex": {
@@ -129,7 +128,7 @@
       "capability": "read-only",
       "skills": [
         "coresearch",
-        "research-dialectic",
+        "research-survey",
         "research-write"
       ],
       "providers": {
@@ -149,9 +148,7 @@
       "capability": "read-only",
       "skills": [
         "coresearch",
-        "research-verify",
-        "research-audit",
-        "research-adversary"
+        "research-verify"
       ],
       "providers": {
         "codex": {

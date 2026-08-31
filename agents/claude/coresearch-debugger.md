@@ -12,7 +12,7 @@ tools:
 skills:
   - coresearch
   - research-engineer
-  - research-audit
+  - research-verify
 ---
 
 <!-- coresearch-managed: role-description-version=2 -->

@@ -12,8 +12,6 @@ tools:
 skills:
   - coresearch
   - research-verify
-  - research-audit
-  - research-adversary
 ---
 
 <!-- coresearch-managed: role-description-version=2 -->

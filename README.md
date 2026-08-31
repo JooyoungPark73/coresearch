@@ -1,7 +1,7 @@
 # Coresearch
 
 Coresearch is a standalone research-agent bundle for Codex and Claude Code. It
-installs fifteen complete research skills, eight fixed native roles per
+installs nine focused research skills, eight fixed native roles per
 provider, a host-neutral durable-run contract, and safe project/global prompt
 bridges. It adds no third-party dependency and does not replace unrelated
 skills, roles, or prompt content.
@@ -14,7 +14,7 @@ and single-source ownership.
 | Path | Purpose | Installed destination |
 |---|---|---|
 | `skills/*/SKILL.md` | Complete research skills and central router | User or project `skills/` for either provider |
-| `skills/manifest.json` | Exact 15-skill inventory | Harness and validation input |
+| `skills/manifest.json` | Exact nine-skill inventory | Harness and validation input |
 | `agents/manifest.json` | Exact roles, capabilities, models, and efforts | Harness and validation input |
 | `agents/codex/*.toml` | Codex-native role definitions | `${CODEX_HOME:-~/.codex}/agents` or `<project>/.codex/agents` |
 | `agents/claude/*.md` | Claude Code-native role definitions | `${CLAUDE_HOME:-~/.claude}/agents` or `<project>/.claude/agents` |
@@ -46,7 +46,7 @@ Coresearch instructions do not pass a per-invocation model override.
 The Luna/Haiku implementer handles mechanically clear, decomposed slices;
 complex integrated implementation stays with the frontier parent. The
 Sol/Opus-low synthesizer consolidates already-resolved evidence; unresolved
-causal or dialectical reconciliation also stays with the frontier parent.
+conflicting evidence or mechanism choices stay with the frontier parent.
 
 ## Recommended development install
 
@@ -217,10 +217,13 @@ role; independent assignments may run concurrently under parent-owned
 dependency joins and integration. Every terminal role or run returns to the
 parent and re-enters `coresearch` before the next research stage.
 
-The fifteen owned skills cover design, survey, durable loops, gaps,
-dialectics, causal reasoning, engineering, qualitative analysis, writing,
-review, rebuttal, verification, methodology audit, and adversarial evidence
-review. Exact inventory lives in `skills/manifest.json`.
+The nine owned skills are `coresearch`, design, survey, durable loop,
+engineering, writing, review, verification, and explicit-only qualitative
+synthesis. Narrow analyses are modes: design owns gap and causal-hypothesis
+planning; survey owns conflict synthesis; review owns responses; verification
+owns factual, methodology, adversarial, and causal audits. Detailed mode
+contracts load only when selected. Exact inventory lives in
+`skills/manifest.json`.
 
 Primary field modes are Systems/Cloud (OSDI, SOSP, NSDI, EuroSys, SoCC), ML
 Systems (MLSys), and Computer Architecture/Workload Characterization (ISCA,
@@ -266,6 +269,10 @@ The canonical research ledger remains:
 ```text
 docs/research/decisions/ledger.yaml
 ```
+
+This path is relative to the research project, not the installed bundle. The
+first durable or multi-stage run initializes it locally when absent; ordinary
+in-chat work does not. Existing ledgers are read and merged, never replaced.
 
 For Codex, use a goal only when the run is multi-turn, experiment-bearing, or
 validator-bearing:

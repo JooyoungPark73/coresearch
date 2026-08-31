@@ -44,6 +44,57 @@ execution_state:      # optional; old ledgers without it remain valid
   completed_runs: [{ id, result_path, status }]
 ```
 
+## Bootstrap when absent
+
+Ordinary in-chat work does not create a ledger. When durable or multi-stage
+work requires one, the parent owns bootstrap after `output_path`, the research
+question, run ID, and mission path are fixed. If the ledger does not exist:
+
+1. create its parent directories under the user's project;
+2. initialize it once from the minimal shape below;
+3. replace angle-bracket placeholders with known mission values, omit unknown
+   optional project fields, and never invent research decisions;
+4. preserve the new file for all hosts and roles.
+
+```yaml
+project:
+  title: <mission title>
+  research_question: <research question>
+  target_venues: []
+current_stage: mission
+completed_skills: []
+active_skill: research-loop
+blocked_by: []
+source_state: []
+claim_state: []
+gap_state:
+  candidates: []
+  falsified: []
+  surviving: []
+hypothesis_state:
+  candidates: []
+  distinguishable: []
+  unidentifiable: []
+quality_state:
+  unsupported_claims: []
+  missing_counterevidence: []
+  unresolved_methodology_issues: []
+next_actions: []
+stop_conditions: []
+execution_state:
+  active_run:
+    id: <run-id>
+    mission_path: docs/research/runs/<run-id>/mission.md
+    host: <codex|claude>
+    status: active
+  completed_runs: []
+```
+
+Never overwrite an existing ledger, even when it is partial or uses an older
+schema. Read it and apply the compatibility and idempotent update rules below.
+If another process creates it during bootstrap, keep that file and merge only
+the keys this run is authorized to update.
+
 ## Read/update protocol
 
 - Read the ledger first. If `claim_state` already has a rejected direction for
@@ -79,12 +130,14 @@ before writing the ledger:
 - `PARTIALLY VERIFIED` → `retrieved` (flag the uncertainty in notes)
 - `NOT FOUND` → `missing`
 
-Producer/consumer pairs that share a ledger key: research-survey seeds
-`source_state`; research-audit writes `source_state.state = audited` after a
-load-bearing read. research-gap writes `gap_state`; research-loop seeds
-`hypothesis_state.candidates`; research-causal extends it. research-review and
-research-audit/adversary/dialectic/qualitative all touch `quality_state` —
-update only the subkeys your skill reasoned about.
+Producer/consumer pairs that share a ledger key: survey seeds `source_state`;
+verification methodology mode writes `source_state.state = audited` after a
+load-bearing read. Design gap mode owns `gap_state`; loop may seed
+`hypothesis_state.candidates`, and design causal mode extends it. Survey
+conflict mode, review, qualitative synthesis, and verification methodology,
+adversarial, or causal modes may touch their reasoned `quality_state` subkeys.
+Record the broad skill plus its mode for new work. Historical
+`completed_skills` values remain valid and are not rewritten.
 
 ## Where it lives
 

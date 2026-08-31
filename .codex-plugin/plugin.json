@@ -1,7 +1,7 @@
 {
   "name": "coresearch",
-  "version": "1.0.0",
-  "description": "Standalone Coresearch router and research skills for paper design, review, surveys, rebuttals, durable loops, claim verification, and reproducible engineering.",
+  "version": "1.1.0",
+  "description": "Standalone Coresearch router and focused research skills for design, surveys, durable loops, engineering, writing, review response, and claim verification.",
   "author": {
     "name": "JooYoung Park"
   },

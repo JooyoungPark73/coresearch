@@ -10,7 +10,8 @@ Architecture, boundaries, and source ownership are canonical in
 
 Maintain a lean, installable research package with:
 
-- all 15 complete skills under `skills/`;
+- nine owned skills under `skills/`: eight core stages plus explicit-only
+  qualitative synthesis;
 - exactly eight provider-neutral roles and both native provider definitions
   under `agents/`;
 - canonical installation and diagnostics in `scripts/harness.py`;

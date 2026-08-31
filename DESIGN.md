@@ -8,7 +8,7 @@ files linked below.
 
 ## 1. Purpose and non-goals
 
-Coresearch owns a research-specific router, fifteen complete research skills,
+Coresearch owns a research-specific router, nine focused research skills,
 evidence-to-claim discipline, a validator-gated durable-run contract, a
 canonical research ledger, and eight bounded provider-neutral roles. Codex and
 Claude Code own their native agent execution, permissions, model invocation,
@@ -79,11 +79,14 @@ artifact is stable, and re-enters `coresearch` before choosing another stage.
 
 ## 5. Skill architecture
 
-[`skills/coresearch/SKILL.md`](skills/coresearch/SKILL.md) is a lightweight
-router; every `research-*` skill is a complete procedure with its own output,
-rejection, state, and handoff contract. References are loaded progressively,
-not copied into every skill. A role result never chains a second skill: it
-returns to the parent and then to `coresearch`.
+[`skills/coresearch/SKILL.md`](skills/coresearch/SKILL.md) is the sole route
+authority. Eight core skills own broad stages; qualitative synthesis remains
+installed but explicit-only. Gap and causal-hypothesis planning are design
+modes, literature disagreement is a survey mode, review response is a review
+mode, and methodology, adversarial, and causal-claim audits are verification
+modes. Detailed schemas and checklists are progressive references, so ordinary
+invocations load only the selected mode. A role result returns to the parent
+and then to `coresearch`; it never chains another skill.
 
 `research-write` preserves a fast local-rewrite path and progressively loads
 [`argument-architecture.md`](skills/research-write/references/argument-architecture.md),
@@ -118,8 +121,8 @@ evidence-changing fixes trigger a new verifier.
 One role owns one assignment. Several independent read-only assignments may
 run concurrently; writable assignments require disjoint owned paths. The
 parent serializes overlapping writes, joins declared dependencies, owns complex
-integrated implementation, and retains unresolved causal or dialectical
-reasoning. The low-effort synthesizer consolidates evidence only after the
+integrated implementation, and retains unresolved conflicting evidence or
+mechanism choices. The low-effort synthesizer consolidates evidence only after the
 mechanism decision is resolved. Roles never spawn descendants.
 
 Exact names, responsibilities, capabilities, intended skills, models, and
@@ -155,7 +158,10 @@ upgrade a role run from `static-only` to `verified`.
 The canonical ledger is defined by
 [`state-ledger.md`](skills/coresearch/references/state-ledger.md). Existing
 ledgers remain valid; durable runs may add the optional execution pointers
-without replacing domain state. Each run stores `mission.md`, `sandbox.md`, and
+without replacing domain state. If the ledger is absent, the durable-run parent
+initializes it once inside the user's project after fixing the run identity;
+ordinary in-chat work creates no ledger, and existing files are never replaced.
+Each run stores `mission.md`, `sandbox.md`, and
 `result.json` under `docs/research/runs/<run-id>/`. New results use schema
 version 2: top-level fields describe the whole run and `role_runs` records one
 terminal entry per attempted assignment, including requested and observed
@@ -224,8 +230,10 @@ then validates and diagnoses them.
 Adding a research skill:
 
 1. Define a distinct research responsibility and re-entry boundary.
-2. Add the complete skill and ownership marker.
-3. Update the skill manifest and router references.
+2. Prove the behavior cannot remain a conditional mode or reference under an
+   existing owner.
+3. Add the concise entrypoint and ownership marker, then update the manifest
+   and sole router.
 4. Add contract, link, installation, and zero-coupling tests.
 
 Adding or changing a role:
@@ -253,9 +261,10 @@ engine.
 
 ## 12. Validation and lifecycle
 
-Static validation parses manifests and scripts, locks the 15-skill and 8-role
+Static validation parses manifests and scripts, locks the 9-skill and 8-role
 sets, checks all sixteen native definitions, resolves links, verifies research
-contracts, audits active surfaces, and exercises the install and prompt matrix.
+contracts and entrypoint budgets, audits active surfaces, and exercises the
+install, pruning, and prompt matrix.
 Strict doctor checks repository definitions, installed copies/links, capability
 and pin drift, environment override risk, and broken entries. Explicit live
 role-routing probes invoke named roles and require role/model/effort metadata
@@ -284,6 +293,9 @@ this file.
   argument architecture or semantic impact analysis only when scope requires
   it; optional manuscript maps remain views over canonical evidence rather
   than a new state authority.
+- **Capability compaction:** broad stage owners expose conditional modes for
+  narrow reasoning tasks. This keeps discovery and entrypoint context small
+  while preserving mode-specific falsification, audit, and response contracts.
 
 Historical rationale and replacement guidance are documented in the
 [migration history](docs/migrations/from-omx.md); that document is historical,
@@ -324,12 +336,12 @@ sequenceDiagram
 |---|---|
 | Owned skill inventory | [`skills/manifest.json`](skills/manifest.json) |
 | Fixed roles and model/effort pins | [`agents/manifest.json`](agents/manifest.json) |
-| Stage/skill routing behavior | [`skills/coresearch/SKILL.md`](skills/coresearch/SKILL.md) and [`routing.md`](skills/coresearch/references/routing.md) |
-| Claim/evidence rules | [`research-contract.md`](skills/coresearch/references/research-contract.md) and [`evidence-grounding.md`](skills/coresearch/references/evidence-grounding.md) |
+| Stage/skill routing behavior | [`skills/coresearch/SKILL.md`](skills/coresearch/SKILL.md) |
+| Claim/evidence rules | [`evidence-grounding.md`](skills/coresearch/references/evidence-grounding.md) |
 | Durable research state | [`state-ledger.md`](skills/coresearch/references/state-ledger.md) |
 | Manuscript realization and optional map | [`research-write/SKILL.md`](skills/research-write/SKILL.md) and its [`references/`](skills/research-write/references/) |
 | Host execution semantics | [`execution-adapters.md`](skills/coresearch/references/execution-adapters.md) |
-| Durable result schema | [`research-loop/SKILL.md`](skills/research-loop/SKILL.md) and [`execution-adapters.md`](skills/coresearch/references/execution-adapters.md) |
+| Durable result schema | [`result-schema.md`](skills/research-loop/references/result-schema.md) and [`execution-adapters.md`](skills/coresearch/references/execution-adapters.md) |
 | Optional working-mode semantics | [`ponytail.md`](skills/coresearch/references/ponytail.md) and [`caveman.md`](skills/coresearch/references/caveman.md) |
 | Native provider definitions | [`agents/codex/`](agents/codex/) and [`agents/claude/`](agents/claude/) |
 | Installation behavior | [`scripts/harness.py`](scripts/harness.py) |

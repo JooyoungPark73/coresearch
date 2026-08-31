@@ -86,4 +86,4 @@ Return the revised affected passages followed by:
 ```
 
 Do not use score movement as a writing diagnostic. A score forecast belongs to
-`research-review`; a reviewer response belongs to `research-rebuttal`.
+`research-review`; reviewer-response planning uses its response mode.

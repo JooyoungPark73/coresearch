@@ -71,22 +71,16 @@ with the evaluation, safety, or artifact contract, the contract wins.
 ## Skill routing
 
 - `coresearch` — sole stage router and re-entry point.
-- `research-design` — contribution, venue, claims, evidence, outline, score plan.
-- `research-survey` — verified literature discovery and synthesis.
+- `research-design` — paper design, gap analysis, and causal-hypothesis planning.
+- `research-survey` — verified literature maps and conflict synthesis.
 - `research-loop` — host-neutral mission, sandbox, validator, retry, and result contract.
-- `research-gap` — important, testable, falsifiable research opportunities.
-- `research-dialectic` — reconcile conflicting literature through mechanisms.
-- `research-causal` — competing explanations and identification strategy.
 - `research-engineer` — reproducible implementation, experiments, datasets, benchmarks, and release.
-- `research-qualitative` — optional qualitative method and theme analysis.
+- `research-qualitative` — optional, explicit-only qualitative synthesis.
 - `research-write` — evidence-bounded local rewriting, section drafting,
   author-approved argument realization, semantic revision, and concept
   decomposition.
-- `research-review` — venue-calibrated review, score, and acceptance risks.
-- `research-rebuttal` — score-moving response strategy.
-- `research-verify` — citation, number, claim, and source-faithfulness checks.
-- `research-audit` — methodology and claim-evidence audit of a load-bearing work.
-- `research-adversary` — bias and counterevidence attack on the emerging conclusion.
+- `research-review` — venue assessment, score movement, and review responses.
+- `research-verify` — focused factual, methodology, adversarial, or causal audit.
 
 If two skills appear applicable, use the routing contract in `coresearch` and
 state the chosen order once. A skill never silently performs the next stage.
@@ -113,8 +107,8 @@ explicit; complex integrated implementation stays with the frontier parent.
 Use experimenter under a locked evaluation contract. After repeated observed
 failure, return to the parent for one debugger diagnosis; fixes return to
 implementer. Use the low-effort synthesizer only after the evidence and
-mechanism decision are resolved; unresolved causal or dialectical reasoning
-stays with the frontier parent. Verify at a claim/completion boundary and after
+mechanism decision is resolved; unresolved conflicting evidence or mechanism
+choice stays with the frontier parent. Verify at a claim/completion boundary and after
 any later evidence-changing edit.
 
 Every role assignment includes: primary skill, field mode, claim/evidence
@@ -149,6 +143,11 @@ the assignment graph with an optional concurrency cap.
 The sandbox fixes files, data, models, APIs, budgets, credentials,
 confidentiality, destructive and external-write prohibitions, logs, and
 cancellation.
+
+If `docs/research/decisions/ledger.yaml` is absent, the parent initializes it
+once after fixing the run identity, following the installed state-ledger
+reference. Ordinary in-chat work creates no ledger; never replace an existing
+ledger.
 
 For Codex durable continuation, submit a goal that references the mission:
 

@@ -23,21 +23,6 @@
       "group": "discovery"
     },
     {
-      "name": "research-gap",
-      "role": "gap",
-      "group": "discovery"
-    },
-    {
-      "name": "research-dialectic",
-      "role": "dialectic",
-      "group": "discovery"
-    },
-    {
-      "name": "research-causal",
-      "role": "causal",
-      "group": "discovery"
-    },
-    {
       "name": "research-engineer",
       "role": "engineering",
       "group": "build"
@@ -58,23 +43,8 @@
       "group": "manuscript"
     },
     {
-      "name": "research-rebuttal",
-      "role": "rebuttal",
-      "group": "manuscript"
-    },
-    {
       "name": "research-verify",
       "role": "verify",
-      "group": "verify"
-    },
-    {
-      "name": "research-audit",
-      "role": "audit",
-      "group": "verify"
-    },
-    {
-      "name": "research-adversary",
-      "role": "adversary",
       "group": "verify"
     }
   ]
