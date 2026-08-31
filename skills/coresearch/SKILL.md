@@ -93,7 +93,7 @@ contract, the contract wins and the conflict returns to the parent.
 - Paper idea/contribution/evidence plan, or venue choice/strategy (which venue fits this work) → `research-design`.
 - Related work/literature map → `research-survey`.
 - Source/citation/fact check → `research-verify`.
-- Section rewrite → `research-write`.
+- Evidence-bounded manuscript drafting, rewriting, argument realization, or semantic revision → `research-write`.
 - Venue review/score forecast → `research-review`.
 - Rebuttal/discussion response → `research-rebuttal`.
 - Code/experiments/artifact release → `research-engineer`.

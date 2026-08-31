@@ -79,7 +79,9 @@ with the evaluation, safety, or artifact contract, the contract wins.
 - `research-causal` — competing explanations and identification strategy.
 - `research-engineer` — reproducible implementation, experiments, datasets, benchmarks, and release.
 - `research-qualitative` — optional qualitative method and theme analysis.
-- `research-write` — evidence-bounded manuscript and concept writing.
+- `research-write` — evidence-bounded local rewriting, section drafting,
+  author-approved argument realization, semantic revision, and concept
+  decomposition.
 - `research-review` — venue-calibrated review, score, and acceptance risks.
 - `research-rebuttal` — score-moving response strategy.
 - `research-verify` — citation, number, claim, and source-faithfulness checks.
@@ -185,6 +187,15 @@ Use **Ha** for mechanism-first technical systems writing, **Oh** for
 context/findings/implications in measurement and workload studies, and a
 hybrid paired-claim spine for ASPLOS cross-layer work. These are narrative
 lenses, not substitutes for evidence.
+
+`research-write` has five modes: local rewrite, section drafting, argument
+architecture, semantic revision, and concept decomposition. A supplied excerpt
+defaults to local rewrite. Whole-paper work may build a transient manuscript
+map over canonical claim/evidence IDs; a durable map must be a declared
+artifact of an existing research run. The map is not another evidence schema
+or ledger, and the prose remains author-controlled. Preserve unaffected prose,
+keep planned evidence distinct from measured evidence, and route score or
+acceptance forecasting back through `coresearch` to `research-review`.
 
 ## Constraints and safety
 

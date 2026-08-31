@@ -10,7 +10,7 @@ Use this when the user starts or re-scopes research.
 | Design | What claims need evidence? | `research-design` |
 | Prototype | What code supports which claim? | `research-engineer` |
 | Evidence | What experiment/study/benchmark validates claims? | `research-loop` or `research-engineer` |
-| Manuscript | What section needs argument/clarity repair? | `research-write` |
+| Manuscript | What approved argument needs drafting, rewriting, or semantic reconciliation? | `research-write` |
 | Review | What score and blockers are likely? | `research-review` |
 | Rebuttal | What response can move scores? | `research-rebuttal` |
 | Release | Can others reproduce artifacts? | `research-engineer` |

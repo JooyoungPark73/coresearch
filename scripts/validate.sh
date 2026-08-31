@@ -207,6 +207,73 @@ assert "one primary research stage and one primary skill" in router
 engineer = Path("skills/research-engineer/SKILL.md").read_text().lower()
 assert "implementation" in engineer and "experiment" in engineer and "research insight" in engineer
 
+writer_path = Path("skills/research-write/SKILL.md")
+writer = writer_path.read_text()
+writer_lower = writer.lower()
+writer_refs = {
+    "argument-architecture.md": Path("skills/research-write/references/argument-architecture.md"),
+    "systems-paper-delivery.md": Path("skills/research-write/references/systems-paper-delivery.md"),
+    "semantic-revision.md": Path("skills/research-write/references/semantic-revision.md"),
+}
+for name, path in writer_refs.items():
+    assert path.is_file(), path
+    assert f"[{name}](references/{name})" in writer, name
+for phrase in (
+    "local rewrite", "section drafting", "argument architecture",
+    "semantic revision", "concept decomposition",
+):
+    assert phrase in writer_lower, phrase
+for phrase in (
+    "default for a supplied excerpt", "unaffected prose", "identification strategy",
+    "mechanism evidence", "planned evidence", "canonical claim and evidence",
+    "no second ledger",
+):
+    assert phrase in writer_lower, phrase
+assert "likely score impact" not in writer_lower
+assert "research-review" in writer_lower and "score" in writer_lower
+
+argument_architecture = writer_refs["argument-architecture.md"].read_text().lower()
+delivery = writer_refs["systems-paper-delivery.md"].read_text().lower()
+semantic_revision = writer_refs["semantic-revision.md"].read_text().lower()
+for phrase in (
+    "manuscript_map", "paper archetype", "coherent payload",
+    "canonical claim and evidence", "must not copy", "unspecified dependency",
+):
+    assert phrase in argument_architecture, phrase
+for phrase in (
+    "why–how–results", "load-bearing design", "mechanism evidence",
+    "identification strategy", "not exhaustive",
+):
+    assert phrase in delivery, phrase
+for phrase in (
+    "impact set", "unaffected prose", "author-controlled",
+    "revise only affected passages", "request the missing passages",
+):
+    assert phrase in semantic_revision, phrase
+
+assert "Evidence-bounded manuscript drafting, rewriting, argument realization, or semantic revision" in router
+
+project_prompt = " ".join(Path("templates/research/AGENTS.md").read_text().lower().split())
+readme = " ".join(Path("README.md").read_text().lower().split())
+design = " ".join(Path("DESIGN.md").read_text().lower().split())
+for phrase in (
+    "local rewrite", "section drafting", "argument architecture",
+    "semantic revision", "concept decomposition", "author-controlled",
+):
+    assert phrase in project_prompt, ("project writing contract", phrase)
+for phrase in (
+    "$research-write rewrite this evaluation section",
+    "$research-write build a hierarchical argument and section plan",
+    "$research-write reconcile this reviewer comment",
+):
+    assert phrase in readme, ("research-write usage", phrase)
+for phrase in (
+    "argument-architecture.md", "systems-paper-delivery.md",
+    "semantic-revision.md", "transient `manuscript_map`",
+    "author-controlled artifact", "no second ledger",
+):
+    assert phrase in design, ("research-write architecture", phrase)
+
 ponytail_path = Path("skills/coresearch/references/ponytail.md")
 caveman_path = Path("skills/coresearch/references/caveman.md")
 assert ponytail_path.is_file() and caveman_path.is_file()
@@ -386,6 +453,11 @@ verify_provider_install() {
     else
       [[ ! -L "$root/skills/$name" ]] || fail "$provider $name unexpectedly symlinked in copy mode"
     fi
+  done
+  local writer_ref
+  for writer_ref in argument-architecture.md systems-paper-delivery.md semantic-revision.md; do
+    [[ -f "$root/skills/research-write/references/$writer_ref" ]] || \
+      fail "$provider install missing research-write reference $writer_ref at $root"
   done
   for name in "${ROLES[@]}"; do
     [[ -f "$root/agents/$name$suffix" ]] || fail "$provider install missing role $name at $root"

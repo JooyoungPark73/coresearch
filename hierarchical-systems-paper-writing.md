@@ -7,11 +7,18 @@ This document defines a writing model for computer systems research papers. It c
 1. **Paper-level argument design:** determine the single idea the paper should transmit, express it as a connected set of refutable claims, and identify the evidence required to support each claim.
 2. **Hierarchical manuscript realization:** expand that argument through sections, paragraphs, and sentences, while preserving the ability to reconcile later feedback across every affected level.
 
-The intended use is both human and computational. A senior Ph.D. student or faculty member should be able to inspect the structured state and understand what the paper argues, why the argument matters, how the system supports it, and which evidence remains missing. An AI writing system should be able to render academic prose from the same state without inventing new claims or losing logical relationships.
+The intended use is both human and computational. A senior Ph.D. student or faculty member should be able to inspect the structured state and understand what the paper argues, why the argument matters, how its method, artifact, analysis, or observations support it, and which evidence remains missing. An AI writing system should be able to render academic prose from the same state without inventing new claims or losing logical relationships.
+
+This document is design input for Coresearch. Installed `research-write`
+instructions and their progressively loaded references own runtime behavior;
+this document does not create another router, ledger, or execution engine.
 
 The central principle is simple:
 
-> A systems paper is a structured argument supported by an implemented artifact and evidence. The manuscript is the textual realization of that argument, not the argument itself.
+> A systems paper is a structured argument supported by evidence appropriate to
+> its paper type. When the argument depends on an artifact, the paper must state
+> what was implemented and how it supports the claims. The manuscript realizes
+> that argument without replacing its claim and evidence contract.
 
 This view follows Simon Peyton Jones's argument that writing is part of doing research and that a paper should transmit one clear, reusable idea. It also incorporates Irene Zhang's organization of a systems paper around the **why**, **how**, and **results**, and Levin and Redell's reviewer-oriented tests of originality, reality, lessons, design choices, context, focus, and presentation.
 
@@ -21,7 +28,14 @@ A paper does not primarily exist to document how much work the authors performed
 
 Writing should therefore begin before the research is considered finished. Early structured writing forces the authors to state what they believe, reveals missing logical steps, separates assumptions from results, and exposes experiments that do not support any important claim. The writing state will initially contain hypotheses, plans, and unresolved questions. These must be explicitly marked rather than silently rendered as established facts.
 
-The finished paper should have one recognizable payload, or what Peyton Jones calls one “ping.” This does not mean that a paper may contain only one contribution. It means that every contribution must support the same central thesis. If two contributions do not need each other to establish a common conclusion, they may belong in different papers.
+The finished paper should have one recognizable, coherent payload, or what
+Peyton Jones calls one “ping.” This does not mean that a paper may contain only
+one contribution or one literal claim. It means that the contributions and
+findings should combine into a recognizable takeaway. A mechanism paper may
+organize that payload around a thesis; a measurement, benchmark, experience,
+or cross-layer paper may organize it around linked findings or paired claims.
+If two contributions do not need each other to establish a common conclusion,
+they may belong in different papers.
 
 For a typical systems paper, the payload can be diagnosed using the following structure:
 
@@ -31,7 +45,9 @@ This is a reasoning aid, not a sentence template. A strong paper may organize or
 
 ## 2. The two coupled structures of a paper
 
-The writing state should maintain two structures at once.
+As an operating model, the writing state can maintain two coupled structures.
+This representation is a practical discipline for an AI writer, not a claim
+that every author or paper must serialize every rhetorical decision.
 
 ### 2.1 The argument graph
 
@@ -101,7 +117,7 @@ The paper's claims should form a chain of proof obligations rather than a list o
 | Insight | What new observation makes a different solution possible? | Reasoning, data, counterexample to an old assumption |
 | Design | How does X turn the insight into a working mechanism? | Architecture, invariants, algorithms, implementation |
 | End-to-end result | Does X improve the outcome that motivates the paper? | Comparison with relevant baselines under representative conditions |
-| Causal result | Which design choices produce the improvement, and at what cost? | Ablations, breakdowns, alternative designs, sensitivity studies |
+| Mechanism or causal result | Which choices are consistent with the outcome, and what stronger attribution is justified? | Ablations, breakdowns, alternatives, and sensitivity for mechanism evidence; an identification strategy and credible counterfactual for causality |
 | Lesson | What reusable knowledge should the community retain? | Synthesis across claims and evidence |
 | Scope and limitation | Under what assumptions does the conclusion stop applying? | Boundary cases, negative results, threats to validity |
 
@@ -140,94 +156,71 @@ The structured state should therefore distinguish:
 
 The lesson must not generalize beyond the evidence. A result from one system, workload, or environment does not automatically establish a universal principle.
 
-## 4. A human-readable semantic state
+## 4. A human-readable manuscript map
 
-The authoritative writing state should be JSON-like, but optimized for inspection rather than strict serialization. A professor should be able to read it without interpreting generated prose or reverse-engineering hidden dependencies.
+The manuscript map should be inspectable and serializable when persistence is
+needed. In Coresearch it is a view over the canonical claim and evidence
+records, not a second copy of their provenance, confidence, experimental
+context, or status. A professor should be able to inspect the map without
+reverse-engineering hidden dependencies, while the author retains control of
+the manuscript itself.
 
-At the paper level, the state should contain at least the following objects:
+At the paper level, the view can contain:
 
-```text
-paper {
-  payload {
-    one_ping
-    intended_reader_takeaway
-    paper_type
-  }
-
-  context {
-    application_Y
-    environment_Z
-    objective
-    assumptions[]
-    exclusions[]
-  }
-
-  argument {
-    problem_P
-    requirement_R
-    prior_work_gap
-    insight_I
-    system_X
-    central_thesis
-    broader_lesson_L
-  }
-
-  claims[] {
-    id
-    role
-    statement
-    status
-    depends_on[]
-    scope
-    evidence_ids[]
-    counterevidence_ids[]
-    section_ids[]
-  }
-
-  design_decisions[] {
-    id
-    requirement
-    choice
-    alternatives[]
-    rationale
-    tradeoffs
-    claim_ids[]
-  }
-
-  evidence[] {
-    id
-    kind
-    claim_ids[]
-    method
-    baseline
-    metric
-    result
-    uncertainty
-    limitations
-  }
-
-  sections[] {
-    id
-    reader_question
-    promise
-    claim_ids[]
-    evidence_ids[]
-    paragraphs[]
-  }
-
-  consistency {
-    terminology
-    unresolved_gaps[]
-    unsupported_claims[]
-    unused_evidence[]
-    scope_conflicts[]
-  }
-}
+```yaml
+manuscript_map:
+  paper_type: system|measurement|architecture|method|benchmark|dataset|experience|theory|design_proposal
+  payload: string
+  intended_takeaway: string
+  context:
+    application_or_workload: string|null
+    environment: string|null
+    objective: string
+    assumptions: [string]
+    exclusions: [string]
+  argument:
+    problem_or_question: string
+    gap: string|null
+    insight_or_central_finding: string
+    thesis_or_payload: string
+    scoped_lesson: string|null
+  claim_bindings:
+    - claim_id: string
+      role: string
+      depends_on: [string]
+      section_ids: [string]
+  design_decisions:
+    - id: string
+      requirement: string
+      choice: string
+      alternatives: [string]
+      rationale: string
+      tradeoffs: [string]
+      claim_ids: [string]
+      evidence_ids: [string]
+  section_promises:
+    - section_id: string
+      reader_question: string
+      promise: string
+      claim_ids: [string]
+      evidence_ids: [string]
+  terminology: {}
+  unresolved_writing_gaps: [string]
+  revision_impacts: [string]
 ```
 
-Claim and evidence status must be explicit. Useful states include `hypothesized`, `planned`, `implemented`, `measured`, `supported`, `qualified`, and `refuted`. An AI writer must never convert a planned experiment into a result or a plausible explanation into an established cause.
+Keep status dimensions separate. Claim status is epistemic (`unresolved`,
+`supported`, `contradicted`, `qualified`, or `rejected`); evidence status is
+operational (`planned`, `collected`, `validated`, or `invalid`); artifact status
+is material (`proposed`, `implemented`, `tested`, or `deployed`). Manuscript
+status, when useful, records drafting progress only. An AI writer must never
+convert planned evidence into a measured result, an implemented component into
+a validated empirical claim, or a plausible explanation into an established
+cause.
 
-This structured representation is not itself the manuscript. It is the inspectable source from which the manuscript is planned, rendered, criticized, and revised.
+The claim/evidence records govern factual and epistemic consistency. The
+manuscript remains an author-controlled artifact, and the map exists to plan,
+inspect, criticize, and reconcile it rather than to make prose disposable.
 
 ## 5. Turning the global argument into a paper
 
@@ -245,7 +238,10 @@ The why–how–results spine is an argumentative organization, not necessarily 
 
 ### 5.2 Treat the first page as a contract
 
-Readers decide quickly whether the paper has a clear and significant idea. The first page should therefore establish the argument directly:
+Readers decide quickly whether a paper has a clear and significant idea. For
+many systems papers, the first page should therefore establish the argument
+directly; treat the following sequence as a diagnostic, not a venue-independent
+template:
 
 1. Begin with a concrete instance of the problem, not a broad statement that the general area is important.
 2. Identify Y and Z and explain the relevant constraint.
@@ -313,7 +309,11 @@ Each paragraph should perform one primary rhetorical function, such as:
 - qualify scope; or
 - transition between reasoning steps.
 
-The paragraph state should identify its local message and the claim it serves. If a paragraph cannot be connected to a section promise or paper-level claim, it is probably irrelevant or the claim graph is incomplete.
+When paragraph-level planning is useful, its state should identify the local
+message and the claim it serves. Do not require a serialized record for every
+paragraph in an ordinary local rewrite. If a paragraph cannot be connected to
+a section promise or paper-level claim, it is probably irrelevant or the claim
+graph is incomplete.
 
 ### 6.5 Sentences
 
@@ -325,9 +325,13 @@ Use direct language, define terms before relying on them, minimize unsupported f
 
 The design should explain, not merely enumerate, the system.
 
-First, show where X sits relative to Y and Z. A system overview figure should make boundaries, interfaces, trusted components, data paths, and changed responsibilities visible. If X changes an API, deployment assumption, or interaction with Y or Z, state that change explicitly.
+For artifact-bearing papers, first show where X sits relative to Y and Z. When
+an overview figure materially clarifies the design, it should make boundaries,
+interfaces, trusted components, data paths, and changed responsibilities
+visible. If X changes an API, deployment assumption, or interaction with Y or
+Z, state that change explicitly.
 
-For every important design decision, record:
+For every load-bearing or non-obvious design decision, record:
 
 1. the requirement derived from the problem;
 2. the chosen mechanism;
@@ -371,22 +375,28 @@ Each evaluation subsection should identify:
 
 The subsection should state the intended conclusion near its beginning, establish it with data, and restate the supported conclusion at the end. The figure caption should also say what the reader should learn and, when necessary, how to read the figure.
 
-### 8.3 Cover both outcome and mechanism
+### 8.3 Cover outcome and mechanism when the claims require them
 
-Most systems-paper evaluations need two forms of evidence:
+Many mechanism-led systems-paper evaluations need two complementary forms of
+evidence. They are common categories, not an exhaustive experiment taxonomy:
 
 1. **End-to-end comparison:** Does X improve the important outcome for Y in Z relative to credible alternatives?
-2. **Causal decomposition:** Which mechanisms or design decisions produce the improvement, and what overheads or trade-offs do they introduce?
+2. **Mechanism evidence:** Which mechanisms or design decisions are consistent
+   with the improvement, and what overheads or trade-offs do they introduce?
 
-The first establishes usefulness; the second establishes understanding. Ablations, breakdowns, sensitivity studies, and alternative designs are valuable when they test the causal account behind the thesis—not merely because reviewers expect more graphs.
+The first establishes usefulness; the second improves understanding. Ablations,
+breakdowns, sensitivity studies, and alternative designs can support mechanism
+attribution, but they do not by themselves establish causality. Use causal
+language only when the work declares an identification strategy that rules out
+credible alternatives.
 
 ### 8.4 Maintain a claim–evidence matrix
 
 Before rendering the evaluation, inspect a matrix with one row per empirical claim:
 
-| Claim | Required evidence | Baseline | Metric | Experiment | Result status | Limitation |
-| --- | --- | --- | --- | --- | --- | --- |
-| Claim ID | What would make the claim credible? | What is the relevant counterfactual? | What directly represents the outcome? | Where is it tested? | Planned, measured, supported, qualified, or refuted | Where does it stop holding? |
+| Claim | Required evidence | Baseline | Metric | Experiment | Evidence status | Claim status | Limitation |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Claim ID | What would make the claim credible? | What is the relevant counterfactual? | What directly represents the outcome? | Where is it tested? | Planned, collected, validated, or invalid | Unresolved, supported, contradicted, qualified, or rejected | Where does it stop holding? |
 
 The matrix should expose four common failures:
 
@@ -411,7 +421,10 @@ Credit is not zero-sum. Describe prior work at its strongest, acknowledge what i
 
 Text-first AI writing commonly proceeds from prompt to introduction, body, and conclusion. It is effective at continuation and local polishing, but late feedback is often applied as a patch to rendered prose. Earlier framing then remains semantically sticky.
 
-Hierarchical iterative writing instead treats the semantic state as authoritative and the manuscript as a rendered view. After a reader critiques the manuscript, revision follows this cycle:
+Hierarchical iterative writing instead treats canonical claims and evidence as
+authoritative for factual and epistemic consistency while keeping the
+manuscript author-controlled. After a reader critiques the manuscript,
+revision follows this cycle:
 
 > **render → critique → locate semantic change → reconcile state → re-realize affected text → render**
 
@@ -434,9 +447,16 @@ Update the targeted node, then inspect its ancestors and graph neighbors. If a r
 
 ### 10.3 Re-realize downward
 
-Regenerate affected descendants after the higher-level state is coherent. A high-level change may alter only a few fields in the structured state while requiring many paragraph- and sentence-level edits. Conversely, a stylistic correction should not trigger unnecessary global rewriting.
+Revise only affected descendants after the higher-level state is coherent. A
+high-level change may alter only a few fields in the structured state while
+requiring many paragraph- and sentence-level edits. Conversely, a stylistic
+correction should not trigger unnecessary global rewriting. Preserve
+unaffected prose, terminology, author voice, and deliberate organization.
 
-The expected edit pattern is therefore a large local change with smaller but nonzero revisions elsewhere whenever semantic consistency requires them. The magnitude of textual change is not the same as the importance of the semantic change.
+The edit pattern may be a large local change with smaller revisions elsewhere
+when semantic consistency requires them; a genuinely local correction may
+require no other edit. The magnitude of textual change is not the same as the
+importance of the semantic change.
 
 ### 10.4 Validate global invariants
 
@@ -449,17 +469,25 @@ After revision, verify that:
 - terminology and system boundaries remain consistent; and
 - no planned or hypothetical result has been rendered as fact.
 
-The analogy to diffusion applies to the interaction pattern: the paper is repeatedly reconsidered and refined as a whole rather than extended as an append-only sequence. The underlying language model may still generate individual passages autoregressively.
-
 ## 11. An end-to-end writing workflow
 
 ### Phase 1: Start before the research is finished
 
-Create the semantic state as soon as an idea can be stated. Mark uncertainty explicitly. Use missing fields and unsupported edges to drive the next research discussion, implementation task, or experiment.
+Create the manuscript map as soon as a coherent payload can be stated when
+whole-paper planning benefits from it. Mark uncertainty explicitly. Use
+missing fields and unsupported edges to expose the next research discussion,
+artifact task, study, analysis, or experiment; return those research decisions
+to their owning stage.
 
 ### Phase 2: Establish the global argument
 
-Write the one-ping payload, Y/Z context, problem, prior-work gap, insight, thesis, principal claims, and intended lesson. Decide whether the work is an implemented system, a design proposal, or a theoretical study; do not let the manuscript imply more implementation reality than exists.
+Write the coherent payload, relevant context, problem or question, prior-work
+gap, insight or central finding, principal claims, and intended lesson. Select
+the applicable paper archetype—implemented mechanism/system, measurement or
+workload characterization, architecture or cross-layer mechanism,
+method/benchmark/dataset, experience or negative results, theory/analysis, or
+design proposal—and do not let the manuscript imply more implementation or
+evidence maturity than exists.
 
 ### Phase 3: Build the evidence program
 
@@ -471,11 +499,18 @@ Write the one-sentence thesis, one-paragraph argument, short conclusion, and abs
 
 ### Phase 5: Expand hierarchically
 
-Assign claims and evidence to section promises. Decompose sections into paragraph functions. Only then realize sentences and transitions. Use concrete examples before abstractions and take the shortest honest route to the idea.
+Assign claims and evidence to section promises. For whole-paper work, use
+paragraph functions when they improve planning or diagnosis, then realize
+sentences and transitions. A local rewrite need not serialize either level.
+Use concrete examples before abstractions when they clarify the idea and take
+the shortest honest route to it.
 
 ### Phase 6: Render and inspect
 
-Generate a conventional manuscript, but inspect it against the semantic state. Local fluency cannot compensate for an unsupported claim, missing comparison, or inconsistent scope.
+Generate a conventional manuscript, but inspect it against canonical
+claim/evidence state and the manuscript map when one is in use. Local fluency
+cannot compensate for an unsupported claim, missing comparison, or inconsistent
+scope.
 
 ### Phase 7: Obtain fresh-reader feedback
 
@@ -493,7 +528,7 @@ Before treating a draft as complete, apply the following gates.
 
 - Can a knowledgeable reader state the paper's one main idea after reading the abstract and introduction?
 - Do all claimed contributions support that idea?
-- Is the paper's lesson reusable beyond the system name?
+- Is the paper's lesson reusable beyond the name of its system, artifact, or study?
 
 ### Originality and context
 
@@ -508,28 +543,35 @@ Before treating a draft as complete, apply the following gates.
 - Does every major claim have identifiable evidence?
 - Does every major experiment support a claim?
 - Do metrics, baselines, and workloads match the thesis?
-- Are causal claims backed by decomposition rather than only correlation?
+- Do causal claims state an identification strategy rather than relying only on
+  correlation, ablation, or breakdown evidence?
 
 ### Reality and scope
 
-- Is implementation status clear from the beginning?
-- Is the implemented subset sufficient to test the thesis?
+- When the argument is artifact-bearing, is implementation status clear from
+  the beginning and is the implemented subset sufficient to test the thesis?
 - Are assumptions, exclusions, limitations, and negative results explicit?
 - Are conclusions no broader than the evidence?
 
 ### Design explanation
 
-- Does each major mechanism follow from a requirement?
-- Are plausible alternatives and trade-offs discussed?
-- Does the paper explain why the selected design is appropriate for Y in Z?
-- Are boundaries, interfaces, and responsibilities visible?
+- When a mechanism or artifact is load-bearing, does each major mechanism
+  follow from a requirement?
+- Are plausible alternatives and trade-offs discussed where a design decision
+  affects a claim?
+- Does the paper explain why the selected design is appropriate for its stated
+  context?
+- Are boundaries, interfaces, and responsibilities visible when applicable?
 
 ### Reader experience
 
-- Does the first page present a concrete problem, gap, insight, system, and principal claims?
+- When the first-page contract applies, does it present a concrete problem or
+  finding, gap, insight, approach or artifact when applicable, and principal
+  claims?
 - Are examples presented before difficult abstractions?
 - Is related work sufficient early but comprehensive only after the idea is understood?
-- Does each section have a clear promise and each paragraph a clear function?
+- Does each section have a clear promise, and does each paragraph have a clear
+  function when paragraph-level diagnosis is useful?
 - Are terms defined before use?
 
 ### Revision consistency
@@ -560,7 +602,9 @@ Before treating a draft as complete, apply the following gates.
 
 An AI system implementing this model should obey the following rules:
 
-1. Treat the structured semantic state as authoritative; treat prose as a revisable rendering.
+1. Treat canonical claims and evidence as authoritative for factual and
+   epistemic consistency; treat prose as an author-controlled, revisable
+   artifact.
 2. Expose the paper's thesis, claims, dependencies, evidence, scope, and unresolved gaps in human-readable form.
 3. Require each contribution to identify its proof obligation and evidence destination.
 4. Distinguish observed facts, author-provided facts, hypotheses, planned work, interpretations, and generated suggestions.
@@ -576,4 +620,3 @@ An AI system implementing this model should obey the following rules:
 - Simon Peyton Jones, [*How to Write a Great Research Paper*](https://www.microsoft.com/en-us/research/academic-program/write-great-research-paper/) and the accompanying [slides](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/How-to-write-a-great-research-paper.pdf). The talk motivates writing as part of research, one clear idea, refutable contributions tied to evidence, concrete examples, delayed related work, direct exposition, and feedback-driven revision.
 - Irene Zhang, [*Hints on How to Write an SOSP Paper*](https://irenezhang.net/blog/2021/06/05/hints.html). The essay organizes systems-paper reasoning around the why, how, and results; emphasizes the X/Y/Z thesis structure, design trade-offs and scope, implementation clarity, and experiments with explicit conclusions.
 - Roy Levin and David D. Redell, [*How (and How Not) to Write a Good Systems Paper*](https://www.usenix.org/conferences/author-resources/how-and-how-not-write-good-systems-paper), originally published in *ACM SIGOPS Operating Systems Review*, 1983. The article frames paper preparation through reviewer questions about originality, reality, lessons, choices, assumptions, focus, organization, and clarity.
-

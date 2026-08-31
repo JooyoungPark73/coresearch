@@ -4,9 +4,13 @@
 
 Pick one primary skill.
 
-- `research-design`: contribution, claim ledger, evidence plan, venue strategy.
+- `research-design`: contribution, claim ledger, evidence plan, venue strategy;
+  it decides what the paper may claim.
 - `research-survey`: verified papers, related-work map, novelty risk.
-- `research-write`: rewrite supplied manuscript text without inventing claims.
+- `research-write`: evidence-bounded local rewriting, section drafting,
+  author-approved argument realization, semantic revision, and concept
+  decomposition. It decides how approved claims and evidence are expressed,
+  never invents research, and does not forecast scores.
 - `research-review`: simulated venue review, score, blockers.
 - `research-verify`: citation, number, source-faithfulness audit.
 - `research-rebuttal`: reviewer response strategy.

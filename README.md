@@ -226,6 +226,31 @@ Primary field modes are Systems/Cloud (OSDI, SOSP, NSDI, EuroSys, SoCC), ML
 Systems (MLSys), and Computer Architecture/Workload Characterization (ISCA,
 MICRO, HPCA, IISWC), with an ASPLOS cross-layer lens.
 
+### Hierarchical manuscript writing
+
+`research-write` keeps supplied-excerpt rewrites local and text-first, while
+whole-paper or semantic-change requests can progressively inspect the coherent
+payload, claim dependencies, section promises, and affected passages. Its
+optional manuscript map references canonical claim/evidence IDs; it is
+transient by default and may become a declared artifact of an existing durable
+run. It does not create a second ledger or provider-specific writing state,
+and score forecasting remains owned by `research-review`.
+
+```text
+$research-write Rewrite this evaluation section while preserving every number
+and qualification.
+```
+
+```text
+$research-write Build a hierarchical argument and section plan from these
+approved claims and evidence records.
+```
+
+```text
+$research-write Reconcile this reviewer comment across the abstract,
+contributions, evaluation claims, and conclusion.
+```
+
 ## Durable run contract
 
 `research-loop` creates or updates:

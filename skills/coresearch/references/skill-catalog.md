@@ -18,7 +18,13 @@ traceable source → claim → conclusion. Each skill loads a single per-skill r
   only by the router.
 - `reasoning-skills.md` — disambiguation table + cross-skill pipelines. Router-only.
 
-Per-invocation load: analytical/audit skills = skill + `evidence-grounding.md`; a multi-skill run also loads `state-ledger.md`; discovery/manuscript skills = skill only.
+Per-invocation load: analytical/audit skills = skill +
+`evidence-grounding.md`; a multi-skill run also loads `state-ledger.md`.
+Discovery skills load only their skill contract. `research-write` also starts
+with its skill contract for a local wording edit, but conditionally loads
+`evidence-grounding.md` when claim/evidence bindings, novelty, generalization,
+or causal language are in scope. It never creates a writing-specific evidence
+model or ledger.
 
 ## No shim aliases
 

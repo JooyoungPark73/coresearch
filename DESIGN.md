@@ -85,6 +85,14 @@ rejection, state, and handoff contract. References are loaded progressively,
 not copied into every skill. A role result never chains a second skill: it
 returns to the parent and then to `coresearch`.
 
+`research-write` preserves a fast local-rewrite path and progressively loads
+[`argument-architecture.md`](skills/research-write/references/argument-architecture.md),
+[`systems-paper-delivery.md`](skills/research-write/references/systems-paper-delivery.md),
+or [`semantic-revision.md`](skills/research-write/references/semantic-revision.md)
+only when scope requires it. The skill realizes an author-approved argument;
+`research-design` still chooses contributions and evidence plans,
+`research-verify` verifies factual support, and `research-review` owns scoring.
+
 Ponytail and Caveman are progressive references owned by `coresearch`.
 Ponytail specifies minimal durable research engineering; Caveman specifies
 communication compression. They are explicit task/mission-scoped modifiers,
@@ -158,6 +166,16 @@ Raw command output remains in ignored `.tmp/` locations under the
 [`execution-safe.md`](skills/coresearch/references/execution-safe.md) policy.
 Only provenance-tagged results promoted to the declared output path may support
 a claim.
+
+A writing invocation may construct a transient `manuscript_map` that binds
+section promises to canonical claim/evidence IDs. It is a view, not a copy of
+evidence provenance, confidence, experimental context, or claim status. If a
+durable mission needs the map, it declares the path as an artifact under its
+existing `docs/research/runs/<run-id>/` contract and references it from the
+existing result and canonical ledger. No second ledger or provider-specific
+writing state is created. Claim/evidence state governs factual consistency;
+the manuscript prose remains an author-controlled artifact and semantic
+revision changes only affected passages.
 
 ## 9. Installation topology
 
@@ -262,6 +280,10 @@ this file.
   provider-specific state forest.
 - **Canonical ledger:** one backward-compatible research record prevents
   divergent state and makes re-entry deterministic.
+- **Progressive manuscript realization:** a lightweight local edit expands to
+  argument architecture or semantic impact analysis only when scope requires
+  it; optional manuscript maps remain views over canonical evidence rather
+  than a new state authority.
 
 Historical rationale and replacement guidance are documented in the
 [migration history](docs/migrations/from-omx.md); that document is historical,
@@ -305,6 +327,7 @@ sequenceDiagram
 | Stage/skill routing behavior | [`skills/coresearch/SKILL.md`](skills/coresearch/SKILL.md) and [`routing.md`](skills/coresearch/references/routing.md) |
 | Claim/evidence rules | [`research-contract.md`](skills/coresearch/references/research-contract.md) and [`evidence-grounding.md`](skills/coresearch/references/evidence-grounding.md) |
 | Durable research state | [`state-ledger.md`](skills/coresearch/references/state-ledger.md) |
+| Manuscript realization and optional map | [`research-write/SKILL.md`](skills/research-write/SKILL.md) and its [`references/`](skills/research-write/references/) |
 | Host execution semantics | [`execution-adapters.md`](skills/coresearch/references/execution-adapters.md) |
 | Durable result schema | [`research-loop/SKILL.md`](skills/research-loop/SKILL.md) and [`execution-adapters.md`](skills/coresearch/references/execution-adapters.md) |
 | Optional working-mode semantics | [`ponytail.md`](skills/coresearch/references/ponytail.md) and [`caveman.md`](skills/coresearch/references/caveman.md) |
