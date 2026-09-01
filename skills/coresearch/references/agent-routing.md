@@ -4,9 +4,12 @@
 bounded assignment and returns its artifact or result to the parent; the
 parent then re-enters `coresearch` before selecting another research stage.
 
-The authoritative role names, provider models, efforts, capabilities, and
-intended skills live in [`agents/manifest.json`](../../../agents/manifest.json).
-Do not substitute another role name or pass a per-invocation model override.
+The source bundle's `agents/manifest.json` is the maintenance authority for role
+names, provider models, efforts, capabilities, and intended skills. Installed
+runtimes do not receive or require a manifest under `.codex/agents` or
+`.claude/agents`; every native role definition is complete. Do not look for a
+runtime manifest, infer registration failure from its absence, substitute
+another role name, or pass a per-invocation model override.
 
 ## Role selection
 

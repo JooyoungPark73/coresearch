@@ -221,6 +221,13 @@ for phrase in (
 router = Path("skills/coresearch/SKILL.md").read_text()
 router_lower = router.lower()
 assert "one primary skill" in router_lower
+for skill in (
+    "research-design", "research-survey", "research-loop", "research-engineer",
+    "research-write", "research-review", "research-verify", "research-qualitative",
+):
+    assert f"](../{skill}/SKILL.md)" in router, skill
+assert "unavailable" in router_lower and "mismatch" in router_lower
+assert "do not look for" in router_lower and "runtime manifest" in router_lower
 assert "causal formulation without supplied evidence is design" in router_lower
 assert "testing a supplied causal claim" in router_lower
 for skill in expected_skills:
@@ -598,6 +605,15 @@ verify_provider_install() {
       [[ ! -L "$root/agents/$name$suffix" ]] || fail "$provider $name unexpectedly symlinked in copy mode"
     fi
   done
+  if [[ "$provider" == "codex" ]]; then
+    [[ -f "$root/config.toml" ]] || fail "Codex install missing role registrations at $root/config.toml"
+    grep -q '^# >>> coresearch-managed: agents:start >>>$' "$root/config.toml" || fail "Codex registration start marker missing"
+    grep -q '^# <<< coresearch-managed: agents:end <<<$' "$root/config.toml" || fail "Codex registration end marker missing"
+    for name in "${ROLES[@]}"; do
+      grep -Fq "[agents.$name]" "$root/config.toml" || fail "Codex registration missing $name"
+      grep -Fq "config_file = \"agents/$name.toml\"" "$root/config.toml" || fail "Codex config_file missing $name"
+    done
+  fi
 }
 
 for scope in user project; do
@@ -627,6 +643,25 @@ for scope in user project; do
   done
 done
 pass "user/project x copy/symlink x codex/claude/both install matrix and idempotency"
+
+config_preserve="$TMP_ROOT/config-preserve"
+mkdir -p "$config_preserve"
+printf '%s\n' '[features]' 'multi_agent = true' > "$config_preserve/config.toml"
+./harness install --scope user --surface codex --mode copy --codex-home "$config_preserve" >"$TMP_ROOT/config-preserve.log" 2>&1 || \
+  fail "Codex install failed to preserve existing config"
+grep -q '^multi_agent = true$' "$config_preserve/config.toml" || fail "Codex install changed unrelated config"
+[[ "$(grep -c '^# >>> coresearch-managed: agents:start >>>$' "$config_preserve/config.toml")" == "1" ]] || fail "Codex registration block is not idempotent"
+
+config_collision="$TMP_ROOT/config-collision"
+mkdir -p "$config_collision"
+printf '%s\n' '[agents.coresearch-reader]' 'description = "external"' 'config_file = "agents/external.toml"' > "$config_collision/config.toml"
+config_before="$(shasum -a 256 "$config_collision/config.toml" | cut -d ' ' -f 1)"
+if ./harness install --scope user --surface codex --mode copy --codex-home "$config_collision" >"$TMP_ROOT/config-collision.log" 2>&1; then
+  fail "Codex install accepted an unrelated role registration"
+fi
+[[ "$config_before" == "$(shasum -a 256 "$config_collision/config.toml" | cut -d ' ' -f 1)" ]] || fail "Codex install changed unrelated role registration"
+grep -q 'Refusing to replace unrelated Codex role registration' "$TMP_ROOT/config-collision.log" || fail "Codex registration collision diagnostic missing"
+pass "Codex role registrations are marker-bounded, idempotent, and preserve unrelated config"
 
 collision="$TMP_ROOT/collision"
 mkdir -p "$collision/skills/coresearch" "$collision/agents"
@@ -822,6 +857,11 @@ unlink "$case_root-codex/agents/coresearch-reader.toml"
 if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-missing.log" 2>&1; then fail "doctor accepted missing role"; fi
 grep -q 'coresearch-reader: missing' "$TMP_ROOT/doctor-missing.log" || fail "missing-role diagnostic absent"
 
+case_root="$(doctor_case missing-registration)"
+unlink "$case_root-codex/config.toml"
+if ./harness doctor --strict --surface codex --codex-home "$case_root-codex" >"$TMP_ROOT/doctor-missing-registration.log" 2>&1; then fail "doctor accepted missing Codex registrations"; fi
+grep -q 'Codex role registration config missing' "$TMP_ROOT/doctor-missing-registration.log" || fail "missing-registration diagnostic absent"
+
 case_root="$(doctor_case broken)"
 unlink "$case_root-claude/agents/coresearch-reader.md"
 ln -s "$case_root-claude/agents/does-not-exist.md" "$case_root-claude/agents/coresearch-reader.md"
@@ -832,6 +872,7 @@ if CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-5 ./harness doctor --strict --surfac
 grep -q 'CLAUDE_CODE_SUBAGENT_MODEL overrides Coresearch Claude role pins' "$TMP_ROOT/doctor-override.log" || fail "override diagnostic absent"
 
 grep -q -- '--probe-models' <(./harness doctor --help) || fail "explicit model probe option missing"
+grep -q -- '--probe-role' <(./harness doctor --help) || fail "single-role probe option missing"
 if PATH="/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --codex-home "$doctor_codex" --claude-home "$TMP_ROOT/probe-empty-claude" >"$TMP_ROOT/probe-codex-only.log" 2>&1; then
   fail "unobservable model probe was incorrectly reported as verified"
 fi
@@ -846,6 +887,7 @@ mkdir -p "$probe_bin"
 cat >"$probe_bin/codex" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
+[[ "$*" == *"--ephemeral"* ]] || exit 89
 for arg in "$@"; do
   [[ "$arg" != "--model" ]] || exit 90
 done
@@ -880,6 +922,24 @@ chmod +x "$probe_bin/codex" "$probe_bin/claude"
 PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface both --probe-models --codex-home "$doctor_codex" --claude-home "$doctor_claude" >"$TMP_ROOT/probe-named-roles.log" 2>&1 || fail "named-role probe rejected exact fixture (log $TMP_ROOT/probe-named-roles.log)"
 [[ "$(grep -c '^routing provider=codex role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Codex named-role probes did not verify all roles"
 [[ "$(grep -c '^routing provider=claude role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Claude named-role probes did not verify all roles"
+
+(cd "$TMP_ROOT" && PATH="$probe_bin:/usr/bin:/bin" "$ROOT_DIR/harness" doctor --strict --surface codex --probe-models --probe-role coresearch-reader --target "$ROOT_DIR" --codex-home "$doctor_codex") >"$TMP_ROOT/probe-single-role.log" 2>&1 || \
+  fail "single named-role probe failed outside a Git repository (log $TMP_ROOT/probe-single-role.log)"
+[[ "$(grep -c '^routing provider=codex role=' "$TMP_ROOT/probe-single-role.log")" == "1" ]] || fail "single-role filter probed more than one role"
+grep -q 'routing provider=codex role=coresearch-reader .*status=verified' "$TMP_ROOT/probe-single-role.log" || fail "single-role probe did not verify requested role"
+
+probe_error_bin="$TMP_ROOT/probe-error-bin"
+mkdir -p "$probe_error_bin"
+cat >"$probe_error_bin/codex" <<'SH'
+#!/usr/bin/env bash
+printf '{"type":"error","message":"agent type is currently not available"}\n'
+exit 1
+SH
+chmod +x "$probe_error_bin/codex"
+if PATH="$probe_error_bin:/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --probe-role coresearch-reader --codex-home "$doctor_codex" >"$TMP_ROOT/probe-error.log" 2>&1; then
+  fail "failed role probe was incorrectly accepted"
+fi
+grep -q 'agent type is currently not available' "$TMP_ROOT/probe-error.log" || fail "failed role probe suppressed bounded host error"
 pass "strict doctor rejects config drift and environment overrides; named-role probes avoid invocation overrides and preserve static-only semantics"
 
 pass "all validations completed"

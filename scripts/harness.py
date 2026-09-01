@@ -16,6 +16,8 @@ RESEARCH_TEMPLATE = ROOT / "templates" / "research" / "AGENTS.md"
 SKILL_MANIFEST = ROOT / "skills" / "manifest.json"
 AGENT_MANIFEST = ROOT / "agents" / "manifest.json"
 ROLE_MARKER = "coresearch-managed: role-description-version="
+CODEX_AGENTS_START = "# >>> coresearch-managed: agents:start >>>"
+CODEX_AGENTS_END = "# <<< coresearch-managed: agents:end <<<"
 
 
 def skill_manifest() -> dict:
@@ -66,6 +68,57 @@ Bounded native roles are installed: {native_roles}. Give each assignment one fix
 Keep durable research state in `docs/research/decisions/ledger.yaml`; use `docs/research/runs/<run-id>/` for mission, sandbox, and result artifacts, with one schema-version-2 `role_runs` entry per attempted assignment. Do not create provider-specific state forests. Verify current venue rules and citations from official or primary sources when exactness matters.
 {END}
 """
+
+
+def codex_agents_block() -> str:
+    lines = [CODEX_AGENTS_START]
+    for role in roles():
+        name = role["name"]
+        lines.extend([
+            f"[agents.{name}]",
+            f"description = {json.dumps(role['responsibility'])}",
+            f'config_file = "agents/{name}.toml"',
+            "",
+        ])
+    lines[-1] = CODEX_AGENTS_END
+    return "\n".join(lines)
+
+
+def codex_config_candidate(text: str) -> str:
+    has_start = CODEX_AGENTS_START in text
+    has_end = CODEX_AGENTS_END in text
+    if has_start != has_end:
+        raise ValueError("incomplete Coresearch Codex registration markers")
+    base = text
+    if has_start:
+        before, rest = text.split(CODEX_AGENTS_START, 1)
+        _old, after = rest.split(CODEX_AGENTS_END, 1)
+        base = (before.rstrip() + "\n\n" + after.lstrip()).rstrip() + "\n"
+    for name in ROLES:
+        header = re.compile(
+            rf"(?m)^\s*\[agents\.(?:{re.escape(name)}|[\"']{re.escape(name)}[\"'])\]\s*$"
+        )
+        if header.search(base):
+            raise ValueError(f"unrelated registration already defines {name}")
+    block = codex_agents_block()
+    if base.strip():
+        return base.rstrip() + "\n\n" + block + "\n"
+    return block + "\n"
+
+
+def codex_registration_failures(home: Path) -> list[str]:
+    path = home / "config.toml"
+    if not path.is_file():
+        return [f"Codex role registration config missing: {path}"]
+    text = path.read_text(errors="replace")
+    if CODEX_AGENTS_START not in text or CODEX_AGENTS_END not in text:
+        return [f"Coresearch Codex role registration block missing: {path}"]
+    block = text.split(CODEX_AGENTS_START, 1)[1].split(CODEX_AGENTS_END, 1)[0]
+    failures: list[str] = []
+    for name in ROLES:
+        if f"[agents.{name}]" not in block or f'config_file = "agents/{name}.toml"' not in block:
+            failures.append(f"Codex role registration missing or drifted for {name}: {path}")
+    return failures
 
 
 def upsert_bridge_text(text: str) -> str:
@@ -461,6 +514,20 @@ def cmd_install(args: argparse.Namespace) -> int:
     installed: list[Path] = []
     for provider in providers:
         root = _provider_root(args, provider)
+        codex_config: tuple[Path, str, str] | None = None
+        if provider == "codex":
+            config_path = root / "config.toml"
+            old_config = config_path.read_text() if config_path.exists() else ""
+            try:
+                new_config = codex_config_candidate(old_config)
+            except ValueError as exc:
+                print(
+                    f"Refusing to replace unrelated Codex role registration in {config_path}: {exc}",
+                    file=sys.stderr,
+                )
+                failures += 1
+                continue
+            codex_config = (config_path, old_config, new_config)
         skills_root = root / "skills"
         roles_root = root / "agents"
         _prune_removed_skills(skills_root)
@@ -484,6 +551,16 @@ def cmd_install(args: argparse.Namespace) -> int:
                 force=args.force,
             ):
                 failures += 1
+        if codex_config is not None:
+            config_path, old_config, new_config = codex_config
+            if old_config == new_config:
+                print(f"Codex role registrations already current: {config_path}")
+            else:
+                backup = backup_file(config_path)
+                atomic_write(config_path, new_config)
+                print(f"Updated Codex role registrations: {config_path}")
+                if backup:
+                    print(f"Backup: {backup}")
         installed.extend((skills_root, roles_root))
 
     project = Path(args.project_dir).expanduser().resolve() if args.project_dir else Path.cwd().resolve()
@@ -1080,13 +1157,51 @@ def _probe_observed(output: str) -> tuple[str | None, str | None, str | None]:
     return _one_unique(observed_roles), _one_unique(models), _one_unique(efforts)
 
 
-def probe_role_routing(providers: list[str], homes: dict[str, Path]) -> tuple[list[str], list[str]]:
+def _probe_error_detail(output: str) -> str | None:
+    """Return one bounded, diagnostic host message without echoing probe prompts."""
+    candidates: list[str] = []
+    for line in output.splitlines():
+        try:
+            document = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        candidates.extend(_json_values(document, {"error", "message", "output", "result", "text"}))
+    indicators = ("unavailable", "not available", "error", "failed", "denied", "invalid", "not found")
+    for candidate in candidates:
+        normalized = " ".join(candidate.split())
+        if "CORESEARCH_ROLE_PROBE" in normalized or not any(word in normalized.lower() for word in indicators):
+            continue
+        return normalized[:240]
+    for line in output.splitlines():
+        normalized = " ".join(line.split())
+        if any(word in normalized.lower() for word in indicators):
+            return normalized[:240]
+    return None
+
+
+def _is_git_worktree(path: Path) -> bool:
+    proc = subprocess.run(
+        ["git", "-C", str(path), "rev-parse", "--is-inside-work-tree"],
+        text=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return proc.returncode == 0
+
+
+def probe_role_routing(
+    providers: list[str],
+    homes: dict[str, Path],
+    target: Path,
+    role_filter: str | None = None,
+) -> tuple[list[str], list[str]]:
     reports: list[str] = []
     failures: list[str] = []
+    selected_roles = [role for role in roles() if role_filter is None or role["name"] == role_filter]
     for provider in providers:
         executable = shutil.which(provider)
         if not executable:
-            for role in roles():
+            for role in selected_roles:
                 pin = role["providers"][provider]
                 reports.append(
                     f"routing provider={provider} role={role['name']} requested={pin['model']}/{pin['effort']} "
@@ -1094,18 +1209,20 @@ def probe_role_routing(providers: list[str], homes: dict[str, Path]) -> tuple[li
                 )
             failures.append(f"{provider} named-role probes are static-only: CLI not found")
             continue
-        for role in roles():
+        for role in selected_roles:
             name = role["name"]
             pin = role["providers"][provider]
             model = pin["model"]
             effort = pin["effort"]
             marker = f"CORESEARCH_ROLE_PROBE {name}"
             if provider == "codex":
-                command = [
-                    executable, "exec", "--json",
+                command = [executable, "exec", "--ephemeral", "--json"]
+                if not _is_git_worktree(target):
+                    command.append("--skip-git-repo-check")
+                command.append(
                     f"Spawn exactly the custom agent named {name}. The child must reply exactly "
-                    f"{marker}. Return that child reply unchanged and do not perform the probe yourself.",
-                ]
+                    f"{marker}. Return that child reply unchanged and do not perform the probe yourself."
+                )
             else:
                 command = [
                     executable, "--agent", name, "--print", "--output-format", "json",
@@ -1124,6 +1241,7 @@ def probe_role_routing(providers: list[str], homes: dict[str, Path]) -> tuple[li
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     env=env,
+                    cwd=target,
                     timeout=120,
                 )
             except subprocess.TimeoutExpired:
@@ -1136,10 +1254,18 @@ def probe_role_routing(providers: list[str], homes: dict[str, Path]) -> tuple[li
             observed_role, observed_model, observed_effort = _probe_observed(proc.stdout)
             if proc.returncode != 0:
                 status = "mismatch"
-                failures.append(f"{provider} named-role probe failed for {name} (exit {proc.returncode})")
+                detail = _probe_error_detail(proc.stdout)
+                suffix = f": {detail}" if detail else ""
+                failures.append(
+                    f"{provider} named-role probe failed for {name} (exit {proc.returncode}){suffix}"
+                )
             elif marker not in proc.stdout:
                 status = "mismatch"
-                failures.append(f"{provider} named-role probe for {name} returned no completion marker")
+                detail = _probe_error_detail(proc.stdout)
+                suffix = f": {detail}" if detail else ""
+                failures.append(
+                    f"{provider} named-role probe for {name} returned no completion marker{suffix}"
+                )
             elif observed_role is not None and observed_role != name:
                 status = "mismatch"
                 failures.append(f"{provider} role mismatch requested={name} observed={observed_role}")
@@ -1178,8 +1304,14 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         claude = user_claude
     providers = ["codex", "claude"] if args.surface == "both" else [args.surface]
     homes = {"codex": codex, "claude": claude}
+    runtime_homes = {
+        "codex": user_codex,
+        "claude": claude if scope == "project" else user_claude,
+    }
     failures = validate_source_roles()
     warnings: list[str] = []
+    if getattr(args, "probe_role", None) and not args.probe_models:
+        failures.append("--probe-role requires --probe-models")
 
     print("# Coresearch Harness Doctor")
     print(f"Repo: {ROOT}")
@@ -1212,6 +1344,12 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 print(f"PASS [{provider}] role {row}")
             else:
                 failures.append(f"bad {provider} role install: {row}")
+        if provider == "codex":
+            registration_issues = codex_registration_failures(home)
+            if registration_issues:
+                failures.extend(registration_issues)
+            else:
+                print(f"PASS [codex] role registrations: {home / 'config.toml'}")
 
     broken_repo_links = assert_no_broken_repo_symlinks()
     if broken_repo_links:
@@ -1262,7 +1400,12 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         warnings.append(f"command `{args.command_name}` not found on PATH")
 
     if args.probe_models:
-        reports, probe_failures = probe_role_routing(providers, homes)
+        reports, probe_failures = probe_role_routing(
+            providers,
+            runtime_homes,
+            target,
+            getattr(args, "probe_role", None),
+        )
         for report in reports:
             print(report)
         failures.extend(probe_failures)
@@ -1348,6 +1491,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
         strict=True,
         validate=False,
         probe_models=False,
+        probe_role=None,
     )
     return cmd_doctor(doctor_args)
 
@@ -1448,6 +1592,7 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument("--strict", action="store_true", help="return nonzero on failures")
     doctor.add_argument("--validate", action="store_true", help="also run scripts/validate.sh")
     doctor.add_argument("--probe-models", action="store_true", help="spend network/tokens to invoke each named role and compare host-reported role/model/effort metadata with the manifest")
+    doctor.add_argument("--probe-role", choices=ROLES, help="limit an explicit live probe to one named role")
     doctor.set_defaults(func=cmd_doctor)
 
     repair = sub.add_parser("repair", help="Relink skills, reinstall harness command, validate, and run strict doctor")

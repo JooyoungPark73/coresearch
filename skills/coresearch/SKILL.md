@@ -14,14 +14,14 @@ pipeline.
 
 | Need | One primary skill | Mode |
 | --- | --- | --- |
-| Paper contribution, evidence plan, gap, or causal hypothesis | `research-design` | paper design / gap analysis / causal hypothesis |
-| Papers, closest work, literature map, or real disagreement | `research-survey` | literature map / conflict synthesis |
-| Durable hypotheses, validators, retries, and stop conditions | `research-loop` | start / steer / audit mission |
-| Research code, experiment execution, debugging, or artifacts | `research-engineer` | implementation / experiment |
-| Evidence-bounded manuscript drafting, rewriting, argument realization, or semantic revision | `research-write` | writing mode matching scope |
-| Venue assessment, score forecast, or response to reviews | `research-review` | assessment / response |
-| Fact, citation, methodology, bias, or causal-claim check | `research-verify` | fact / methodology / adversarial / causal |
-| Interview, observation, or open-response coding explicitly requested | `research-qualitative` | qualitative synthesis |
+| Paper contribution, evidence plan, gap, or causal hypothesis | [`research-design`](../research-design/SKILL.md) | paper design / gap analysis / causal hypothesis |
+| Papers, closest work, literature map, or real disagreement | [`research-survey`](../research-survey/SKILL.md) | literature map / conflict synthesis |
+| Durable hypotheses, validators, retries, and stop conditions | [`research-loop`](../research-loop/SKILL.md) | start / steer / audit mission |
+| Research code, experiment execution, debugging, or artifacts | [`research-engineer`](../research-engineer/SKILL.md) | implementation / experiment |
+| Evidence-bounded manuscript drafting, rewriting, argument realization, or semantic revision | [`research-write`](../research-write/SKILL.md) | writing mode matching scope |
+| Venue assessment, score forecast, or response to reviews | [`research-review`](../research-review/SKILL.md) | assessment / response |
+| Fact, citation, methodology, bias, or causal-claim check | [`research-verify`](../research-verify/SKILL.md) | fact / methodology / adversarial / causal |
+| Interview, observation, or open-response coding explicitly requested | [`research-qualitative`](../research-qualitative/SKILL.md) | qualitative synthesis |
 
 Resolve common ambiguities as follows:
 
@@ -60,12 +60,11 @@ Load references conditionally:
 
 ## Native roles and re-entry
 
-Roles execute bounded assignments; they do not choose research stages. Use the
-fewest roles needed, give each disjoint ownership, an expected artifact, a
-validator, and a stop condition, and keep joins with the parent. Use the exact
-model and effort declared in `agents/manifest.json`. Record routing as
-`verified` only when the host exposes matching runtime metadata; otherwise use
-`static-only`.
+Roles execute bounded assignments, not stage selection. Give each disjoint
+ownership, artifact, validator, and stop condition. Installed roles are
+self-contained: do not look for a runtime manifest. `verified` requires matching
+metadata; `static-only` requires successful execution with incomplete metadata;
+blocked, substituted, unavailable, or different is `mismatch`.
 
 Every terminal role or mission result returns to the parent. Integrate stable
 artifacts before independent verification, update only authorized ledger keys,
@@ -73,12 +72,11 @@ then re-enter Coresearch if another stage is needed.
 
 ## Optional working modes
 
-Ponytail and Caveman are explicit-only modifiers, never routes, roles, models,
-or permissions. They accept `off`, `lite`, or `full` for the current task or
-mission. Load [ponytail.md](references/ponytail.md) for minimal durable research
-engineering and [caveman.md](references/caveman.md) for communication
-compression. Pass active levels through handoffs. Neither mode may weaken
-evidence, validation, safety, routing, or required artifacts.
+Ponytail and Caveman are explicit-only task or mission modifiers (`off`, `lite`,
+`full`), never routes, roles, models, or permissions. Load
+[ponytail.md](references/ponytail.md) for minimal durable engineering and
+[caveman.md](references/caveman.md) for communication compression. Pass active
+levels through handoffs; neither may weaken evidence, validation, or safety.
 
 ## Guardrails
 

@@ -127,12 +127,18 @@ mechanism decision is resolved. Roles never spawn descendants.
 
 Exact names, responsibilities, capabilities, intended skills, models, and
 efforts live only in [`agents/manifest.json`](agents/manifest.json). Native
-files repeat required host fields and are validated against that manifest; this
+files repeat required host fields and are validated against that manifest. The
+source manifest is not installed into provider agent directories and is not a
+runtime registration mechanism; each native file is self-contained. This
 document intentionally does not duplicate the model matrix.
 
 ## 7. Host adapters
 
-Codex loads `.codex/agents/*.toml`. A Codex goal is used only for multi-turn,
+Codex role TOMLs are complete standalone definitions. The harness also writes a
+marker-bounded `[agents.<name>]` registration block in the applicable
+`.codex/config.toml`, pointing each name to `agents/<name>.toml`; this avoids
+depending on host discovery behavior while preserving unrelated configuration.
+A Codex goal is used only for multi-turn,
 experiment-bearing work or durable validators and references the mission file;
 it owns continuation, not stage selection. Claude Code loads
 `.claude/agents/*.md`; its main session consumes the same mission and sandbox
@@ -149,9 +155,12 @@ Provider differences remain limited to native definition syntax,
 permissions/tools, invocation, and observable routing metadata.
 
 Explicit routing probes invoke each named native role without passing a model
-or effort override. A direct model invocation is an availability test, not a
+or effort override. Codex probes are ephemeral and execute with the selected
+doctor target as their project root, independent of the caller's working
+directory. A direct model invocation is an availability test, not a
 role-routing test. Only host-reported role, model, and effort metadata can
-upgrade a role run from `static-only` to `verified`.
+upgrade a successful role run from `static-only` to `verified`; blocked,
+substituted, unavailable, and different routes are mismatches.
 
 ## 8. State and artifact model
 
@@ -193,6 +202,8 @@ flowchart LR
     SS --> PHS[Project .claude/skills]
     CA[agents/codex/] --> UCA[User Codex agents]
     CA --> PCA[Project .codex/agents]
+    CM[Managed Codex registration block] --> UCC[User .codex/config.toml]
+    CM --> PCC[Project .codex/config.toml]
     HA[agents/claude/] --> UHA[User Claude agents]
     HA --> PHA[Project .claude/agents]
     T[templates/research/AGENTS.md] --> PA[Project AGENTS.md]
@@ -202,7 +213,10 @@ flowchart LR
 User and project scopes support copy and symlink modes for Codex, Claude, or
 both. The harness installs skills plus provider-specific roles, replaces only
 recognized Coresearch entries unless `--force` is explicit, prunes only
-recognized stale entries, and preserves unrelated files. Prompt bridges are
+recognized stale entries, and preserves unrelated files. It does not install
+the source manifests into runtime skill or agent directories. Codex role
+registrations are marker-bounded, idempotent, backed up when an existing config
+changes, and refuse conflicting external role tables. Prompt bridges are
 optional, marker-bounded, diffable, backed up, idempotent, removable, and
 rollback-capable. Full project templates require an absent file or explicit
 replacement semantics.

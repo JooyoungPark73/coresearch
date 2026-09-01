@@ -27,8 +27,10 @@ template installed into research projects.
 
 ## Fixed role and model matrix
 
-[`agents/manifest.json`](agents/manifest.json) is authoritative. Native files
-repeat these exact pins because each host requires them.
+[`agents/manifest.json`](agents/manifest.json) is the source authority. Native
+files repeat these exact pins because each host requires complete standalone
+definitions. The harness does not install the manifest under `.codex/agents`
+or `.claude/agents`, and its absence there is not a registration failure.
 
 | Role | Codex model / effort | Claude model / effort |
 |---|---|---|
@@ -58,13 +60,14 @@ harness link --surface both
 harness doctor --strict --surface both
 ```
 
-This creates user-scope symlinks:
+This creates user-scope symlinks and a marker-bounded Codex registration block:
 
 ```text
 ${CODEX_HOME:-~/.codex}/skills/<skill>   -> <repo>/skills/<skill>
 ${CODEX_HOME:-~/.codex}/agents/<role>.toml -> <repo>/agents/codex/<role>.toml
 ${CLAUDE_HOME:-~/.claude}/skills/<skill> -> <repo>/skills/<skill>
 ${CLAUDE_HOME:-~/.claude}/agents/<role>.md -> <repo>/agents/claude/<role>.md
+${CODEX_HOME:-~/.codex}/config.toml          # [agents.<role>] registrations
 ```
 
 Local edits then appear immediately through the symlinks. Restart Codex and
@@ -106,7 +109,10 @@ harness install --scope project --surface both --mode symlink \
 Project destinations are `<project>/.codex/{skills,agents}` and
 `<project>/.claude/{skills,agents}`. The harness replaces only recognized
 Coresearch copies or links. A same-name unrelated entry is preserved and
-reported; `--force` is required for an intentional replacement.
+reported; `--force` is required for an intentional replacement. Codex installs
+also maintain a marker-bounded block in the scope's `.codex/config.toml` that
+maps each role name to its standalone TOML. Unrelated configuration is
+preserved, and a conflicting pre-existing role registration is refused.
 
 ## Project and global prompts
 
@@ -187,6 +193,7 @@ Ordinary strict doctor is local and static. It verifies:
 - manifest parity for every name, model, effort, capability, and skill list;
 - read-only versus workspace-write boundaries;
 - installed role configuration and link health;
+- marker-bounded Codex role registration and config-file mappings;
 - that `CLAUDE_CODE_SUBAGENT_MODEL` is unset during the audit.
 
 Static success does not prove which model a host actually used. When installed
@@ -195,11 +202,16 @@ audit, run:
 
 ```bash
 harness doctor --strict --surface both --probe-models
+harness doctor --strict --surface codex --probe-models \
+  --probe-role coresearch-reader
 ```
 
 This explicit command invokes every named fixed role without passing a model or
-effort override and reports. It may make eight host calls per selected surface;
-each role probe has a 120-second timeout.
+effort override and reports. `--probe-role` limits a diagnostic run to one role.
+Codex probes are ephemeral, use the doctor target as their project root, and do
+not depend on the shell's starting directory. A full probe may make eight host
+calls per selected surface; each role probe has a 120-second timeout. Bounded
+host errors such as an unavailable agent type are included in failures.
 
 - `verified` — observed role, model, and effort metadata match the manifest;
 - `static-only` — the host or CLI does not expose all three observed values;
