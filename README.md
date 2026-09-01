@@ -13,11 +13,11 @@ and single-source ownership.
 
 | Path | Purpose | Installed destination |
 |---|---|---|
-| `skills/*/SKILL.md` | Complete research skills and central router | User or project `skills/` for either provider |
+| `skills/*/SKILL.md` | Complete research skills and central router | Codex `.agents/skills`; Claude `.claude/skills` |
 | `skills/manifest.json` | Exact nine-skill inventory | Harness and validation input |
 | `agents/manifest.json` | Exact roles, capabilities, models, and efforts | Harness and validation input |
 | `agents/codex/*.toml` | Codex-native role definitions | `${CODEX_HOME:-~/.codex}/agents` or `<project>/.codex/agents` |
-| `agents/claude/*.md` | Claude Code-native role definitions | `${CLAUDE_HOME:-~/.claude}/agents` or `<project>/.claude/agents` |
+| `agents/claude/*.md` | Claude Code-native role definitions | `${CLAUDE_CONFIG_DIR:-~/.claude}/agents` or `<project>/.claude/agents` |
 | `templates/research/AGENTS.md` | Full research-project contract | Project `AGENTS.md` through explicit initialization |
 | `scripts/harness.py` | Canonical install, status, doctor, repair, and prompt logic | Invoked by `harness` and thin wrappers |
 | `.codex-plugin/plugin.json` | Skill-only plugin package metadata | Plugin loader; native roles remain harness-installed |
@@ -60,18 +60,21 @@ harness link --surface both
 harness doctor --strict --surface both
 ```
 
-This creates user-scope symlinks and a marker-bounded Codex registration block:
+This creates user-scope skill symlinks and provider-native roles. Current Codex
+requires role TOMLs to be regular files, so Codex roles are copied even in link
+mode:
 
 ```text
-${CODEX_HOME:-~/.codex}/skills/<skill>   -> <repo>/skills/<skill>
-${CODEX_HOME:-~/.codex}/agents/<role>.toml -> <repo>/agents/codex/<role>.toml
-${CLAUDE_HOME:-~/.claude}/skills/<skill> -> <repo>/skills/<skill>
-${CLAUDE_HOME:-~/.claude}/agents/<role>.md -> <repo>/agents/claude/<role>.md
-${CODEX_HOME:-~/.codex}/config.toml          # [agents.<role>] registrations
+~/.agents/skills/<skill>                   -> <repo>/skills/<skill>
+${CODEX_HOME:-~/.codex}/agents/<role>.toml    copied regular file
+${CLAUDE_CONFIG_DIR:-~/.claude}/skills/<skill> -> <repo>/skills/<skill>
+${CLAUDE_CONFIG_DIR:-~/.claude}/agents/<role>.md -> <repo>/agents/claude/<role>.md
 ```
 
-Local edits then appear immediately through the symlinks. Restart Codex and
-Claude Code after installation to reload skill and role metadata.
+Local skill edits and Claude role edits then appear immediately through their
+symlinks. Re-run `harness link --surface codex` after changing a Codex role so
+its required regular-file copy is refreshed. Restart Codex and Claude Code
+after installation to reload skill and role metadata.
 
 For a copy install:
 
@@ -88,7 +91,8 @@ The compatibility wrapper is equivalent:
 ## Installation matrix
 
 The same `--surface codex|claude|both`, `--scope user|project`, and
-`--mode copy|symlink` options apply to skills and roles.
+`--mode copy|symlink` options are accepted across providers. Codex roles retain
+the regular-file copy exception described above.
 
 ```bash
 # User Codex copy
@@ -106,13 +110,32 @@ harness install --scope project --surface both --mode symlink \
   --project-dir /path/to/research-repo
 ```
 
-Project destinations are `<project>/.codex/{skills,agents}` and
-`<project>/.claude/{skills,agents}`. The harness replaces only recognized
-Coresearch copies or links. A same-name unrelated entry is preserved and
-reported; `--force` is required for an intentional replacement. Codex installs
-also maintain a marker-bounded block in the scope's `.codex/config.toml` that
-maps each role name to its standalone TOML. Unrelated configuration is
-preserved, and a conflicting pre-existing role registration is refused.
+Project destinations are `<project>/.agents/skills`,
+`<project>/.codex/agents`, and `<project>/.claude/{skills,agents}`. Install at
+the actual repository root. An umbrella directory that merely contains several
+Git repositories is not inherited by those repositories; either use user scope
+once or run the project install separately in each repository. The harness
+warns when a project target is not a Git worktree.
+
+The harness replaces only recognized Coresearch copies or links. A same-name
+unrelated entry is preserved and reported; `--force` is required for an
+intentional replacement. Codex role TOMLs are always regular copied files;
+skill directories may use copy or symlink mode. Existing managed Coresearch
+skills under the legacy
+`.codex/skills` location and the retired managed role-registration block are
+removed during a successful Codex install, while unrelated configuration is
+preserved and backed up before a block removal.
+
+Codex user skills are independent of `CODEX_HOME`; use
+`--codex-skills-root` only for an explicit alternate or isolated test root.
+Claude user configuration follows `CLAUDE_CONFIG_DIR` (default `~/.claude`);
+`--claude-home` is the harness's explicit override.
+
+The paths follow the official [Codex Skills discovery
+rules](https://developers.openai.com/codex/skills) and [custom-agent discovery
+rules](https://developers.openai.com/codex/multi-agent). Codex role copies also
+avoid the host's explicit [rejection of symlinked custom-role
+files](https://github.com/openai/codex/pull/39299).
 
 ## Project and global prompts
 
@@ -193,7 +216,8 @@ Ordinary strict doctor is local and static. It verifies:
 - manifest parity for every name, model, effort, capability, and skill list;
 - read-only versus workspace-write boundaries;
 - installed role configuration and link health;
-- marker-bounded Codex role registration and config-file mappings;
+- documented Codex and Claude discovery roots;
+- regular-file enforcement for Codex role TOMLs;
 - that `CLAUDE_CODE_SUBAGENT_MODEL` is unset during the audit.
 
 Static success does not prove which model a host actually used. When installed

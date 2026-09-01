@@ -134,10 +134,14 @@ document intentionally does not duplicate the model matrix.
 
 ## 7. Host adapters
 
-Codex role TOMLs are complete standalone definitions. The harness also writes a
-marker-bounded `[agents.<name>]` registration block in the applicable
-`.codex/config.toml`, pointing each name to `agents/<name>.toml`; this avoids
-depending on host discovery behavior while preserving unrelated configuration.
+Codex role TOMLs are complete standalone definitions discovered from
+`${CODEX_HOME:-~/.codex}/agents` at user scope and `.codex/agents` at project
+scope. They are installed as regular copied files because current Codex rejects
+symlinked custom-role files. Codex skills use the separate documented discovery
+roots `~/.agents/skills` and project `.agents/skills`; skill directories may be
+copied or symlinked. Project-scoped discovery is bounded by the actual project
+repository, so an umbrella directory containing multiple repositories is not a
+shared project install surface; use user scope or install into each repository.
 A Codex goal is used only for multi-turn,
 experiment-bearing work or durable validators and references the mission file;
 it owns continuation, not stage selection. Claude Code loads
@@ -196,14 +200,12 @@ revision changes only affected passages.
 
 ```mermaid
 flowchart LR
-    SS[skills/] --> UCS[User Codex skills]
+    SS[skills/] --> UCS[User ~/.agents/skills]
     SS --> UHS[User Claude skills]
-    SS --> PCS[Project .codex/skills]
+    SS --> PCS[Project .agents/skills]
     SS --> PHS[Project .claude/skills]
-    CA[agents/codex/] --> UCA[User Codex agents]
+    CA[agents/codex/] --> UCA[User CODEX_HOME/agents, copied]
     CA --> PCA[Project .codex/agents]
-    CM[Managed Codex registration block] --> UCC[User .codex/config.toml]
-    CM --> PCC[Project .codex/config.toml]
     HA[agents/claude/] --> UHA[User Claude agents]
     HA --> PHA[Project .claude/agents]
     T[templates/research/AGENTS.md] --> PA[Project AGENTS.md]
@@ -211,12 +213,14 @@ flowchart LR
 ```
 
 User and project scopes support copy and symlink modes for Codex, Claude, or
-both. The harness installs skills plus provider-specific roles, replaces only
-recognized Coresearch entries unless `--force` is explicit, prunes only
-recognized stale entries, and preserves unrelated files. It does not install
-the source manifests into runtime skill or agent directories. Codex role
-registrations are marker-bounded, idempotent, backed up when an existing config
-changes, and refuse conflicting external role tables. Prompt bridges are
+both, except Codex role TOMLs are always copied as regular files. The harness
+installs skills plus provider-specific roles, replaces only recognized
+Coresearch entries unless `--force` is explicit, prunes only recognized stale
+entries, and preserves unrelated files. It does not install the source
+manifests into runtime skill or agent directories. A successful Codex install
+migrates recognized Coresearch skills out of the legacy `.codex/skills`
+location and removes only the legacy marker-bounded role-registration block,
+backing up a changed config first. Prompt bridges are
 optional, marker-bounded, diffable, backed up, idempotent, removable, and
 rollback-capable. Full project templates require an absent file or explicit
 replacement semantics.

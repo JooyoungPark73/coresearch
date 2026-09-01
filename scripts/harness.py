@@ -51,8 +51,12 @@ def codex_home(value: str | None = None) -> Path:
     return Path(value or os.environ.get("CODEX_HOME") or Path.home() / ".codex").expanduser().resolve()
 
 
+def codex_skills_root(value: str | None = None) -> Path:
+    return Path(value or Path.home() / ".agents" / "skills").expanduser().resolve()
+
+
 def claude_home(value: str | None = None) -> Path:
-    return Path(value or os.environ.get("CLAUDE_HOME") or Path.home() / ".claude").expanduser().resolve()
+    return Path(value or os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude").expanduser().resolve()
 
 
 def default_bin_dir() -> Path:
@@ -70,55 +74,17 @@ Keep durable research state in `docs/research/decisions/ledger.yaml`; use `docs/
 """
 
 
-def codex_agents_block() -> str:
-    lines = [CODEX_AGENTS_START]
-    for role in roles():
-        name = role["name"]
-        lines.extend([
-            f"[agents.{name}]",
-            f"description = {json.dumps(role['responsibility'])}",
-            f'config_file = "agents/{name}.toml"',
-            "",
-        ])
-    lines[-1] = CODEX_AGENTS_END
-    return "\n".join(lines)
-
-
-def codex_config_candidate(text: str) -> str:
+def remove_codex_agents_block(text: str) -> str:
     has_start = CODEX_AGENTS_START in text
     has_end = CODEX_AGENTS_END in text
     if has_start != has_end:
         raise ValueError("incomplete Coresearch Codex registration markers")
-    base = text
-    if has_start:
-        before, rest = text.split(CODEX_AGENTS_START, 1)
-        _old, after = rest.split(CODEX_AGENTS_END, 1)
-        base = (before.rstrip() + "\n\n" + after.lstrip()).rstrip() + "\n"
-    for name in ROLES:
-        header = re.compile(
-            rf"(?m)^\s*\[agents\.(?:{re.escape(name)}|[\"']{re.escape(name)}[\"'])\]\s*$"
-        )
-        if header.search(base):
-            raise ValueError(f"unrelated registration already defines {name}")
-    block = codex_agents_block()
-    if base.strip():
-        return base.rstrip() + "\n\n" + block + "\n"
-    return block + "\n"
-
-
-def codex_registration_failures(home: Path) -> list[str]:
-    path = home / "config.toml"
-    if not path.is_file():
-        return [f"Codex role registration config missing: {path}"]
-    text = path.read_text(errors="replace")
-    if CODEX_AGENTS_START not in text or CODEX_AGENTS_END not in text:
-        return [f"Coresearch Codex role registration block missing: {path}"]
-    block = text.split(CODEX_AGENTS_START, 1)[1].split(CODEX_AGENTS_END, 1)[0]
-    failures: list[str] = []
-    for name in ROLES:
-        if f"[agents.{name}]" not in block or f'config_file = "agents/{name}.toml"' not in block:
-            failures.append(f"Codex role registration missing or drifted for {name}: {path}")
-    return failures
+    if not has_start:
+        return text
+    before, rest = text.split(CODEX_AGENTS_START, 1)
+    _old, after = rest.split(CODEX_AGENTS_END, 1)
+    joined = before.rstrip() + ("\n\n" if before.strip() and after.strip() else "") + after.lstrip()
+    return joined.rstrip() + "\n" if joined.strip() else ""
 
 
 def upsert_bridge_text(text: str) -> str:
@@ -348,24 +314,19 @@ def assert_no_broken_repo_symlinks() -> list[Path]:
     return broken
 
 
-def _install_roots(codex: Path, claude: Path) -> list[Path]:
+def _install_roots(codex_skills: Path, codex_roles: Path, claude_skills: Path, claude_roles: Path) -> list[Path]:
     """Candidate installed skill and role surfaces scanned for broken links.
 
     Tolerant of absent directories; callers filter by existence. Shared by
     broken_install_symlinks (the scan) and cmd_doctor (the report label) so
     the scanned set and the reported set cannot drift apart.
     """
-    return [
-        codex / "skills",
-        codex / "agents",
-        claude / "skills",
-        claude / "agents",
-    ]
+    return [codex_skills, codex_roles, claude_skills, claude_roles]
 
 
-def broken_install_symlinks(codex: Path, claude: Path) -> list[Path]:
+def broken_install_symlinks(roots: list[Path]) -> list[Path]:
     broken: list[Path] = []
-    for root in _install_roots(codex, claude):
+    for root in roots:
         if not root.is_dir():
             continue
         for entry in root.iterdir():
@@ -484,15 +445,56 @@ def _prune_removed_roles(root: Path, provider: str) -> None:
             print(f"WARN unrelated Coresearch-named role preserved: {dst}", file=sys.stderr)
 
 
-def _provider_root(args: argparse.Namespace, provider: str) -> Path:
+def _provider_roots(args: argparse.Namespace, provider: str) -> tuple[Path, Path, Path]:
     if args.scope == "project":
         if not args.project_dir:
             project = Path.cwd()
         else:
             project = Path(args.project_dir).expanduser().resolve()
         project.mkdir(parents=True, exist_ok=True)
-        return project / (".codex" if provider == "codex" else ".claude")
-    return codex_home(args.codex_home) if provider == "codex" else claude_home(args.claude_home)
+        if provider == "codex":
+            return project / ".agents" / "skills", project / ".codex" / "agents", project / ".codex"
+        home = project / ".claude"
+        return home / "skills", home / "agents", home
+    if provider == "codex":
+        home = codex_home(getattr(args, "codex_home", None))
+        return codex_skills_root(getattr(args, "codex_skills_root", None)), home / "agents", home
+    home = claude_home(getattr(args, "claude_home", None))
+    return home / "skills", home / "agents", home
+
+
+def _legacy_codex_skill_entries(root: Path) -> list[Path]:
+    entries: list[Path] = []
+    for name in sorted(set(SKILLS) | REMOVED_SKILLS):
+        path = root / name
+        if not path.exists() and not path.is_symlink():
+            continue
+        if _is_managed_entry(path, "skill") or _recognized_removed_skill(path):
+            entries.append(path)
+    return entries
+
+
+def _migrate_legacy_codex_install(config_home: Path) -> None:
+    for path in _legacy_codex_skill_entries(config_home / "skills"):
+        _remove_entry(path)
+        print(f"Removed legacy Coresearch Codex skill: {path}")
+
+    config_path = config_home / "config.toml"
+    if not config_path.is_file():
+        return
+    old = config_path.read_text()
+    try:
+        new = remove_codex_agents_block(old)
+    except ValueError as exc:
+        print(f"WARN legacy Codex registration block was not changed in {config_path}: {exc}", file=sys.stderr)
+        return
+    if new == old:
+        return
+    backup = backup_file(config_path)
+    atomic_write(config_path, new)
+    print(f"Removed legacy Codex role registrations: {config_path}")
+    if backup:
+        print(f"Backup: {backup}")
 
 
 def _write_bridge(path: Path) -> None:
@@ -513,23 +515,8 @@ def cmd_install(args: argparse.Namespace) -> int:
     failures = 0
     installed: list[Path] = []
     for provider in providers:
-        root = _provider_root(args, provider)
-        codex_config: tuple[Path, str, str] | None = None
-        if provider == "codex":
-            config_path = root / "config.toml"
-            old_config = config_path.read_text() if config_path.exists() else ""
-            try:
-                new_config = codex_config_candidate(old_config)
-            except ValueError as exc:
-                print(
-                    f"Refusing to replace unrelated Codex role registration in {config_path}: {exc}",
-                    file=sys.stderr,
-                )
-                failures += 1
-                continue
-            codex_config = (config_path, old_config, new_config)
-        skills_root = root / "skills"
-        roles_root = root / "agents"
+        skills_root, roles_root, config_home = _provider_roots(args, provider)
+        provider_failures = 0
         _prune_removed_skills(skills_root)
         _prune_removed_roles(roles_root, provider)
         for name in SKILLS:
@@ -541,29 +528,29 @@ def cmd_install(args: argparse.Namespace) -> int:
                 force=args.force,
             ):
                 failures += 1
+                provider_failures += 1
         suffix = ".toml" if provider == "codex" else ".md"
+        role_mode = "copy" if provider == "codex" else args.mode
         for name in ROLES:
             if not _install_entry(
                 ROOT / "agents" / provider / f"{name}{suffix}",
                 roles_root / f"{name}{suffix}",
-                mode=args.mode,
+                mode=role_mode,
                 kind="role",
                 force=args.force,
             ):
                 failures += 1
-        if codex_config is not None:
-            config_path, old_config, new_config = codex_config
-            if old_config == new_config:
-                print(f"Codex role registrations already current: {config_path}")
-            else:
-                backup = backup_file(config_path)
-                atomic_write(config_path, new_config)
-                print(f"Updated Codex role registrations: {config_path}")
-                if backup:
-                    print(f"Backup: {backup}")
+                provider_failures += 1
+        if provider == "codex" and provider_failures == 0:
+            _migrate_legacy_codex_install(config_home)
         installed.extend((skills_root, roles_root))
 
     project = Path(args.project_dir).expanduser().resolve() if args.project_dir else Path.cwd().resolve()
+    if args.scope == "project" and not _is_git_worktree(project):
+        print(
+            f"WARN project target is not a Git worktree; nested repositories will not inherit this install: {project}",
+            file=sys.stderr,
+        )
     if args.global_bridge:
         _write_bridge(codex_home(args.codex_home) / "AGENTS.md")
     if args.project_bridge:
@@ -582,6 +569,8 @@ def cmd_install(args: argparse.Namespace) -> int:
     print()
     print("Install target(s): " + ", ".join(str(path) for path in installed))
     print(f"Mode: {args.mode}")
+    if "codex" in providers:
+        print("Codex role mode: copy (regular files required by current Codex)")
     print(f"Scope: {args.scope}")
     print(f"Surface: {args.surface}")
     print("Restart Codex or Claude Code to reload skill and role metadata.")
@@ -756,10 +745,10 @@ def cmd_rollback(args: argparse.Namespace) -> int:
     return 0
 
 
-def skill_status(home: Path) -> list[str]:
+def skill_status(skills_dir: Path) -> list[str]:
     rows: list[str] = []
     for name in SKILLS:
-        dst = home / "skills" / name
+        dst = skills_dir / name
         src = ROOT / "skills" / name
         expected_skill = src / "SKILL.md"
         if dst.is_symlink():
@@ -799,7 +788,6 @@ def skill_status(home: Path) -> list[str]:
     def looks_coreskills(name: str) -> bool:
         return name in legacy_names or name.startswith("research") or name.startswith("paper-")
 
-    skills_dir = home / "skills"
     if skills_dir.is_dir():
         for entry in sorted(skills_dir.iterdir()):
             name = entry.name
@@ -851,11 +839,10 @@ def parse_role_definition(path: Path, provider: str) -> dict[str, object]:
     return result
 
 
-def role_status(home: Path, provider: str) -> list[str]:
+def role_status(roles_root: Path, provider: str) -> list[str]:
     rows: list[str] = []
     suffix = ".toml" if provider == "codex" else ".md"
     by_name = {item["name"]: item for item in roles()}
-    roles_root = home / "agents"
     for name in ROLES:
         dst = roles_root / f"{name}{suffix}"
         src = ROOT / "agents" / provider / f"{name}{suffix}"
@@ -865,6 +852,8 @@ def role_status(home: Path, provider: str) -> list[str]:
             target = _link_target(dst)
             if not dst.exists():
                 kind = f"symlink:BROKEN -> {target}"
+            elif provider == "codex":
+                kind = f"symlink:UNSUPPORTED -> {target}"
             elif target != src.resolve():
                 kind = f"symlink:OTHER -> {target}"
             else:
@@ -902,11 +891,13 @@ def global_agents_status(home: Path) -> list[str]:
 
 def cmd_status(args: argparse.Namespace) -> int:
     home = codex_home(args.codex_home)
+    codex_skills = codex_skills_root(getattr(args, "codex_skills_root", None))
     claude = claude_home(getattr(args, "claude_home", None))
     target = Path(arg_target(args)).expanduser().resolve()
     print(f"Repo: {ROOT}")
     print(f"CODEX_HOME: {home}")
-    print(f"CLAUDE_HOME: {claude}")
+    print(f"Codex skill root: {codex_skills}")
+    print(f"CLAUDE_CONFIG_DIR: {claude}")
     print(f"Project target: {target}")
     print()
     for row in global_agents_status(home):
@@ -923,16 +914,16 @@ def cmd_status(args: argparse.Namespace) -> int:
         print(f"project AGENTS: missing ({project_agents})")
     print()
     print("Installed research skills (codex):")
-    for row in skill_status(home):
+    for row in skill_status(codex_skills):
         print("  " + row)
     print("Installed native roles (codex):")
-    for row in role_status(home, "codex"):
+    for row in role_status(home / "agents", "codex"):
         print("  " + row)
     print("Installed research skills (claude):")
-    for row in skill_status(claude):
+    for row in skill_status(claude / "skills"):
         print("  " + row)
     print("Installed native roles (claude):")
-    for row in role_status(claude, "claude"):
+    for row in role_status(claude / "agents", "claude"):
         print("  " + row)
     return 0
 
@@ -959,9 +950,10 @@ def read_skill_name_and_description(skill_dir: Path) -> tuple[str, str]:
 
 def inventory_roots(args: argparse.Namespace) -> list[tuple[str, Path]]:
     codex = codex_home(args.codex_home)
+    skills = codex_skills_root(getattr(args, "codex_skills_root", None))
     claude = claude_home(args.claude_home)
     roots: list[tuple[str, Path]] = [
-        ("codex-user", codex / "skills"),
+        ("codex-user", skills),
         ("codex-system", codex / "skills" / ".system"),
         ("claude-user", claude / "skills"),
     ]
@@ -1015,7 +1007,8 @@ def cmd_inventory(args: argparse.Namespace) -> int:
     print("# Coresearch skill inventory")
     print(f"Repo: {ROOT}")
     print(f"CODEX_HOME: {codex_home(args.codex_home)}")
-    print(f"CLAUDE_HOME: {claude_home(args.claude_home)}")
+    print(f"Codex skill root: {codex_skills_root(getattr(args, 'codex_skills_root', None))}")
+    print(f"CLAUDE_CONFIG_DIR: {claude_home(args.claude_home)}")
     print()
     print("surface\tclass\tname\tkind\tpath\ttarget\tdescription")
     for surface, root in inventory_roots(args):
@@ -1232,7 +1225,6 @@ def probe_role_routing(
             if provider == "codex":
                 env["CODEX_HOME"] = str(homes[provider])
             else:
-                env["CLAUDE_HOME"] = str(homes[provider])
                 env["CLAUDE_CONFIG_DIR"] = str(homes[provider])
             try:
                 proc = subprocess.run(
@@ -1292,21 +1284,29 @@ def probe_role_routing(
 
 def cmd_doctor(args: argparse.Namespace) -> int:
     user_codex = codex_home(args.codex_home)
+    user_codex_skills = codex_skills_root(getattr(args, "codex_skills_root", None))
     user_claude = claude_home(getattr(args, "claude_home", None))
     target_value = getattr(args, "project_dir", None) or arg_target(args)
     target = Path(target_value).expanduser().resolve()
     scope = getattr(args, "scope", "user")
     if scope == "project":
-        codex = target / ".codex"
-        claude = target / ".claude"
+        codex_skills = target / ".agents" / "skills"
+        codex_roles = target / ".codex" / "agents"
+        codex_config_home = target / ".codex"
+        claude_skills = target / ".claude" / "skills"
+        claude_roles = target / ".claude" / "agents"
     else:
-        codex = user_codex
-        claude = user_claude
+        codex_skills = user_codex_skills
+        codex_roles = user_codex / "agents"
+        codex_config_home = user_codex
+        claude_skills = user_claude / "skills"
+        claude_roles = user_claude / "agents"
     providers = ["codex", "claude"] if args.surface == "both" else [args.surface]
-    homes = {"codex": codex, "claude": claude}
+    skill_roots = {"codex": codex_skills, "claude": claude_skills}
+    role_roots = {"codex": codex_roles, "claude": claude_roles}
     runtime_homes = {
         "codex": user_codex,
-        "claude": claude if scope == "project" else user_claude,
+        "claude": user_claude,
     }
     failures = validate_source_roles()
     warnings: list[str] = []
@@ -1315,8 +1315,12 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
     print("# Coresearch Harness Doctor")
     print(f"Repo: {ROOT}")
-    print(f"CODEX_HOME: {codex}")
-    print(f"CLAUDE_HOME: {claude}")
+    print(f"CODEX_HOME: {user_codex}")
+    print(f"Codex skill root: {codex_skills}")
+    print(f"Codex role root: {codex_roles}")
+    print(f"CLAUDE_CONFIG_DIR: {user_claude}")
+    print(f"Claude skill root: {claude_skills}")
+    print(f"Claude role root: {claude_roles}")
     print(f"Project target: {target}")
     print(f"Install scope: {scope}")
     print(f"Surface audit: {args.surface}")
@@ -1333,23 +1337,22 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print("PASS Claude subagent model override is unset")
 
     for provider in providers:
-        home = homes[provider]
-        for row in skill_status(home):
+        for row in skill_status(skill_roots[provider]):
             if "symlink:OK" in row or "copy/dir" in row:
                 print(f"PASS [{provider}] skill {row}")
             else:
                 failures.append(f"bad {provider} skill install: {row}")
-        for row in role_status(home, provider):
+        for row in role_status(role_roots[provider], provider):
             if ("symlink:OK" in row or "copy/file" in row) and "CONFIG-MISMATCH" not in row:
                 print(f"PASS [{provider}] role {row}")
             else:
                 failures.append(f"bad {provider} role install: {row}")
-        if provider == "codex":
-            registration_issues = codex_registration_failures(home)
-            if registration_issues:
-                failures.extend(registration_issues)
-            else:
-                print(f"PASS [codex] role registrations: {home / 'config.toml'}")
+        if provider == "codex" and _legacy_codex_skill_entries(codex_config_home / "skills"):
+            failures.append(f"legacy Coresearch Codex skills remain in unsupported root: {codex_config_home / 'skills'}")
+        if provider == "codex" and (codex_config_home / "config.toml").is_file():
+            config_text = (codex_config_home / "config.toml").read_text(errors="replace")
+            if CODEX_AGENTS_START in config_text or CODEX_AGENTS_END in config_text:
+                failures.append(f"legacy Coresearch Codex role registration block remains: {codex_config_home / 'config.toml'}")
 
     broken_repo_links = assert_no_broken_repo_symlinks()
     if broken_repo_links:
@@ -1357,8 +1360,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     else:
         print("PASS no broken symlinks in repo")
 
-    scanned_install_roots = [root for root in _install_roots(codex, claude) if root.is_dir()]
-    broken_install_links = broken_install_symlinks(codex, claude)
+    install_roots = _install_roots(codex_skills, codex_roles, claude_skills, claude_roles)
+    scanned_install_roots = [root for root in install_roots if root.is_dir()]
+    broken_install_links = broken_install_symlinks(install_roots)
     if broken_install_links:
         failures.extend(f"broken install symlink: {link}" for link in broken_install_links)
     else:
@@ -1435,6 +1439,7 @@ def cmd_update(args: argparse.Namespace) -> int:
     if not args.no_link:
         link_args = argparse.Namespace(
             codex_home=args.codex_home,
+            codex_skills_root=getattr(args, "codex_skills_root", None),
             claude_home=args.claude_home,
             surface=args.surface,
             global_bridge=args.global_bridge,
@@ -1459,6 +1464,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
     project_dir = arg_target(args) if getattr(args, "scope", "user") == "project" else None
     link_args = argparse.Namespace(
         codex_home=args.codex_home,
+        codex_skills_root=getattr(args, "codex_skills_root", None),
         claude_home=getattr(args, "claude_home", None),
         surface=getattr(args, "surface", "codex"),
         global_bridge=args.global_bridge,
@@ -1481,6 +1487,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
             return code
     doctor_args = argparse.Namespace(
         codex_home=args.codex_home,
+        codex_skills_root=getattr(args, "codex_skills_root", None),
         claude_home=getattr(args, "claude_home", None),
         surface=getattr(args, "surface", "codex"),
         scope=getattr(args, "scope", "user"),
@@ -1505,6 +1512,7 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     install.add_argument("--mode", choices=["copy", "symlink"], default="copy")
     install.add_argument("--codex-home")
+    install.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     install.add_argument("--claude-home")
     install.add_argument("--project-dir")
     install.add_argument("--global-bridge", action="store_true")
@@ -1513,9 +1521,13 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument("--force", action="store_true")
     install.set_defaults(func=cmd_install)
 
-    link = sub.add_parser("link", help="Symlink user-scope skills and native roles so repo edits reflect locally")
+    link = sub.add_parser(
+        "link",
+        help="Link supported user-scope entries and copy Codex roles as required by the host",
+    )
     link.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     link.add_argument("--codex-home")
+    link.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     link.add_argument("--claude-home")
     link.add_argument("--global-bridge", action="store_true")
     link.add_argument("--project-bridge", action="store_true")
@@ -1569,6 +1581,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     status = sub.add_parser("status", help="Show global/project/skill/role install status")
     status.add_argument("--codex-home")
+    status.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     status.add_argument("--claude-home")
     status.add_argument("target_arg", nargs="?", help="target directory (default: .)")
     status.add_argument("--target", help="target directory (overrides positional target)")
@@ -1576,12 +1589,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     inventory = sub.add_parser("inventory", help="Audit Codex/Claude skills and native roles")
     inventory.add_argument("--codex-home")
+    inventory.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     inventory.add_argument("--claude-home")
     inventory.add_argument("--include-plugins", action="store_true", help="also scan Claude plugin marketplaces/cache")
     inventory.set_defaults(func=cmd_inventory)
 
     doctor = sub.add_parser("doctor", help="Run install and exact role-routing checks")
     doctor.add_argument("--codex-home")
+    doctor.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     doctor.add_argument("--claude-home")
     doctor.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     doctor.add_argument("--scope", choices=["user", "project"], default="user")
@@ -1599,6 +1614,7 @@ def build_parser() -> argparse.ArgumentParser:
     repair.add_argument("target_arg", nargs="?", help="target directory for doctor (default: .)")
     repair.add_argument("--target", help="target directory (overrides positional target)")
     repair.add_argument("--codex-home")
+    repair.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     repair.add_argument("--claude-home")
     repair.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     repair.add_argument("--scope", choices=["user", "project"], default="user")
@@ -1613,6 +1629,7 @@ def build_parser() -> argparse.ArgumentParser:
     update = sub.add_parser("update", help="Optionally pull, relink user skills, and validate")
     update.add_argument("--pull", action="store_true", help="run git pull --ff-only before relinking")
     update.add_argument("--codex-home")
+    update.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     update.add_argument("--claude-home")
     update.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     update.add_argument("--scope", choices=["user", "project"], default="user")

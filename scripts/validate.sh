@@ -564,24 +564,25 @@ surface_has() {
 
 verify_provider_install() {
   local provider="$1"
-  local root="$2"
-  local mode="$3"
+  local skills_root="$2"
+  local roles_root="$3"
+  local mode="$4"
   local suffix
   suffix=".toml"
   [[ "$provider" == "claude" ]] && suffix=".md"
   local name
   for name in "${SKILLS[@]}"; do
-    [[ -f "$root/skills/$name/SKILL.md" ]] || fail "$provider install missing skill $name at $root"
+    [[ -f "$skills_root/$name/SKILL.md" ]] || fail "$provider install missing skill $name at $skills_root"
     if [[ "$mode" == "symlink" ]]; then
-      [[ -L "$root/skills/$name" ]] || fail "$provider $name is not a skill symlink"
+      [[ -L "$skills_root/$name" ]] || fail "$provider $name is not a skill symlink"
     else
-      [[ ! -L "$root/skills/$name" ]] || fail "$provider $name unexpectedly symlinked in copy mode"
+      [[ ! -L "$skills_root/$name" ]] || fail "$provider $name unexpectedly symlinked in copy mode"
     fi
   done
   local writer_ref
   for writer_ref in argument-architecture.md systems-paper-delivery.md semantic-revision.md; do
-    [[ -f "$root/skills/research-write/references/$writer_ref" ]] || \
-      fail "$provider install missing research-write reference $writer_ref at $root"
+    [[ -f "$skills_root/research-write/references/$writer_ref" ]] || \
+      fail "$provider install missing research-write reference $writer_ref at $skills_root"
   done
   local compact_ref
   for compact_ref in \
@@ -594,26 +595,19 @@ verify_provider_install() {
     research-review/references/rebuttal.md \
     research-verify/references/methodology-audit.md \
     research-verify/references/adversarial-audit.md; do
-    [[ -f "$root/skills/$compact_ref" ]] || \
-      fail "$provider install missing compact reference $compact_ref at $root"
+    [[ -f "$skills_root/$compact_ref" ]] || \
+      fail "$provider install missing compact reference $compact_ref at $skills_root"
   done
   for name in "${ROLES[@]}"; do
-    [[ -f "$root/agents/$name$suffix" ]] || fail "$provider install missing role $name at $root"
-    if [[ "$mode" == "symlink" ]]; then
-      [[ -L "$root/agents/$name$suffix" ]] || fail "$provider $name is not a role symlink"
+    [[ -f "$roles_root/$name$suffix" ]] || fail "$provider install missing role $name at $roles_root"
+    if [[ "$provider" == "codex" ]]; then
+      [[ ! -L "$roles_root/$name$suffix" ]] || fail "Codex $name must be a regular copied role file"
+    elif [[ "$mode" == "symlink" ]]; then
+      [[ -L "$roles_root/$name$suffix" ]] || fail "$provider $name is not a role symlink"
     else
-      [[ ! -L "$root/agents/$name$suffix" ]] || fail "$provider $name unexpectedly symlinked in copy mode"
+      [[ ! -L "$roles_root/$name$suffix" ]] || fail "$provider $name unexpectedly symlinked in copy mode"
     fi
   done
-  if [[ "$provider" == "codex" ]]; then
-    [[ -f "$root/config.toml" ]] || fail "Codex install missing role registrations at $root/config.toml"
-    grep -q '^# >>> coresearch-managed: agents:start >>>$' "$root/config.toml" || fail "Codex registration start marker missing"
-    grep -q '^# <<< coresearch-managed: agents:end <<<$' "$root/config.toml" || fail "Codex registration end marker missing"
-    for name in "${ROLES[@]}"; do
-      grep -Fq "[agents.$name]" "$root/config.toml" || fail "Codex registration missing $name"
-      grep -Fq "config_file = \"agents/$name.toml\"" "$root/config.toml" || fail "Codex config_file missing $name"
-    done
-  fi
 }
 
 for scope in user project; do
@@ -623,21 +617,29 @@ for scope in user project; do
       mkdir -p "$fixture/project"
       log="$TMP_ROOT/install-$scope-$mode-$surface.log"
       if [[ "$scope" == "user" ]]; then
-        command=(./harness install --scope user --surface "$surface" --mode "$mode" --codex-home "$fixture/codex" --claude-home "$fixture/claude")
+        command=(./harness install --scope user --surface "$surface" --mode "$mode" --codex-home "$fixture/codex" --codex-skills-root "$fixture/.agents/skills" --claude-home "$fixture/claude")
       else
         command=(./harness install --scope project --surface "$surface" --mode "$mode" --project-dir "$fixture/project")
       fi
       "${command[@]}" >"$log" 2>&1 || fail "install matrix failed: $scope/$mode/$surface (log $log)"
       "${command[@]}" >>"$log" 2>&1 || fail "install idempotency failed: $scope/$mode/$surface (log $log)"
       if surface_has "$surface" codex; then
-        root="$fixture/codex"
-        [[ "$scope" == "project" ]] && root="$fixture/project/.codex"
-        verify_provider_install codex "$root" "$mode"
+        skills_root="$fixture/.agents/skills"
+        roles_root="$fixture/codex/agents"
+        if [[ "$scope" == "project" ]]; then
+          skills_root="$fixture/project/.agents/skills"
+          roles_root="$fixture/project/.codex/agents"
+        fi
+        verify_provider_install codex "$skills_root" "$roles_root" "$mode"
       fi
       if surface_has "$surface" claude; then
-        root="$fixture/claude"
-        [[ "$scope" == "project" ]] && root="$fixture/project/.claude"
-        verify_provider_install claude "$root" "$mode"
+        skills_root="$fixture/claude/skills"
+        roles_root="$fixture/claude/agents"
+        if [[ "$scope" == "project" ]]; then
+          skills_root="$fixture/project/.claude/skills"
+          roles_root="$fixture/project/.claude/agents"
+        fi
+        verify_provider_install claude "$skills_root" "$roles_root" "$mode"
       fi
     done
   done
@@ -645,34 +647,43 @@ done
 pass "user/project x copy/symlink x codex/claude/both install matrix and idempotency"
 
 config_preserve="$TMP_ROOT/config-preserve"
+config_skills="$TMP_ROOT/config-preserve-skills"
 mkdir -p "$config_preserve"
 printf '%s\n' '[features]' 'multi_agent = true' > "$config_preserve/config.toml"
-./harness install --scope user --surface codex --mode copy --codex-home "$config_preserve" >"$TMP_ROOT/config-preserve.log" 2>&1 || \
+./harness install --scope user --surface codex --mode copy --codex-home "$config_preserve" --codex-skills-root "$config_skills" >"$TMP_ROOT/config-preserve.log" 2>&1 || \
   fail "Codex install failed to preserve existing config"
 grep -q '^multi_agent = true$' "$config_preserve/config.toml" || fail "Codex install changed unrelated config"
-[[ "$(grep -c '^# >>> coresearch-managed: agents:start >>>$' "$config_preserve/config.toml")" == "1" ]] || fail "Codex registration block is not idempotent"
 
-config_collision="$TMP_ROOT/config-collision"
-mkdir -p "$config_collision"
-printf '%s\n' '[agents.coresearch-reader]' 'description = "external"' 'config_file = "agents/external.toml"' > "$config_collision/config.toml"
-config_before="$(shasum -a 256 "$config_collision/config.toml" | cut -d ' ' -f 1)"
-if ./harness install --scope user --surface codex --mode copy --codex-home "$config_collision" >"$TMP_ROOT/config-collision.log" 2>&1; then
-  fail "Codex install accepted an unrelated role registration"
-fi
-[[ "$config_before" == "$(shasum -a 256 "$config_collision/config.toml" | cut -d ' ' -f 1)" ]] || fail "Codex install changed unrelated role registration"
-grep -q 'Refusing to replace unrelated Codex role registration' "$TMP_ROOT/config-collision.log" || fail "Codex registration collision diagnostic missing"
-pass "Codex role registrations are marker-bounded, idempotent, and preserve unrelated config"
+legacy_config="$TMP_ROOT/legacy-config"
+legacy_skills="$TMP_ROOT/legacy-new-skills"
+mkdir -p "$legacy_config/skills/coresearch"
+printf '%s\n' 'coresearch' > "$legacy_config/skills/coresearch/_coresearch"
+cp skills/coresearch/SKILL.md "$legacy_config/skills/coresearch/SKILL.md"
+printf '%s\n' '[features]' 'multi_agent = true' '' \
+  '# >>> coresearch-managed: agents:start >>>' \
+  '[agents.coresearch-reader]' \
+  'description = "legacy"' \
+  'config_file = "agents/coresearch-reader.toml"' \
+  '# <<< coresearch-managed: agents:end <<<' > "$legacy_config/config.toml"
+./harness install --scope user --surface codex --mode copy --codex-home "$legacy_config" --codex-skills-root "$legacy_skills" >"$TMP_ROOT/legacy-config.log" 2>&1 || \
+  fail "Codex install failed to migrate legacy topology"
+[[ ! -e "$legacy_config/skills/coresearch" ]] || fail "legacy .codex/skills entry was not removed"
+[[ -f "$legacy_skills/coresearch/SKILL.md" ]] || fail "legacy skill was not installed in .agents/skills"
+grep -q '^multi_agent = true$' "$legacy_config/config.toml" || fail "legacy migration changed unrelated config"
+if grep -q 'coresearch-managed: agents:' "$legacy_config/config.toml"; then fail "legacy role registration block remains"; fi
+pass "Codex install preserves unrelated config and migrates legacy skill/registration topology"
 
 collision="$TMP_ROOT/collision"
-mkdir -p "$collision/skills/coresearch" "$collision/agents"
-printf '%s\n' 'external skill content' > "$collision/skills/coresearch/SKILL.md"
+collision_skills="$TMP_ROOT/collision-skills"
+mkdir -p "$collision_skills/coresearch" "$collision/agents"
+printf '%s\n' 'external skill content' > "$collision_skills/coresearch/SKILL.md"
 printf '%s\n' 'name = "coresearch-planner"' 'model = "external-model"' > "$collision/agents/coresearch-planner.toml"
-skill_before="$(shasum -a 256 "$collision/skills/coresearch/SKILL.md" | cut -d ' ' -f 1)"
+skill_before="$(shasum -a 256 "$collision_skills/coresearch/SKILL.md" | cut -d ' ' -f 1)"
 role_before="$(shasum -a 256 "$collision/agents/coresearch-planner.toml" | cut -d ' ' -f 1)"
-if ./harness install --scope user --surface codex --mode copy --codex-home "$collision" >"$TMP_ROOT/collision.log" 2>&1; then
+if ./harness install --scope user --surface codex --mode copy --codex-home "$collision" --codex-skills-root "$collision_skills" >"$TMP_ROOT/collision.log" 2>&1; then
   fail "install overwrote or accepted unrelated same-name entries"
 fi
-[[ "$skill_before" == "$(shasum -a 256 "$collision/skills/coresearch/SKILL.md" | cut -d ' ' -f 1)" ]] || fail "unrelated skill changed"
+[[ "$skill_before" == "$(shasum -a 256 "$collision_skills/coresearch/SKILL.md" | cut -d ' ' -f 1)" ]] || fail "unrelated skill changed"
 [[ "$role_before" == "$(shasum -a 256 "$collision/agents/coresearch-planner.toml" | cut -d ' ' -f 1)" ]] || fail "unrelated role changed"
 grep -q 'Refusing to replace unrelated skill' "$TMP_ROOT/collision.log" || fail "skill collision message missing"
 grep -q 'Refusing to replace unrelated role' "$TMP_ROOT/collision.log" || fail "role collision message missing"
@@ -680,59 +691,64 @@ grep -q 'Refusing to replace unrelated role' "$TMP_ROOT/collision.log" || fail "
 forced="$TMP_ROOT/forced"
 mkdir -p "$forced/agents"
 printf '%s\n' 'external role' > "$forced/agents/coresearch-planner.toml"
-./harness install --scope user --surface codex --mode copy --codex-home "$forced" --force >"$TMP_ROOT/forced.log" 2>&1
+./harness install --scope user --surface codex --mode copy --codex-home "$forced" --codex-skills-root "$TMP_ROOT/forced-skills" --force >"$TMP_ROOT/forced.log" 2>&1
 grep -q 'coresearch-managed: role-description-version=2' "$forced/agents/coresearch-planner.toml" || fail "explicit --force did not replace role"
 
 stale="$TMP_ROOT/stale"
-mkdir -p "$stale/skills/paper-design" "$stale/agents"
-printf '%s\n' 'coresearch' > "$stale/skills/paper-design/_coresearch"
-printf '%s\n' '---' 'name: paper-design' 'description: compatibility shim retained for migration' '---' > "$stale/skills/paper-design/SKILL.md"
+stale_skills="$TMP_ROOT/stale-skills"
+mkdir -p "$stale_skills/paper-design" "$stale/agents"
+printf '%s\n' 'coresearch' > "$stale_skills/paper-design/_coresearch"
+printf '%s\n' '---' 'name: paper-design' 'description: compatibility shim retained for migration' '---' > "$stale_skills/paper-design/SKILL.md"
 for retired in research-gap research-causal research-audit research-adversary research-rebuttal; do
-  mkdir -p "$stale/skills/$retired"
-  printf '%s\n' 'coresearch' > "$stale/skills/$retired/_coresearch"
-  printf '%s\n' '---' "name: $retired" 'description: retired compacted skill' '---' > "$stale/skills/$retired/SKILL.md"
+  mkdir -p "$stale_skills/$retired"
+  printf '%s\n' 'coresearch' > "$stale_skills/$retired/_coresearch"
+  printf '%s\n' '---' "name: $retired" 'description: retired compacted skill' '---' > "$stale_skills/$retired/SKILL.md"
 done
-ln -s "$ROOT_DIR/skills/research-dialectic" "$stale/skills/research-dialectic"
+ln -s "$ROOT_DIR/skills/research-dialectic" "$stale_skills/research-dialectic"
 printf '%s\n' '# coresearch-managed: role-description-version=1' 'name = "coresearch-old"' > "$stale/agents/coresearch-old.toml"
 printf '%s\n' 'unrelated' > "$stale/agents/coresearch-external.toml"
-./harness install --scope user --surface codex --mode copy --codex-home "$stale" >"$TMP_ROOT/stale.log" 2>&1
-[[ ! -e "$stale/skills/paper-design" ]] || fail "recognized stale skill was not pruned"
+./harness install --scope user --surface codex --mode copy --codex-home "$stale" --codex-skills-root "$stale_skills" >"$TMP_ROOT/stale.log" 2>&1
+[[ ! -e "$stale_skills/paper-design" ]] || fail "recognized stale skill was not pruned"
 for retired in research-gap research-dialectic research-causal research-audit research-adversary research-rebuttal; do
-  [[ ! -e "$stale/skills/$retired" && ! -L "$stale/skills/$retired" ]] || \
+  [[ ! -e "$stale_skills/$retired" && ! -L "$stale_skills/$retired" ]] || \
     fail "retired Coresearch skill was not pruned: $retired"
 done
 [[ ! -e "$stale/agents/coresearch-old.toml" ]] || fail "recognized stale role was not pruned"
 [[ -f "$stale/agents/coresearch-external.toml" ]] || fail "unrelated stale-name role was removed"
 
 unrelated_retired="$TMP_ROOT/unrelated-retired"
-mkdir -p "$unrelated_retired/skills/research-gap"
-printf '%s\n' '---' 'name: research-gap' 'description: unrelated user-owned analysis skill' '---' > "$unrelated_retired/skills/research-gap/SKILL.md"
-./harness install --scope user --surface codex --mode copy --codex-home "$unrelated_retired" >"$TMP_ROOT/unrelated-retired.log" 2>&1
-grep -q 'unrelated user-owned analysis skill' "$unrelated_retired/skills/research-gap/SKILL.md" || \
+unrelated_skills="$TMP_ROOT/unrelated-retired-skills"
+mkdir -p "$unrelated_skills/research-gap"
+printf '%s\n' '---' 'name: research-gap' 'description: unrelated user-owned analysis skill' '---' > "$unrelated_skills/research-gap/SKILL.md"
+./harness install --scope user --surface codex --mode copy --codex-home "$unrelated_retired" --codex-skills-root "$unrelated_skills" >"$TMP_ROOT/unrelated-retired.log" 2>&1
+grep -q 'unrelated user-owned analysis skill' "$unrelated_skills/research-gap/SKILL.md" || \
   fail "unrelated retired-name skill was changed"
 pass "external entries are preserved; explicit force and recognized stale-entry pruning are bounded"
 
 repair_codex="$TMP_ROOT/repair-codex"
+repair_codex_skills="$TMP_ROOT/repair-codex-skills"
 repair_claude="$TMP_ROOT/repair-claude"
-./harness link --surface both --codex-home "$repair_codex" --claude-home "$repair_claude" >"$TMP_ROOT/repair-setup.log" 2>&1
-unlink "$repair_codex/skills/research-loop"
-ln -s "$ROOT_DIR/skills/research-loop-missing" "$repair_codex/skills/research-loop"
+./harness link --surface both --codex-home "$repair_codex" --codex-skills-root "$repair_codex_skills" --claude-home "$repair_claude" >"$TMP_ROOT/repair-setup.log" 2>&1
+[[ ! -L "$repair_codex/agents/coresearch-reader.toml" ]] || fail "harness link created an unsupported Codex role symlink"
+unlink "$repair_codex_skills/research-loop"
+ln -s "$ROOT_DIR/skills/research-loop-missing" "$repair_codex_skills/research-loop"
 unlink "$repair_claude/agents/coresearch-reader.md"
 ln -s "$ROOT_DIR/agents/claude/coresearch-reader-missing.md" "$repair_claude/agents/coresearch-reader.md"
-./harness repair --surface both --codex-home "$repair_codex" --claude-home "$repair_claude" --no-self-install --no-validate >"$TMP_ROOT/repair.log" 2>&1 || fail "repair failed (log $TMP_ROOT/repair.log)"
-[[ -e "$repair_codex/skills/research-loop" ]] || fail "repair left broken managed skill"
+./harness repair --surface both --codex-home "$repair_codex" --codex-skills-root "$repair_codex_skills" --claude-home "$repair_claude" --no-self-install --no-validate >"$TMP_ROOT/repair.log" 2>&1 || fail "repair failed (log $TMP_ROOT/repair.log)"
+[[ -e "$repair_codex_skills/research-loop" ]] || fail "repair left broken managed skill"
 [[ -e "$repair_claude/agents/coresearch-reader.md" ]] || fail "repair left broken managed role"
 grep -q 'Doctor result: PASS' "$TMP_ROOT/repair.log" || fail "repair did not finish with strict doctor"
 
 repair_project="$TMP_ROOT/repair-project"
 mkdir -p "$repair_project"
 ./harness install --scope project --surface both --mode copy --project-dir "$repair_project" >"$TMP_ROOT/repair-project-setup.log" 2>&1
-unlink "$repair_project/.codex/skills/research-loop/SKILL.md"
+grep -q 'nested repositories will not inherit this install' "$TMP_ROOT/repair-project-setup.log" || fail "non-worktree project warning missing"
+unlink "$repair_project/.agents/skills/research-loop/SKILL.md"
 unlink "$repair_project/.claude/agents/coresearch-reader.md"
 ./harness repair "$repair_project" --scope project --mode copy --surface both --no-self-install --no-validate >"$TMP_ROOT/repair-project.log" 2>&1 || fail "project copy repair failed (log $TMP_ROOT/repair-project.log)"
-[[ -f "$repair_project/.codex/skills/research-loop/SKILL.md" ]] || fail "project repair left copied skill broken"
+[[ -f "$repair_project/.agents/skills/research-loop/SKILL.md" ]] || fail "project repair left copied skill broken"
 [[ -f "$repair_project/.claude/agents/coresearch-reader.md" ]] || fail "project repair left copied role broken"
-[[ ! -L "$repair_project/.codex/skills/coresearch" ]] || fail "project copy repair silently changed mode to symlink"
+[[ ! -L "$repair_project/.agents/skills/coresearch" ]] || fail "project copy repair silently changed mode to symlink"
 grep -q 'Mode: copy' "$TMP_ROOT/repair-project.log" || fail "project repair ignored requested copy mode"
 grep -q 'Scope: project' "$TMP_ROOT/repair-project.log" || fail "project repair ignored requested scope"
 grep -q 'Doctor result: PASS' "$TMP_ROOT/repair-project.log" || fail "project repair did not validate the project install"
@@ -740,7 +756,7 @@ grep -q 'Doctor result: PASS' "$TMP_ROOT/repair-project.log" || fail "project re
 repair_collision="$TMP_ROOT/repair-collision"
 mkdir -p "$repair_collision/agents"
 printf '%s\n' 'external repair role' > "$repair_collision/agents/coresearch-planner.toml"
-if ./harness repair --surface codex --mode copy --codex-home "$repair_collision" --no-self-install --no-validate >"$TMP_ROOT/repair-collision.log" 2>&1; then
+if ./harness repair --surface codex --mode copy --codex-home "$repair_collision" --codex-skills-root "$TMP_ROOT/repair-collision-skills" --no-self-install --no-validate >"$TMP_ROOT/repair-collision.log" 2>&1; then
   fail "repair silently replaced or accepted an unrelated role collision"
 fi
 grep -q '^external repair role$' "$repair_collision/agents/coresearch-planner.toml" || fail "repair overwrote an unrelated role"
@@ -748,14 +764,15 @@ grep -q '^external repair role$' "$repair_collision/agents/coresearch-planner.to
 update_project="$TMP_ROOT/update-project"
 mkdir -p "$update_project"
 (cd "$update_project" && "$ROOT_DIR/harness" update --scope project --mode copy --surface codex --no-validate) >"$TMP_ROOT/update-project.log" 2>&1
-[[ -f "$update_project/.codex/skills/coresearch/SKILL.md" ]] || fail "project update omitted copied skills"
+[[ -f "$update_project/.agents/skills/coresearch/SKILL.md" ]] || fail "project update omitted copied skills"
 [[ -f "$update_project/.codex/agents/coresearch-verifier.toml" ]] || fail "project update omitted copied roles"
-[[ ! -L "$update_project/.codex/skills/coresearch" ]] || fail "project update silently changed mode to symlink"
+[[ ! -L "$update_project/.agents/skills/coresearch" ]] || fail "project update silently changed mode to symlink"
 pass "repair and update honor scope/mode and preserve unrelated collisions"
 
 wrapper="$TMP_ROOT/wrapper"
-./scripts/install.sh --scope user --surface codex --mode copy --codex-home "$wrapper" >"$TMP_ROOT/wrapper.log" 2>&1
-[[ -f "$wrapper/skills/coresearch/SKILL.md" && -f "$wrapper/agents/coresearch-verifier.toml" ]] || fail "thin install wrapper omitted skills or roles"
+wrapper_skills="$TMP_ROOT/wrapper-skills"
+./scripts/install.sh --scope user --surface codex --mode copy --codex-home "$wrapper" --codex-skills-root "$wrapper_skills" >"$TMP_ROOT/wrapper.log" 2>&1
+[[ -f "$wrapper_skills/coresearch/SKILL.md" && -f "$wrapper/agents/coresearch-verifier.toml" ]] || fail "thin install wrapper omitted skills or roles"
 pass "shell install wrapper delegates to canonical harness behavior"
 
 project="$TMP_ROOT/prompt-project"
@@ -809,9 +826,10 @@ cmp -s "$path_case/plain/AGENTS.md" "$path_case/stubbed/AGENTS.md" || fail "brid
 pass "prompt bridge/full-template dry-run, apply, idempotency, protection, backup, rollback, removal, and path independence"
 
 doctor_codex="$TMP_ROOT/doctor-codex"
+doctor_skills="$TMP_ROOT/doctor-skills"
 doctor_claude="$TMP_ROOT/doctor-claude"
-./harness install --scope user --surface both --mode copy --codex-home "$doctor_codex" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-install.log" 2>&1
-./harness doctor --strict --surface both --codex-home "$doctor_codex" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-pass.log" 2>&1 || fail "strict doctor rejected correct fixture (log $TMP_ROOT/doctor-pass.log)"
+./harness install --scope user --surface both --mode copy --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-install.log" 2>&1
+./harness doctor --strict --surface both --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-pass.log" 2>&1 || fail "strict doctor rejected correct fixture (log $TMP_ROOT/doctor-pass.log)"
 grep -q 'Doctor result: PASS' "$TMP_ROOT/doctor-pass.log" || fail "strict doctor PASS summary missing"
 
 doctor_case() {
@@ -829,7 +847,7 @@ import sys
 path = Path(sys.argv[1])
 path.write_text(path.read_text().replace('model = "gpt-5.6-sol"', 'model = "wrong-model"', 1))
 PY
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-model.log" 2>&1; then fail "doctor accepted wrong model"; fi
+if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-model.log" 2>&1; then fail "doctor accepted wrong model"; fi
 grep -q 'CONFIG-MISMATCH' "$TMP_ROOT/doctor-wrong-model.log" || fail "wrong-model diagnostic missing"
 
 case_root="$(doctor_case wrong-effort)"
@@ -839,7 +857,7 @@ import sys
 path = Path(sys.argv[1])
 path.write_text(path.read_text().replace('model_reasoning_effort = "xhigh"', 'model_reasoning_effort = "low"', 1))
 PY
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-effort.log" 2>&1; then fail "doctor accepted wrong effort"; fi
+if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-effort.log" 2>&1; then fail "doctor accepted wrong effort"; fi
 grep -q 'CONFIG-MISMATCH' "$TMP_ROOT/doctor-wrong-effort.log" || fail "wrong-effort diagnostic missing"
 
 case_root="$(doctor_case alias)"
@@ -849,31 +867,32 @@ import sys
 path = Path(sys.argv[1])
 path.write_text(path.read_text().replace('model: claude-opus-5', 'model: opus', 1))
 PY
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-alias.log" 2>&1; then fail "doctor accepted rolling alias"; fi
+if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-alias.log" 2>&1; then fail "doctor accepted rolling alias"; fi
 grep -q 'observed=opus' "$TMP_ROOT/doctor-alias.log" || fail "alias diagnostic missing observed value"
 
 case_root="$(doctor_case missing)"
 unlink "$case_root-codex/agents/coresearch-reader.toml"
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-missing.log" 2>&1; then fail "doctor accepted missing role"; fi
+if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-missing.log" 2>&1; then fail "doctor accepted missing role"; fi
 grep -q 'coresearch-reader: missing' "$TMP_ROOT/doctor-missing.log" || fail "missing-role diagnostic absent"
 
-case_root="$(doctor_case missing-registration)"
-unlink "$case_root-codex/config.toml"
-if ./harness doctor --strict --surface codex --codex-home "$case_root-codex" >"$TMP_ROOT/doctor-missing-registration.log" 2>&1; then fail "doctor accepted missing Codex registrations"; fi
-grep -q 'Codex role registration config missing' "$TMP_ROOT/doctor-missing-registration.log" || fail "missing-registration diagnostic absent"
+case_root="$(doctor_case symlink-role)"
+mv "$case_root-codex/agents/coresearch-reader.toml" "$case_root-codex/agents/coresearch-reader-source.toml"
+ln -s "$case_root-codex/agents/coresearch-reader-source.toml" "$case_root-codex/agents/coresearch-reader.toml"
+if ./harness doctor --strict --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-symlink-role.log" 2>&1; then fail "doctor accepted unsupported Codex role symlink"; fi
+grep -q 'symlink:UNSUPPORTED' "$TMP_ROOT/doctor-symlink-role.log" || fail "unsupported Codex role symlink diagnostic absent"
 
 case_root="$(doctor_case broken)"
 unlink "$case_root-claude/agents/coresearch-reader.md"
 ln -s "$case_root-claude/agents/does-not-exist.md" "$case_root-claude/agents/coresearch-reader.md"
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-broken.log" 2>&1; then fail "doctor accepted broken role link"; fi
+if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-broken.log" 2>&1; then fail "doctor accepted broken role link"; fi
 grep -q 'symlink:BROKEN' "$TMP_ROOT/doctor-broken.log" || fail "broken-link diagnostic absent"
 
-if CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-5 ./harness doctor --strict --surface both --codex-home "$doctor_codex" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-override.log" 2>&1; then fail "doctor accepted Claude environment override"; fi
+if CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-5 ./harness doctor --strict --surface both --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-override.log" 2>&1; then fail "doctor accepted Claude environment override"; fi
 grep -q 'CLAUDE_CODE_SUBAGENT_MODEL overrides Coresearch Claude role pins' "$TMP_ROOT/doctor-override.log" || fail "override diagnostic absent"
 
 grep -q -- '--probe-models' <(./harness doctor --help) || fail "explicit model probe option missing"
 grep -q -- '--probe-role' <(./harness doctor --help) || fail "single-role probe option missing"
-if PATH="/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --codex-home "$doctor_codex" --claude-home "$TMP_ROOT/probe-empty-claude" >"$TMP_ROOT/probe-codex-only.log" 2>&1; then
+if PATH="/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$TMP_ROOT/probe-empty-claude" >"$TMP_ROOT/probe-codex-only.log" 2>&1; then
   fail "unobservable model probe was incorrectly reported as verified"
 fi
 grep -q 'routing provider=codex role=coresearch-reader .*status=static-only' "$TMP_ROOT/probe-codex-only.log" || fail "Codex static-only named-role probe record missing"
@@ -919,11 +938,11 @@ effort="$(sed -n 's/^effort: //p' "$config")"
 printf '{"agent_type":"%s","model":"%s","effort":"%s","result":"CORESEARCH_ROLE_PROBE %s"}\n' "$role" "$model" "$effort" "$role"
 SH
 chmod +x "$probe_bin/codex" "$probe_bin/claude"
-PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface both --probe-models --codex-home "$doctor_codex" --claude-home "$doctor_claude" >"$TMP_ROOT/probe-named-roles.log" 2>&1 || fail "named-role probe rejected exact fixture (log $TMP_ROOT/probe-named-roles.log)"
+PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface both --probe-models --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/probe-named-roles.log" 2>&1 || fail "named-role probe rejected exact fixture (log $TMP_ROOT/probe-named-roles.log)"
 [[ "$(grep -c '^routing provider=codex role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Codex named-role probes did not verify all roles"
 [[ "$(grep -c '^routing provider=claude role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Claude named-role probes did not verify all roles"
 
-(cd "$TMP_ROOT" && PATH="$probe_bin:/usr/bin:/bin" "$ROOT_DIR/harness" doctor --strict --surface codex --probe-models --probe-role coresearch-reader --target "$ROOT_DIR" --codex-home "$doctor_codex") >"$TMP_ROOT/probe-single-role.log" 2>&1 || \
+(cd "$TMP_ROOT" && PATH="$probe_bin:/usr/bin:/bin" "$ROOT_DIR/harness" doctor --strict --surface codex --probe-models --probe-role coresearch-reader --target "$ROOT_DIR" --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills") >"$TMP_ROOT/probe-single-role.log" 2>&1 || \
   fail "single named-role probe failed outside a Git repository (log $TMP_ROOT/probe-single-role.log)"
 [[ "$(grep -c '^routing provider=codex role=' "$TMP_ROOT/probe-single-role.log")" == "1" ]] || fail "single-role filter probed more than one role"
 grep -q 'routing provider=codex role=coresearch-reader .*status=verified' "$TMP_ROOT/probe-single-role.log" || fail "single-role probe did not verify requested role"
@@ -936,7 +955,7 @@ printf '{"type":"error","message":"agent type is currently not available"}\n'
 exit 1
 SH
 chmod +x "$probe_error_bin/codex"
-if PATH="$probe_error_bin:/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --probe-role coresearch-reader --codex-home "$doctor_codex" >"$TMP_ROOT/probe-error.log" 2>&1; then
+if PATH="$probe_error_bin:/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --probe-role coresearch-reader --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/probe-error.log" 2>&1; then
   fail "failed role probe was incorrectly accepted"
 fi
 grep -q 'agent type is currently not available' "$TMP_ROOT/probe-error.log" || fail "failed role probe suppressed bounded host error"
