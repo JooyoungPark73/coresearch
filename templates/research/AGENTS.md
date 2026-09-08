@@ -92,14 +92,14 @@ Do not pass a per-invocation model override.
 
 | Role | Codex model / effort | Claude model / effort | Capability |
 |---|---|---|---|
-| `coresearch-planner` | `gpt-5.6-sol` / `xhigh` | `claude-opus-5` / `xhigh` | Read-only planning and browsing |
-| `coresearch-researcher` | `gpt-5.6-terra` / `high` | `claude-sonnet-5` / `high` | Read, search, and web |
-| `coresearch-reader` | `gpt-5.6-luna` / `low` | `claude-haiku-4-5-20251001` / `low` | Read and bounded extraction |
-| `coresearch-implementer` | `gpt-5.6-luna` / `medium` | `claude-haiku-4-5-20251001` / `medium` | Bounded workspace writes and tests |
-| `coresearch-experimenter` | `gpt-5.6-luna` / `medium` | `claude-haiku-4-5-20251001` / `medium` | Bounded execution and result capture |
-| `coresearch-debugger` | `gpt-5.6-sol` / `high` | `claude-opus-5` / `high` | Read-only root-cause diagnosis |
-| `coresearch-synthesizer` | `gpt-5.6-sol` / `low` | `claude-opus-5` / `low` | Read-only evidence synthesis |
-| `coresearch-verifier` | `gpt-5.6-sol` / `xhigh` | `claude-opus-5` / `xhigh` | Independent read-only verification |
+| `coresearch-planner` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` | Read-only planning and browsing |
+| `coresearch-researcher` | `gpt-6-astra` / `high` | `claude-sonnet-5` / `high` | Read, search, and web |
+| `coresearch-reader` | `gpt-6-astra` / `low` | `claude-haiku-4-5-20251001` / `low` | Read and bounded extraction |
+| `coresearch-implementer` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` | Bounded workspace writes and tests |
+| `coresearch-experimenter` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` | Bounded execution and result capture |
+| `coresearch-debugger` | `gpt-6-astra` / `high` | `claude-opus-5` / `high` | Read-only root-cause diagnosis |
+| `coresearch-synthesizer` | `gpt-6-astra` / `low` | `claude-opus-5` / `low` | Read-only evidence synthesis |
+| `coresearch-verifier` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` | Independent read-only verification |
 
 Use reader for known sources and researcher for discovery. Use implementer only
 for a mechanically clear, decomposed slice after owned files and validation are

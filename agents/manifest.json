@@ -14,7 +14,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-sol",
+          "model": "gpt-6-astra",
           "effort": "xhigh"
         },
         "claude": {
@@ -34,7 +34,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-terra",
+          "model": "gpt-6-astra",
           "effort": "high"
         },
         "claude": {
@@ -54,7 +54,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-luna",
+          "model": "gpt-6-astra",
           "effort": "low"
         },
         "claude": {
@@ -73,7 +73,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-luna",
+          "model": "gpt-6-astra",
           "effort": "medium"
         },
         "claude": {
@@ -93,7 +93,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-luna",
+          "model": "gpt-6-astra",
           "effort": "medium"
         },
         "claude": {
@@ -113,7 +113,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-sol",
+          "model": "gpt-6-astra",
           "effort": "high"
         },
         "claude": {
@@ -133,7 +133,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-sol",
+          "model": "gpt-6-astra",
           "effort": "low"
         },
         "claude": {
@@ -152,7 +152,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-5.6-sol",
+          "model": "gpt-6-astra",
           "effort": "xhigh"
         },
         "claude": {

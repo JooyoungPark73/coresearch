@@ -34,20 +34,24 @@ or `.claude/agents`, and its absence there is not a registration failure.
 
 | Role | Codex model / effort | Claude model / effort |
 |---|---|---|
-| `coresearch-planner` | `gpt-5.6-sol` / `xhigh` | `claude-opus-5` / `xhigh` |
-| `coresearch-researcher` | `gpt-5.6-terra` / `high` | `claude-sonnet-5` / `high` |
-| `coresearch-reader` | `gpt-5.6-luna` / `low` | `claude-haiku-4-5-20251001` / `low` |
-| `coresearch-implementer` | `gpt-5.6-luna` / `medium` | `claude-haiku-4-5-20251001` / `medium` |
-| `coresearch-experimenter` | `gpt-5.6-luna` / `medium` | `claude-haiku-4-5-20251001` / `medium` |
-| `coresearch-debugger` | `gpt-5.6-sol` / `high` | `claude-opus-5` / `high` |
-| `coresearch-synthesizer` | `gpt-5.6-sol` / `low` | `claude-opus-5` / `low` |
-| `coresearch-verifier` | `gpt-5.6-sol` / `xhigh` | `claude-opus-5` / `xhigh` |
+| `coresearch-planner` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` |
+| `coresearch-researcher` | `gpt-6-astra` / `high` | `claude-sonnet-5` / `high` |
+| `coresearch-reader` | `gpt-6-astra` / `low` | `claude-haiku-4-5-20251001` / `low` |
+| `coresearch-implementer` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` |
+| `coresearch-experimenter` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` |
+| `coresearch-debugger` | `gpt-6-astra` / `high` | `claude-opus-5` / `high` |
+| `coresearch-synthesizer` | `gpt-6-astra` / `low` | `claude-opus-5` / `low` |
+| `coresearch-verifier` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` |
+
+All eight Codex roles use Astra with role-specific reasoning effort.
+After updating this checkout, run `./harness link --surface codex` to refresh
+installed role copies, then start a new Codex session to load them.
 
 Rolling provider aliases and inherited or unspecified effort are rejected.
 Coresearch instructions do not pass a per-invocation model override.
-The Luna/Haiku implementer handles mechanically clear, decomposed slices;
+The implementer handles mechanically clear, decomposed slices;
 complex integrated implementation stays with the frontier parent. The
-Sol/Opus-low synthesizer consolidates already-resolved evidence; unresolved
+low-effort synthesizer consolidates already-resolved evidence; unresolved
 conflicting evidence or mechanism choices stay with the frontier parent.
 
 ## Recommended development install

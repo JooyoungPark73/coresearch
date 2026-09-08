@@ -165,14 +165,14 @@ manifest = json.loads(Path("agents/manifest.json").read_text())
 assert manifest["schema_version"] == 1
 assert manifest["role_description_version"] == 2
 expected_roles = {
-    "coresearch-planner": {"codex": ("gpt-5.6-sol", "xhigh"), "claude": ("claude-opus-5", "xhigh")},
-    "coresearch-researcher": {"codex": ("gpt-5.6-terra", "high"), "claude": ("claude-sonnet-5", "high")},
-    "coresearch-reader": {"codex": ("gpt-5.6-luna", "low"), "claude": ("claude-haiku-4-5-20251001", "low")},
-    "coresearch-implementer": {"codex": ("gpt-5.6-luna", "medium"), "claude": ("claude-haiku-4-5-20251001", "medium")},
-    "coresearch-experimenter": {"codex": ("gpt-5.6-luna", "medium"), "claude": ("claude-haiku-4-5-20251001", "medium")},
-    "coresearch-debugger": {"codex": ("gpt-5.6-sol", "high"), "claude": ("claude-opus-5", "high")},
-    "coresearch-synthesizer": {"codex": ("gpt-5.6-sol", "low"), "claude": ("claude-opus-5", "low")},
-    "coresearch-verifier": {"codex": ("gpt-5.6-sol", "xhigh"), "claude": ("claude-opus-5", "xhigh")},
+    "coresearch-planner": {"codex": ("gpt-6-astra", "xhigh"), "claude": ("claude-opus-5", "xhigh")},
+    "coresearch-researcher": {"codex": ("gpt-6-astra", "high"), "claude": ("claude-sonnet-5", "high")},
+    "coresearch-reader": {"codex": ("gpt-6-astra", "low"), "claude": ("claude-haiku-4-5-20251001", "low")},
+    "coresearch-implementer": {"codex": ("gpt-6-astra", "medium"), "claude": ("claude-haiku-4-5-20251001", "medium")},
+    "coresearch-experimenter": {"codex": ("gpt-6-astra", "medium"), "claude": ("claude-haiku-4-5-20251001", "medium")},
+    "coresearch-debugger": {"codex": ("gpt-6-astra", "high"), "claude": ("claude-opus-5", "high")},
+    "coresearch-synthesizer": {"codex": ("gpt-6-astra", "low"), "claude": ("claude-opus-5", "low")},
+    "coresearch-verifier": {"codex": ("gpt-6-astra", "xhigh"), "claude": ("claude-opus-5", "xhigh")},
 }
 roles = {item["name"]: item for item in manifest["roles"]}
 assert set(roles) == set(expected_roles) and len(roles) == 8
@@ -845,7 +845,7 @@ python3 - "$case_root-codex/agents/coresearch-planner.toml" <<'PY'
 from pathlib import Path
 import sys
 path = Path(sys.argv[1])
-path.write_text(path.read_text().replace('model = "gpt-5.6-sol"', 'model = "wrong-model"', 1))
+path.write_text(path.read_text().replace('model = "gpt-6-astra"', 'model = "wrong-model"', 1))
 PY
 if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-model.log" 2>&1; then fail "doctor accepted wrong model"; fi
 grep -q 'CONFIG-MISMATCH' "$TMP_ROOT/doctor-wrong-model.log" || fail "wrong-model diagnostic missing"

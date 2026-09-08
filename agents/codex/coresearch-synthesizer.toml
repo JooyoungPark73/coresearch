@@ -1,7 +1,7 @@
 # coresearch-managed: role-description-version=2
 name = "coresearch-synthesizer"
 description = "Consolidates already-resolved evidence into scoped claims, conclusions, limitations, and explicit unknowns."
-model = "gpt-5.6-sol"
+model = "gpt-6-astra"
 model_reasoning_effort = "low"
 sandbox_mode = "read-only"
 developer_instructions = """

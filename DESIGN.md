@@ -130,7 +130,9 @@ efforts live only in [`agents/manifest.json`](agents/manifest.json). Native
 files repeat required host fields and are validated against that manifest. The
 source manifest is not installed into provider agent directories and is not a
 runtime registration mechanism; each native file is self-contained. This
-document intentionally does not duplicate the model matrix.
+document intentionally does not duplicate the model matrix. Codex roles share
+one explicit model pin while retaining role-specific effort and capability
+boundaries; Claude roles retain their provider-specific model tiers.
 
 ## 7. Host adapters
 

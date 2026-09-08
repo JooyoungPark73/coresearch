@@ -1,7 +1,7 @@
 # coresearch-managed: role-description-version=2
 name = "coresearch-verifier"
 description = "Independently verifies claims, methodology, implementation evidence, and completion at a declared boundary."
-model = "gpt-5.6-sol"
+model = "gpt-6-astra"
 model_reasoning_effort = "xhigh"
 sandbox_mode = "read-only"
 developer_instructions = """
