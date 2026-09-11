@@ -87,26 +87,33 @@ state the chosen order once. A skill never silently performs the next stage.
 
 ## Fixed native roles
 
-The role/model matrix below mirrors the installed canonical agent manifest.
-Do not pass a per-invocation model override.
+The role/model matrix below mirrors the source canonical agent manifest.
+Do not pass a per-invocation model override. For Codex, `assignment` means the
+parent chooses and explicitly passes effort per task: `low` for straightforward
+extraction, `medium` for bounded execution, `high` for difficult reasoning, and
+`xhigh` for deeply branching planning or verification. These are complexity
+guidelines, not role defaults. Read the assignment-effort section of
+`coresearch/references/agent-routing.md` before delegation. Record the concrete
+effort and rationale; use a bounded or no-history fork that supports overrides.
+Claude retains its fixed efforts.
 
 | Role | Codex model / effort | Claude model / effort | Capability |
 |---|---|---|---|
-| `coresearch-planner` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` | Read-only planning and browsing |
-| `coresearch-researcher` | `gpt-6-astra` / `high` | `claude-sonnet-5` / `high` | Read, search, and web |
-| `coresearch-reader` | `gpt-6-astra` / `low` | `claude-haiku-4-5-20251001` / `low` | Read and bounded extraction |
-| `coresearch-implementer` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` | Bounded workspace writes and tests |
-| `coresearch-experimenter` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` | Bounded execution and result capture |
-| `coresearch-debugger` | `gpt-6-astra` / `high` | `claude-opus-5` / `high` | Read-only root-cause diagnosis |
-| `coresearch-synthesizer` | `gpt-6-astra` / `low` | `claude-opus-5` / `low` | Read-only evidence synthesis |
-| `coresearch-verifier` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` | Independent read-only verification |
+| `coresearch-planner` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` | Read-only planning and browsing |
+| `coresearch-researcher` | `gpt-6-astra` / `assignment` | `claude-sonnet-5` / `high` | Read, search, and web |
+| `coresearch-reader` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `low` | Read and bounded extraction |
+| `coresearch-implementer` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` | Bounded workspace writes and tests |
+| `coresearch-experimenter` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` | Bounded execution and result capture |
+| `coresearch-debugger` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `high` | Read-only root-cause diagnosis |
+| `coresearch-synthesizer` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `low` | Read-only evidence synthesis |
+| `coresearch-verifier` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` | Independent read-only verification |
 
 Use reader for known sources and researcher for discovery. Use implementer only
 for a mechanically clear, decomposed slice after owned files and validation are
 explicit; complex integrated implementation stays with the frontier parent.
 Use experimenter under a locked evaluation contract. After repeated observed
 failure, return to the parent for one debugger diagnosis; fixes return to
-implementer. Use the low-effort synthesizer only after the evidence and
+implementer. Use the synthesizer only after the evidence and
 mechanism decision is resolved; unresolved conflicting evidence or mechanism
 choice stays with the frontier parent. Verify at a claim/completion boundary and after
 any later evidence-changing edit.
@@ -153,8 +160,10 @@ For Codex durable continuation, submit a goal that references the mission:
 
 ```text
 /goal Execute docs/research/runs/<run-id>/mission.md within sandbox.md. Use the
-named fixed role for each ready assignment and never override its configured
-model or effort. Join dependencies and integrate writable artifacts before
+named fixed role for each ready assignment, preserve its configured model, and
+explicitly pass parent-selected reasoning effort by assignment complexity.
+Use a bounded or no-history fork that supports effort selection. Join
+dependencies and integrate writable artifacts before
 verification. Keep docs/research/decisions/ledger.yaml current. Stop only after
 result.json has a terminal status, every assignment has a role_runs record, and
 every required validator has evidence, or when a declared

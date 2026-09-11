@@ -836,6 +836,9 @@ def parse_role_definition(path: Path, provider: str) -> dict[str, object]:
         match = re.search(rf'(?m)^{key}\s*=\s*"([^"\n]+)"\s*$', text)
         if match:
             result[key] = match.group(1)
+        elif re.search(rf"(?m)^\s*{key}\s*=", text):
+            # An unparsed value is still an override, not an omitted setting.
+            result[key] = "<unparsed>"
     return result
 
 
@@ -863,11 +866,11 @@ def role_status(roles_root: Path, provider: str) -> list[str]:
         config = parse_role_definition(dst, provider)
         effort_key = "model_reasoning_effort" if provider == "codex" else "effort"
         observed = (config.get("model"), config.get(effort_key))
-        expected = (pin["model"], pin["effort"])
+        expected = (pin["model"], None if pin["effort"] == "assignment" else pin["effort"])
         if dst.exists() and observed != expected:
-            kind += f" CONFIG-MISMATCH requested={expected[0]}/{expected[1]} observed={observed[0]}/{observed[1]}"
+            kind += f" CONFIG-MISMATCH requested={pin['model']}/{pin['effort']} observed={observed[0]}/{observed[1]}"
         elif dst.exists():
-            kind += f" model={expected[0]} effort={expected[1]}"
+            kind += f" model={expected[0]} effort={pin['effort']}"
         rows.append(f"{name}: {kind}")
 
     if roles_root.is_dir():
@@ -1054,8 +1057,12 @@ def cmd_inventory(args: argparse.Namespace) -> int:
 def validate_source_roles() -> list[str]:
     failures: list[str] = []
     manifest = agent_manifest()
-    if manifest.get("schema_version") != 1:
-        failures.append("agents/manifest.json schema_version must be 1")
+    if manifest.get("schema_version") != 2:
+        failures.append("agents/manifest.json schema_version must be 2")
+    policy = manifest.get("codex_effort_policy", {})
+    allowed = policy.get("allowed", [])
+    if allowed != ["low", "medium", "high", "xhigh"] or policy.get("probe_effort") not in allowed:
+        failures.append("agents/manifest.json invalid Codex assignment effort policy")
     if manifest.get("role_description_version") != 2:
         failures.append("agents/manifest.json role_description_version must be 2")
     manifest_roles = manifest.get("roles", [])
@@ -1085,7 +1092,12 @@ def validate_source_roles() -> list[str]:
                 failures.append(f"{path}: name mismatch {config.get('name')!r}")
             if config.get("model") != pin["model"]:
                 failures.append(f"{path}: model mismatch requested={pin['model']} observed={config.get('model')}")
-            if config.get(effort_key) != pin["effort"]:
+            expected_effort = None if provider == "codex" else pin.get("effort")
+            if provider == "codex" and pin.get("effort") != "assignment":
+                failures.append(f"{name}: Codex effort must be assignment-selected")
+            if provider == "claude" and pin.get("effort") not in {"low", "medium", "high", "xhigh"}:
+                failures.append(f"{name}: invalid fixed Claude effort")
+            if config.get(effort_key) != expected_effort:
                 failures.append(f"{path}: effort mismatch requested={pin['effort']} observed={config.get(effort_key)}")
             if config.get("model") in forbidden:
                 failures.append(f"{path}: rolling or inherited model alias is forbidden")
@@ -1196,8 +1208,9 @@ def probe_role_routing(
         if not executable:
             for role in selected_roles:
                 pin = role["providers"][provider]
+                effort = agent_manifest()["codex_effort_policy"]["probe_effort"] if provider == "codex" else pin["effort"]
                 reports.append(
-                    f"routing provider={provider} role={role['name']} requested={pin['model']}/{pin['effort']} "
+                    f"routing provider={provider} role={role['name']} requested={pin['model']}/{effort} "
                     "observed_role=null observed=null/null status=static-only"
                 )
             failures.append(f"{provider} named-role probes are static-only: CLI not found")
@@ -1206,14 +1219,17 @@ def probe_role_routing(
             name = role["name"]
             pin = role["providers"][provider]
             model = pin["model"]
-            effort = pin["effort"]
+            # The probe is a bounded assignment: select its effort explicitly,
+            # then compare observed metadata against that request, not a role pin.
+            effort = agent_manifest()["codex_effort_policy"]["probe_effort"] if provider == "codex" else pin["effort"]
             marker = f"CORESEARCH_ROLE_PROBE {name}"
             if provider == "codex":
                 command = [executable, "exec", "--ephemeral", "--json"]
                 if not _is_git_worktree(target):
                     command.append("--skip-git-repo-check")
                 command.append(
-                    f"Spawn exactly the custom agent named {name}. The child must reply exactly "
+                    f"Spawn exactly the custom agent named {name} with reasoning_effort={effort} "
+                    "and fork_turns=none. Do not override its model. The child must reply exactly "
                     f"{marker}. Return that child reply unchanged and do not perform the probe yourself."
                 )
             else:

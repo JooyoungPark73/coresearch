@@ -5,11 +5,37 @@ bounded assignment and returns its artifact or result to the parent; the
 parent then re-enters `coresearch` before selecting another research stage.
 
 The source bundle's `agents/manifest.json` is the maintenance authority for role
-names, provider models, efforts, capabilities, and intended skills. Installed
+names, provider models, effort policies, capabilities, and intended skills. Installed
 runtimes do not receive or require a manifest under `.codex/agents` or
 `.claude/agents`; every native role definition is complete. Do not look for a
 runtime manifest, infer registration failure from its absence, substitute
 another role name, or pass a per-invocation model override.
+
+## Assignment effort
+
+Codex roles keep their model pins but do not set `model_reasoning_effort`.
+The parent chooses and explicitly passes `reasoning_effort` for each assignment:
+
+| Effort | Assignment complexity |
+| --- | --- |
+| `low` | Known-source extraction, straightforward checks, or consolidation of resolved evidence |
+| `medium` | Bounded implementation or experiment setup with clear inputs and validators |
+| `high` | Multi-source reasoning, difficult diagnosis, or substantial uncertainty |
+| `xhigh` | Deeply branching planning or verification with difficult claim dependencies |
+
+These are decision criteria, not role defaults. A narrow verifier check can use
+less effort than a difficult reading assignment. Record `requested_effort` and
+a brief complexity rationale in the handoff before spawning. Do not pass the
+manifest's `assignment` policy label as an effort value.
+
+Use `fork_turns="none"` or a bounded history fork when needed to pass an explicit
+effort; full-history forks may reject effort overrides. Supply enough task
+context and artifact pointers for the child. If the host cannot accept the
+selected effort, report that limitation instead of silently inheriting effort
+or claiming verified routing. The child does not choose its own effort.
+
+Claude roles retain their configured model and effort. Effort selection never
+changes role capabilities, stage ownership, validators, or independence.
 
 ## Role selection
 
@@ -55,6 +81,7 @@ Every role assignment states:
 7. validation command or evidence requirement;
 8. explicit stop and escalation conditions;
 9. `working_modes` with explicit Ponytail or Caveman levels when active.
+10. exact `requested_effort` and, for Codex, the assignment-complexity rationale.
 
 The role must not broaden the research question, choose the next research
 stage, silently change the evaluation contract, or write outside its owned

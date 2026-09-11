@@ -20,7 +20,9 @@ validators, ordered experiment units, retry budget, all terminal conditions,
 the canonical ledger path and owned keys, allowed roles, and any delegated
 assignment graph. Each assignment declares `assignment_id`, `role`,
 `depends_on`, owned/read-only scope, expected artifacts, validator,
-stop/escalation conditions, and active working modes. The mission may set a
+stop/escalation conditions, requested effort, and active working modes. For
+Codex, the parent records its effort choice and complexity rationale before
+spawning, following [agent-routing.md](agent-routing.md). The mission may set a
 small `max_concurrency`. It may also
 declare a `working_modes` map whose only keys are `ponytail` and `caveman` and
 whose values are `off`, `lite`, or `full`.
@@ -46,7 +48,9 @@ for migration.
 
 Static configuration proves only `static-only`. Use `verified` only when the
 host reports the observed role, model, and effort and all three match the
-assignment and manifest. Missing role/model/effort metadata remains
+assignment's requested values: model matches the manifest, and Codex effort
+matches the parent's selected effort (Claude effort matches its pin).
+Missing role/model/effort metadata remains
 `static-only`. A blocked, substituted, unavailable, or different role, model,
 or effort is `mismatch` and must not be reported as successful routing.
 
@@ -56,7 +60,7 @@ The same [Ponytail](ponytail.md) and [Caveman](caveman.md) semantics apply on
 both hosts. The mission is authoritative for their run-scoped levels, and each
 bounded role handoff repeats the active settings. The modes constrain
 engineering or communication only; they do not alter stage routing, native
-role selection, exact model/effort pins, permissions, validators, or terminal
+role selection, model pins, assignment effort policy, permissions, validators, or terminal
 conditions.
 
 ## Codex
@@ -67,8 +71,10 @@ The goal references the mission instead of embedding or replacing it:
 
 ```text
 /goal Execute docs/research/runs/<run-id>/mission.md within sandbox.md. Use the
-named fixed role for each ready assignment and never override its configured
-model or effort. Join dependencies and integrate writable artifacts before
+named fixed role for each ready assignment, preserve its configured model, and
+explicitly pass parent-selected reasoning effort by assignment complexity.
+Use a bounded or no-history fork that supports effort selection. Join
+dependencies and integrate writable artifacts before
 verification. Keep docs/research/decisions/ledger.yaml current. Stop only after
 result.json has a terminal status, every assignment has a role_runs record, and
 every required validator has evidence, or when a declared

@@ -1,6 +1,6 @@
 ---
 name: coresearch
-description: Route broad or multi-stage research work to one primary Coresearch skill, optional native role, and only the references needed for the current stage.
+description: Route broad or multi-stage research requests to the next Coresearch stage.
 ---
 
 # Coresearch router
@@ -23,19 +23,15 @@ pipeline.
 | Fact, citation, methodology, bias, or causal-claim check | [`research-verify`](../research-verify/SKILL.md) | fact / methodology / adversarial / causal |
 | Interview, observation, or open-response coding explicitly requested | [`research-qualitative`](../research-qualitative/SKILL.md) | qualitative synthesis |
 
-Resolve common ambiguities as follows:
+Causal formulation without supplied evidence is design; testing a supplied causal claim
+against methods or evidence is verification. Defining a durable mission is loop;
+ordinary planning is design. Writing realizes an approved argument.
 
-- planning claim-bearing evidence is design; running it is engineering;
-- defining a durable mission is loop; ordinary planning is design;
-- discovering sources is survey; checking a supplied claim is verification;
-- venue scoring and review responses are review; truth and method checks are verification;
-- writing expresses an approved argument; it does not invent the contribution or evidence.
-- causal formulation without supplied evidence is design; testing a supplied causal claim against
-  methods or evidence is verification. Ask once only if indeterminate.
-
-If a request spans stages, start at the earliest blocked stage. Route again only
-after that output exists. Ordinary requests return the requested artifact in
-chat; durable files are created only when requested or declared by a mission.
+Continue through the stages needed to complete the authorized request, re-routing
+after each required output exists. A stage handoff is not a user-approval gate.
+Stop at the requested artifact and applicable validation, or a concrete blocker
+requiring new input or authority. Ordinary output stays in chat; durable files
+are created only when requested or mission-declared.
 
 ## Shared contracts
 
@@ -60,6 +56,9 @@ Load references conditionally:
 
 ## Native roles and re-entry
 
+For Codex assignments, choose and explicitly pass reasoning effort by complexity
+using [agent-routing.md](references/agent-routing.md); retain the role's model pin.
+
 Roles execute bounded assignments, not stage selection. Give each disjoint
 ownership, artifact, validator, and stop condition. Installed roles are
 self-contained: do not look for a runtime manifest. `verified` requires matching
@@ -73,10 +72,10 @@ then re-enter Coresearch if another stage is needed.
 ## Optional working modes
 
 Ponytail and Caveman are explicit-only task or mission modifiers (`off`, `lite`,
-`full`), never routes, roles, models, or permissions. Load
-[ponytail.md](references/ponytail.md) for minimal durable engineering and
-[caveman.md](references/caveman.md) for communication compression. Pass active
-levels through handoffs; neither may weaken evidence, validation, or safety.
+`full`). When requested, read [ponytail.md](references/ponytail.md) for minimal
+durable engineering or [caveman.md](references/caveman.md) for communication
+compression. Pass active levels through handoffs; modes do not change routing,
+permissions, evidence, or validation.
 
 ## Guardrails
 

@@ -15,7 +15,7 @@ and single-source ownership.
 |---|---|---|
 | `skills/*/SKILL.md` | Complete research skills and central router | Codex `.agents/skills`; Claude `.claude/skills` |
 | `skills/manifest.json` | Exact nine-skill inventory | Harness and validation input |
-| `agents/manifest.json` | Exact roles, capabilities, models, and efforts | Harness and validation input |
+| `agents/manifest.json` | Exact roles, capabilities, models, and effort policies | Harness and validation input |
 | `agents/codex/*.toml` | Codex-native role definitions | `${CODEX_HOME:-~/.codex}/agents` or `<project>/.codex/agents` |
 | `agents/claude/*.md` | Claude Code-native role definitions | `${CLAUDE_CONFIG_DIR:-~/.claude}/agents` or `<project>/.claude/agents` |
 | `templates/research/AGENTS.md` | Full research-project contract | Project `AGENTS.md` through explicit initialization |
@@ -28,30 +28,36 @@ template installed into research projects.
 ## Fixed role and model matrix
 
 [`agents/manifest.json`](agents/manifest.json) is the source authority. Native
-files repeat these exact pins because each host requires complete standalone
-definitions. The harness does not install the manifest under `.codex/agents`
+files repeat model pins and implement each provider's effort policy. The harness
+does not install the manifest under `.codex/agents`
 or `.claude/agents`, and its absence there is not a registration failure.
 
 | Role | Codex model / effort | Claude model / effort |
 |---|---|---|
-| `coresearch-planner` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` |
-| `coresearch-researcher` | `gpt-6-astra` / `high` | `claude-sonnet-5` / `high` |
-| `coresearch-reader` | `gpt-6-astra` / `low` | `claude-haiku-4-5-20251001` / `low` |
-| `coresearch-implementer` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` |
-| `coresearch-experimenter` | `gpt-6-astra` / `medium` | `claude-haiku-4-5-20251001` / `medium` |
-| `coresearch-debugger` | `gpt-6-astra` / `high` | `claude-opus-5` / `high` |
-| `coresearch-synthesizer` | `gpt-6-astra` / `low` | `claude-opus-5` / `low` |
-| `coresearch-verifier` | `gpt-6-astra` / `xhigh` | `claude-opus-5` / `xhigh` |
+| `coresearch-planner` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` |
+| `coresearch-researcher` | `gpt-6-astra` / `assignment` | `claude-sonnet-5` / `high` |
+| `coresearch-reader` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `low` |
+| `coresearch-implementer` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` |
+| `coresearch-experimenter` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` |
+| `coresearch-debugger` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `high` |
+| `coresearch-synthesizer` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `low` |
+| `coresearch-verifier` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` |
 
-All eight Codex roles use Astra with role-specific reasoning effort.
+All eight Codex roles use Astra. `assignment` means the parent explicitly
+chooses effort for each task: `low` for extraction or resolved synthesis,
+`medium` for bounded execution, `high` for difficult reasoning, and `xhigh` for
+deeply branching planning or verification. These are complexity guidelines,
+not fixed role defaults. See [assignment effort](skills/coresearch/references/agent-routing.md).
 After updating this checkout, run `./harness link --surface codex` to refresh
 installed role copies, then start a new Codex session to load them.
 
-Rolling provider aliases and inherited or unspecified effort are rejected.
+Rolling provider aliases are rejected. Codex role files omit effort overrides;
+the parent must pass the chosen effort explicitly at spawn time. Claude retains
+fixed efforts. Stale Codex role copies with fixed effort fail strict doctor.
 Coresearch instructions do not pass a per-invocation model override.
 The implementer handles mechanically clear, decomposed slices;
 complex integrated implementation stays with the frontier parent. The
-low-effort synthesizer consolidates already-resolved evidence; unresolved
+synthesizer consolidates already-resolved evidence; unresolved
 conflicting evidence or mechanism choices stay with the frontier parent.
 
 ## Recommended development install
@@ -217,7 +223,7 @@ effort.
 Ordinary strict doctor is local and static. It verifies:
 
 - exactly eight source roles and sixteen native definitions;
-- manifest parity for every name, model, effort, capability, and skill list;
+- manifest parity for every name, model, effort policy, capability, and skill list;
 - read-only versus workspace-write boundaries;
 - installed role configuration and link health;
 - documented Codex and Claude discovery roots;
@@ -234,14 +240,15 @@ harness doctor --strict --surface codex --probe-models \
   --probe-role coresearch-reader
 ```
 
-This explicit command invokes every named fixed role without passing a model or
-effort override and reports. `--probe-role` limits a diagnostic run to one role.
+This explicit command invokes each named role without a model override. Codex
+probes explicitly request `low` effort for their simple diagnostic assignment;
+Claude probes retain configured effort. `--probe-role` limits a diagnostic run to one role.
 Codex probes are ephemeral, use the doctor target as their project root, and do
 not depend on the shell's starting directory. A full probe may make eight host
 calls per selected surface; each role probe has a 120-second timeout. Bounded
 host errors such as an unavailable agent type are included in failures.
 
-- `verified` — observed role, model, and effort metadata match the manifest;
+- `verified` — observed role, model, and effort metadata match the requested assignment, with the model pinned by the manifest;
 - `static-only` — the host or CLI does not expose all three observed values;
 - `mismatch` — the role is missing or a role/model/effort is blocked,
   substituted, unavailable, or different.
@@ -264,6 +271,12 @@ planning; survey owns conflict synthesis; review owns responses; verification
 owns factual, methodology, adversarial, and causal audits. Detailed mode
 contracts load only when selected. Exact inventory lives in
 `skills/manifest.json`.
+
+Skill descriptions stay short for discovery. Entrypoints provide scope decisions
+and essential research constraints; full paper plans, venue assessments, and
+specialized audits load their references only when needed. Narrow requests stay
+narrow, and authorized multi-stage work continues through applicable validation
+without pausing for approval at each stage handoff.
 
 Primary field modes are Systems/Cloud (OSDI, SOSP, NSDI, EuroSys, SoCC), ML
 Systems (MLSys), and Computer Architecture/Workload Characterization (ISCA,

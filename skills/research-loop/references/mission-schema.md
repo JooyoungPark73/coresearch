@@ -23,6 +23,8 @@ Record:
 - role assignments with `assignment_id`, fixed role, `depends_on`, owned or
   read-only scope, expected artifact, validator, working modes, and stop or
   escalation condition;
+- exact `requested_effort` for each assignment; for Codex, the parent's
+  complexity rationale and explicit spawn effort, with no fixed role override;
 - retry/fix budget;
 - success, blocked, failure, cancellation, and human-decision stop conditions;
 - canonical ledger path and authorized keys.

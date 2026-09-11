@@ -28,7 +28,7 @@ state.
 - `docs/research/decisions/ledger.yaml` is the only durable research ledger.
 - Delegation is bounded by owned scope, artifact, validation, confidentiality,
   and stop conditions.
-- Exactly eight role names exist; exact provider pins live in one manifest.
+- Exactly eight role names exist; provider model pins and effort policies live in one manifest.
 - Claim-bearing completion receives independent verification.
 - Mission, sandbox, and result artifacts are host-neutral; no provider-specific
   state forest is created.
@@ -88,6 +88,22 @@ modes. Detailed schemas and checklists are progressive references, so ordinary
 invocations load only the selected mode. A role result returns to the parent
 and then to `coresearch`; it never chains another skill.
 
+Discovery descriptions state a short capability and trigger. Entrypoints keep
+decision criteria, essential research constraints, completion boundaries, and
+conditional links; they do not prescribe a full dossier for narrow requests.
+Full paper planning lives in
+[`paper-design.md`](skills/research-design/references/paper-design.md), and full
+venue scoring in [`assessment.md`](skills/research-review/references/assessment.md).
+Simple methods remain self-contained. References stay reachable from entrypoints
+and installation carries them with the owning skill. Context-size checks are
+regression ceilings, not writing targets or proof of behavioral quality.
+
+Stage completion returns control to the router without requiring renewed user
+approval for already-authorized work. Local implementation continues through
+applicable validation and observed-failure repair until the requested outcome
+or a declared stop condition. Runtime permission boundaries and independent
+verification at claim-bearing completion remain in force.
+
 `research-write` preserves a fast local-rewrite path and progressively loads
 [`argument-architecture.md`](skills/research-write/references/argument-architecture.md),
 [`systems-paper-delivery.md`](skills/research-write/references/systems-paper-delivery.md),
@@ -122,17 +138,29 @@ One role owns one assignment. Several independent read-only assignments may
 run concurrently; writable assignments require disjoint owned paths. The
 parent serializes overlapping writes, joins declared dependencies, owns complex
 integrated implementation, and retains unresolved conflicting evidence or
-mechanism choices. The low-effort synthesizer consolidates evidence only after the
+mechanism choices. The synthesizer consolidates evidence only after the
 mechanism decision is resolved. Roles never spawn descendants.
 
 Exact names, responsibilities, capabilities, intended skills, models, and
-efforts live only in [`agents/manifest.json`](agents/manifest.json). Native
+effort policies live only in [`agents/manifest.json`](agents/manifest.json). Native
 files repeat required host fields and are validated against that manifest. The
 source manifest is not installed into provider agent directories and is not a
 runtime registration mechanism; each native file is self-contained. This
 document intentionally does not duplicate the model matrix. Codex roles share
-one explicit model pin while retaining role-specific effort and capability
-boundaries; Claude roles retain their provider-specific model tiers.
+one explicit model pin and their capability boundaries. Manifest schema version 2
+uses `effort: assignment` for Codex: native TOMLs omit effort overrides and the
+parent explicitly selects `low`, `medium`, `high`, or `xhigh` per assignment.
+The shared `codex_effort_policy` defines allowed levels and the diagnostic probe
+effort. Claude keeps fixed model and effort settings. Version-1 source manifests
+require migration with the harness; existing installed roles remain owned and
+are safely replaceable. Old fixed-effort Codex copies fail strict doctor until
+refreshed. Run result schemas are unchanged: `requested_effort` records the actual
+assignment choice, and observed effort is checked against it.
+
+Effort selection follows assignment complexity, not role identity. Parent
+instructions require explicit spawn effort and a compatible bounded or
+no-history fork; omission alone would inherit effort. Static checks establish
+configuration intent only, while host metadata establishes observed routing.
 
 ## 7. Host adapters
 
@@ -160,8 +188,9 @@ Shared semantics and the canonical handoffs live in
 Provider differences remain limited to native definition syntax,
 permissions/tools, invocation, and observable routing metadata.
 
-Explicit routing probes invoke each named native role without passing a model
-or effort override. Codex probes are ephemeral and execute with the selected
+Explicit routing probes invoke each named native role without a model override.
+Codex probes explicitly pass the manifest's diagnostic effort for the bounded
+probe assignment; Claude uses its configured effort. Codex probes are ephemeral and execute with the selected
 doctor target as their project root, independent of the caller's working
 directory. A direct model invocation is an availability test, not a
 role-routing test. Only host-reported role, model, and effort metadata can
@@ -355,7 +384,7 @@ sequenceDiagram
 | Concern | Authoritative file |
 |---|---|
 | Owned skill inventory | [`skills/manifest.json`](skills/manifest.json) |
-| Fixed roles and model/effort pins | [`agents/manifest.json`](agents/manifest.json) |
+| Fixed roles, model pins, and effort policies | [`agents/manifest.json`](agents/manifest.json) |
 | Stage/skill routing behavior | [`skills/coresearch/SKILL.md`](skills/coresearch/SKILL.md) |
 | Claim/evidence rules | [`evidence-grounding.md`](skills/coresearch/references/evidence-grounding.md) |
 | Durable research state | [`state-ledger.md`](skills/coresearch/references/state-ledger.md) |

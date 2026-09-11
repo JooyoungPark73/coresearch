@@ -40,6 +40,12 @@ verification and blocked, failed, or cancelled lanes. `verified` requires host
 metadata matching both requested model and effort. Missing or partial metadata
 is `static-only`; substitution, unavailability, or mismatch is `mismatch`.
 
+For Codex, `requested_effort` is the parent's concrete assignment choice
+(`low`, `medium`, `high`, or `xhigh`), never the manifest label `assignment`.
+For Claude it remains the configured role effort. Compare observed effort with
+this recorded request, not a historical Codex role default. This uses existing
+version-2 fields and does not change the result schema or historical records.
+
 Schema version 1 remains valid for historical zero- or one-role runs. Do not
 rewrite old results solely to upgrade them. A resumed run using multiple role
 assignments emits version 2 while preserving historical artifacts and ledger

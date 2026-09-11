@@ -77,7 +77,8 @@ for path in files:
     assert name in roles, name
     pin = roles[name]["providers"]["codex"]
     assert config["model"] == pin["model"], (path, config["model"], pin["model"])
-    assert config["model_reasoning_effort"] == pin["effort"], (path, config["model_reasoning_effort"], pin["effort"])
+    assert pin["effort"] == "assignment"
+    assert "model_reasoning_effort" not in config, path
     expected_sandbox = "workspace-write" if roles[name]["capability"] == "workspace-write" else "read-only"
     assert config["sandbox_mode"] == expected_sandbox, (path, config["sandbox_mode"], expected_sandbox)
     normalized = " ".join(config["developer_instructions"].split())
@@ -88,6 +89,8 @@ for path in files:
     assert re.search(r"spawn(?:ing)? subagents", normalized), path
 PY
 pass "all eight Codex role definitions parse with tomllib and match the manifest"
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_effort_policy.py
+pass "parent-selected effort, fixed-override drift, and per-assignment routing evidence"
 
 python3 - <<'PY'
 from pathlib import Path
@@ -148,31 +151,31 @@ for name in owned:
     desc_match = re.search(r"(?m)^description:\s*(.+)$", front)
     assert desc_match, path
     description = desc_match.group(1).strip()
-    assert len(description) <= 220 and len(description.split()) <= 35, (path, description)
+    assert len(description) <= 160 and len(description.split()) <= 24, (path, description)
     for custom in ("version:", "depends_on:", "produces:"):
         assert custom not in front, (path, custom)
     words = len(text.split())
     entrypoint_words += words
     description_words += len(description.split())
-    limit = 650 if name == "coresearch" else 500 if name == "research-qualitative" else 700
+    limit = 600 if name == "coresearch" else 450
     assert words <= limit, (path, words, limit)
-assert entrypoint_words <= 5500, entrypoint_words
-assert description_words <= 320, description_words
+assert entrypoint_words <= 3500, entrypoint_words
+assert description_words <= 180, description_words
 qualitative = Path("skills/research-qualitative/SKILL.md").read_text().lower()
 assert "explicit" in qualitative and "optional" in qualitative
 
 manifest = json.loads(Path("agents/manifest.json").read_text())
-assert manifest["schema_version"] == 1
+assert manifest["schema_version"] == 2
 assert manifest["role_description_version"] == 2
 expected_roles = {
-    "coresearch-planner": {"codex": ("gpt-6-astra", "xhigh"), "claude": ("claude-opus-5", "xhigh")},
-    "coresearch-researcher": {"codex": ("gpt-6-astra", "high"), "claude": ("claude-sonnet-5", "high")},
-    "coresearch-reader": {"codex": ("gpt-6-astra", "low"), "claude": ("claude-haiku-4-5-20251001", "low")},
-    "coresearch-implementer": {"codex": ("gpt-6-astra", "medium"), "claude": ("claude-haiku-4-5-20251001", "medium")},
-    "coresearch-experimenter": {"codex": ("gpt-6-astra", "medium"), "claude": ("claude-haiku-4-5-20251001", "medium")},
-    "coresearch-debugger": {"codex": ("gpt-6-astra", "high"), "claude": ("claude-opus-5", "high")},
-    "coresearch-synthesizer": {"codex": ("gpt-6-astra", "low"), "claude": ("claude-opus-5", "low")},
-    "coresearch-verifier": {"codex": ("gpt-6-astra", "xhigh"), "claude": ("claude-opus-5", "xhigh")},
+    "coresearch-planner": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "xhigh")},
+    "coresearch-researcher": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-sonnet-5", "high")},
+    "coresearch-reader": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-haiku-4-5-20251001", "low")},
+    "coresearch-implementer": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-haiku-4-5-20251001", "medium")},
+    "coresearch-experimenter": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-haiku-4-5-20251001", "medium")},
+    "coresearch-debugger": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "high")},
+    "coresearch-synthesizer": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "low")},
+    "coresearch-verifier": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "xhigh")},
 }
 roles = {item["name"]: item for item in manifest["roles"]}
 assert set(roles) == set(expected_roles) and len(roles) == 8
@@ -209,7 +212,7 @@ for role in roles.values():
     for provider in ("codex", "claude"):
         model = role["providers"][provider]["model"]
         assert model not in {"gpt-5.6", "opus", "sonnet", "haiku", "inherit"}, (role["name"], provider, model)
-        assert role["providers"][provider]["effort"] in {"low", "medium", "high", "xhigh"}
+        assert role["providers"][provider]["effort"] in ({"assignment"} if provider == "codex" else {"low", "medium", "high", "xhigh"})
 
 evidence_contract = " ".join(Path("skills/coresearch/references/evidence-grounding.md").read_text().lower().split())
 for phrase in (
@@ -454,6 +457,22 @@ assert "/goal Execute docs/research/runs/<run-id>/mission.md" in adapter
 assert "same `mission.md` and `sandbox.md`" in adapter
 
 link_re = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+# Conditional guidance must remain reachable from an installed entrypoint.
+reachable = set()
+pending = [Path("skills") / name / "SKILL.md" for name in owned]
+while pending:
+    path = pending.pop().resolve()
+    if path in reachable:
+        continue
+    reachable.add(path)
+    for raw in link_re.findall(path.read_text()):
+        if raw.startswith(("http://", "https://", "mailto:", "#")):
+            continue
+        target = (path.parent / raw.split("#", 1)[0]).resolve()
+        if target.is_file() and target.suffix == ".md":
+            pending.append(target)
+for path in Path("skills").glob("*/references/*.md"):
+    assert path.resolve() in reachable, ("unreachable guidance", path)
 checked = 0
 for path in sorted(Path("skills").rglob("*.md")):
     for raw in link_re.findall(path.read_text()):
@@ -587,12 +606,14 @@ verify_provider_install() {
   local compact_ref
   for compact_ref in \
     coresearch/references/causal-reasoning.md \
+    research-design/references/paper-design.md \
     research-design/references/gap-analysis.md \
     research-survey/references/conflict-synthesis.md \
     research-survey/references/crawler-usage.md \
     research-loop/references/mission-schema.md \
     research-loop/references/result-schema.md \
     research-review/references/rebuttal.md \
+    research-review/references/assessment.md \
     research-verify/references/methodology-audit.md \
     research-verify/references/adversarial-audit.md; do
     [[ -f "$skills_root/$compact_ref" ]] || \
@@ -855,7 +876,7 @@ python3 - "$case_root-codex/agents/coresearch-planner.toml" <<'PY'
 from pathlib import Path
 import sys
 path = Path(sys.argv[1])
-path.write_text(path.read_text().replace('model_reasoning_effort = "xhigh"', 'model_reasoning_effort = "low"', 1))
+path.write_text('model_reasoning_effort = "low"\n' + path.read_text())
 PY
 if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-effort.log" 2>&1; then fail "doctor accepted wrong effort"; fi
 grep -q 'CONFIG-MISMATCH' "$TMP_ROOT/doctor-wrong-effort.log" || fail "wrong-effort diagnostic missing"
@@ -917,7 +938,9 @@ done
 [[ -n "$role" ]]
 config="$CODEX_HOME/agents/$role.toml"
 model="$(sed -n 's/^model = "\(.*\)"/\1/p' "$config")"
-effort="$(sed -n 's/^model_reasoning_effort = "\(.*\)"/\1/p' "$config")"
+[[ "$*" == *"fork_turns=none"* ]] || exit 91
+[[ "$*" == *"reasoning_effort=low"* ]] || exit 92
+effort=low
 printf '{"agent_type":"%s","model":"%s","model_reasoning_effort":"%s","text":"CORESEARCH_ROLE_PROBE %s"}\n' "$role" "$model" "$effort" "$role"
 SH
 cat >"$probe_bin/claude" <<'SH'
@@ -959,6 +982,6 @@ if PATH="$probe_error_bin:/usr/bin:/bin" ./harness doctor --strict --surface cod
   fail "failed role probe was incorrectly accepted"
 fi
 grep -q 'agent type is currently not available' "$TMP_ROOT/probe-error.log" || fail "failed role probe suppressed bounded host error"
-pass "strict doctor rejects config drift and environment overrides; named-role probes avoid invocation overrides and preserve static-only semantics"
+pass "strict doctor rejects config drift and environment overrides; named-role probes select Codex effort without model overrides and preserve static-only semantics"
 
 pass "all validations completed"

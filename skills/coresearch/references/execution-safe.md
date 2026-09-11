@@ -4,20 +4,18 @@ Tool-agnostic rules for commands that may run long or emit more than a small
 bounded output: Cargo, npm/pnpm/yarn, make/cmake/ninja, Gradle/Maven, Bazel,
 Go, Python test runners, build scripts, training, evaluation, and benchmarks.
 
-## Advisor gate
+## Scope and authorization
 
-Before the first potentially long command in a command family or scope, record:
-purpose, exact command, expected duration, side effects, output artifact, and
-stop condition. Use one bounded native Coresearch role when the target or
-option is unknown, the scope is broad or side-effectful, or the command is
-expected to be long. Use `coresearch-planner` for preflight design and, after
-an observed repeated failure, `coresearch-debugger` for diagnosis. Do not
-invoke both for the same preflight.
+Know the command's purpose, side effects, output path, and stop condition before
+running it. Estimate duration when it affects a budget. Existing project or
+mission authorization covers local validation and repairs within that scope;
+command duration alone does not require approval or a delegated preflight.
 
-Reuse a preflight for the same command, scope, and inputs. Ask again only after
-a failure, changed scope/configuration, or new evidence. A failed command gets
-one diagnosis request, not an immediate rerun: ask for the likely cause, a
-minimal reproduction, and the smallest next command.
+Use tool help to resolve unknown options. A bounded `coresearch-planner` or,
+after observed repeated failure, `coresearch-debugger` assignment can help when
+uncertainty warrants it. Diagnose failures from saved logs before retrying;
+reuse established scope decisions unless configuration, impact, or evidence
+changes. Escalate only for missing authority or an unresolved blocker.
 
 ## Run discipline
 
@@ -30,11 +28,11 @@ minimal reproduction, and the smallest next command.
 4. Inspect only a bounded summary: status, exit code, duration, selected error
    lines, and at most roughly 120 lines from the head/tail via `sed`, `head`,
    `tail`, or a focused search. Do not `cat` a long log.
-5. Split broad builds/tests into single-purpose commands. After failure, do
-   not rerun until the saved-log diagnosis names a cause and minimal repro.
-6. Rerun only the diagnosed minimal command. Count the diagnosis and rerun in
-   the existing retry/fix-cycle budget; stop when there is no new artifact or
-   error signal.
+5. Choose the relevant test scope. After failure, use the saved log to identify
+   the cause and smallest useful diagnostic or corrective run.
+6. Count retries in the existing retry/fix-cycle budget; stop when there is no
+   new artifact or error signal. Repeat or broaden checks only when changes,
+   failures, or a declared completion gate justify it.
 
 ## Artifact tiers
 

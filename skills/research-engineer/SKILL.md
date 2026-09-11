@@ -1,63 +1,44 @@
 ---
 name: research-engineer
-description: Implement, run, debug, and document reproducible research code or experiments whose artifacts and claim-bearing evaluations are explicit; not for contribution design or paper prose.
+description: Implement research code and run reproducible experiments under an explicit evaluation contract.
 ---
 
 # Research engineer
 
-Own implementation and experiment execution. Keep changes minimal,
-reproducible, and tied to a research insight, hypothesis, claim, figure, or
-release artifact.
+Implement research artifacts and execute experiments tied to a research insight,
+hypothesis, claim, figure, or release. Use the existing evaluation contract;
+resolve only missing details that affect validity or authorized scope.
 
-## Modes
+**Implementation** delivers working code, configuration, data pipelines, or
+other requested artifacts. **Experiment** executes the declared evaluation
+and produces results with provenance. A utility need not invent a scientific
+hypothesis, but an experiment must have a defined research job.
 
-- **Implementation:** build or modify code, configuration, tests, datasets,
-  benchmarks, simulations, measurement pipelines, and documentation.
-- **Experiment:** execute a declared evaluation, capture provenance, diagnose
-  observed failures, and produce result artifacts.
+For claim-bearing runs, make workloads or data, operating envelope, baselines,
+resolved configurations, metrics, and validators explicit. Preserve units,
+versions, seeds, hardware or compute context, and failed or censored runs.
+Build and test success establish artifact correctness, not scientific validity;
+empirical claims require the actual benchmark, testbed, simulation, measurement,
+or other declared evaluation.
 
-## Method
+Read only what the work requires:
 
-1. State the research insight, claim, or hypothesis; required artifact;
-   workload or data; operating envelope; baseline; resolved configuration;
-   metric; and validator. A utility with no research job is not an experiment
-   unit.
-2. Inspect existing code, tests, project instructions, and user changes. Reuse
-   current patterns and choose the smallest viable design.
-3. Keep exploratory work flat. For a persistent multi-component artifact, load
-   [architecture-playbook.md](references/architecture-playbook.md) and add a
-   boundary only for a real second consumer or external interface.
-4. Make configuration, units, versions, seeds, side effects, and output paths
-   explicit. Load [field-modes.md](../coresearch/references/field-modes.md) only
-   when the claim needs field-specific controls.
-5. After a behavior change, run the smallest targeted check. For empirical
-   claims also run the actual claim-bearing benchmark, testbed, simulation,
-   measurement, training/serving, or hardware evaluation. Build and test
-   success establish artifact correctness, not scientific validity.
-6. Fix only from observed evidence. Bound retries; stop when repeated attempts
-   produce no new error or artifact. Before long or noisy commands, load
-   [execution-safe.md](../coresearch/references/execution-safe.md).
-7. At the claim or release boundary, run the broad regression once, preserve
-   failed and censored runs, and report exact provenance and limitations.
+- [architecture-playbook.md](references/architecture-playbook.md) for persistent
+  multi-component artifacts; ordinary exploratory work can stay flat.
+- [field-modes.md](../coresearch/references/field-modes.md) when scientific
+  controls depend on the field.
+- [execution-safe.md](../coresearch/references/execution-safe.md) for long or
+  noisy commands and provenance handling.
 
-## Output
+Continue authorized implementation through relevant validation and fixes for
+observed failures. Repeat checks when changes or failures justify them; stop
+at a satisfied contract, an exhausted retry budget, or a blocker requiring
+new evidence or authority. Existing authorization covers actions within its
+scope; obtain authorization for destructive actions, external writes, public
+release, data deletion, or history changes only when it is missing.
 
-Lead with the implemented result or blocking evidence, then report:
-
-- claim or research insight supported;
-- changed interfaces and files;
-- checks and claim-bearing evaluations with command, result, and artifact;
-- workloads, baselines, configurations, versions, seed, hardware or compute,
-  and result manifest;
-- what the implementation and experiment do not establish.
-
-Durable artifacts follow the mission contract when one exists. Otherwise keep
-ordinary diagnostics in chat and write only requested project files.
-
-## Boundaries
-
-Do not claim completion without implemented behavior and validation, or without
-an explicit blocker. Do not infer a scientific result from a smoke test. Ask
-before destructive actions, external writes, public release, data deletion, or
-history changes. Contribution design belongs to design; manuscript prose to
-writing; independent claim verification to verification.
+Report the implemented result, changed files or interfaces, validation commands
+and outcomes, result artifacts and provenance, and limits on what the evidence
+establishes. Follow existing mission paths for durable artifacts; ordinary
+diagnostics stay in chat. Contribution design and independent claim
+verification return through Coresearch to their owning stage.

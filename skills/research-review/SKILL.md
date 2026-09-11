@@ -1,56 +1,32 @@
 ---
 name: research-review
-description: Assess a paper's venue readiness and score movement, or plan an evidence-bounded response to supplied reviews; not a substitute for independent methodology verification.
+description: Assess venue readiness and score risks, or prepare responses to supplied reviews.
 ---
 
 # Research review
 
-Act as a strict, fair author-side reviewer. Choose assessment or response mode;
-do not mix response promises into an ordinary manuscript assessment.
+Assess likely reviewer reception while distinguishing it from factual or
+methodological verification.
 
-## Modes
-
-| Mode | Use when | Conditional reference |
+| Mode | Use when | Read |
 | --- | --- | --- |
-| **Assessment** | critique, score forecast, acceptance risk, or submission readiness | shared evidence and field contracts |
-| **Response** | reviewer comments, scores, meta-review, or discussion feedback exist | [rebuttal.md](references/rebuttal.md) |
+| **Assessment** | critique, score forecast, acceptance risk, or readiness | [assessment.md](references/assessment.md) for a full venue assessment |
+| **Response** | preparing a response to supplied reviewer comments or discussion | [rebuttal.md](references/rebuttal.md) |
 
+Tie strengths, weaknesses, and revision priorities to actual claims and
+evidence. Engineering completion cannot close a scientific evidence gap.
 Use [evidence-grounding.md](../coresearch/references/evidence-grounding.md) for
 claim/evidence alignment and [field-modes.md](../coresearch/references/field-modes.md)
-for applicable venue methodology. Official score forms and policies must be
-checked from current official sources; otherwise label the scale `INTERNAL`.
+when venue methodology matters.
 
-## Assessment method
+Check official score forms and policies from current official sources;
+otherwise label the scale `INTERNAL`. State uncertainty for partial inputs.
+Confidential official peer review is handled only when policy permits.
 
-1. Summarize the paper's actual claim and contributions.
-2. Evaluate significance, originality, technical soundness, evidence fit,
-   reproducibility, clarity, venue fit, and relevant ethics or limitations.
-3. Tie every strength and weakness to a claim or evidence item. Engineering
-   completion alone cannot close a research-evidence gap.
-4. State recommendation, confidence, likely reviewer variance, blockers, and
-   concrete score-up and score-down conditions.
-5. For a borderline result, explain both the real contribution supporting
-   acceptance and the gap supporting rejection.
+Return the requested assessment or response, with evidence-tied rationale and
+material limits. A narrow review question does not require a full scorecard.
+In response mode, distinguish confirmed evidence, feasible additions, and
+unsupported promises; do not promise unconfirmed or venue-prohibited work.
+Keep output in chat unless files are requested or mission-declared.
 
-## Output
-
-For assessment, return:
-
-- recommendation, scale provenance, confidence, variance, and readiness;
-- summary and claimed contributions;
-- evidence-tied strengths and weaknesses;
-- rationale for this score rather than one level higher or lower;
-- ranked acceptance risks and revisions by score impact;
-- questions for authors and likely decision-level synthesis.
-
-For response mode, follow the conditional reference. Always distinguish
-confirmed evidence, feasible additions, and unsupported promises. Default to
-in-chat output; write files only when requested or mission-declared.
-
-## Boundaries
-
-Review forecasts reception; verification determines factual or methodological
-support. Do not use a memorized official scale, omit uncertainty when inputs are
-partial, fight every reviewer sentence, or promise work the user has not
-confirmed feasible and venue rules do not allow. Confidential official peer
-review is handled only when policy permits.
+Independent truth and method checks return through Coresearch to verification.
