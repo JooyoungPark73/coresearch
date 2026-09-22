@@ -8,8 +8,9 @@ not production architecture for its own sake.
 
 ## Architecture target
 
-Prefer the smallest layout that makes experimental substitutions and provenance
-explicit:
+Use the existing project layout where it supports experimental substitutions
+and provenance. The following is an illustrative layout for larger artifacts;
+create only the components the evaluation actually needs:
 
 ```text
 src/<project>/
@@ -34,8 +35,9 @@ docs/                    # claim, command, data, and artifact routing
 Separate workload and baseline adapters from orchestration so every method sees
 the same inputs, budget, measurement window, and metric implementation. Keep
 cloud/provider APIs, model runtimes, simulators, devices, counters, datasets,
-and file formats at adapters. Every implementation unit must instantiate a
-research insight, test a hypothesis, or produce claim evidence.
+and file formats at adapters when those boundaries improve comparability or
+reuse. Tie evaluation units to a research insight, hypothesis, or claim;
+supporting utilities need only serve the declared artifact and its validation.
 
 ## Claim-bearing evaluation contract
 
@@ -77,30 +79,24 @@ declared inputs. If licensed data, hardware, or cloud access prevents a complete
 rerun, make the command reproduce from archived raw evidence and state exactly
 which acquisition step remains external.
 
-## Hot / index / cold docs
+## Documentation and state
 
-Use docs as an LLM-friendly routing layer:
+Keep durable research decisions in `docs/research/decisions/ledger.yaml`,
+following [state-ledger.md](../../coresearch/references/state-ledger.md).
+Run contracts remain under `docs/research/runs/<run-id>/`. Documentation may
+link claims to code, data, figures, and reproduction commands, but must not
+copy claim state into another ledger.
 
-- `docs/hot/` — current decisions, active experiment commands, claim ledger, latest results, known blockers.
-- `docs/index/` — maps from claims → code → data → figures → paper sections; stable enough for agents to route context.
-- `docs/cold/` — archived runs, old notes, superseded designs, long logs, prior failed attempts.
-
-Minimum useful files:
-
-```text
-docs/hot/claim-ledger.md
-docs/hot/runbook.md
-docs/index/architecture.md
-docs/index/data-contracts.md
-docs/index/experiment-map.md
-docs/cold/README.md
-```
-
-Do not dump everything into `docs/hot`; hot means the next agent probably needs it.
+Use existing documentation first. Add a runbook or architecture map only when
+it helps a reader execute or understand the artifact. Larger projects may
+separate current guidance, indexes, and archives; there is no required
+documentation tree. Raw diagnostic logs stay in ignored scratch storage.
 
 ## AGENTS.md architecture block
 
-When a research repo is being initialized or upgraded, add a compact architecture block to project `AGENTS.md` or a linked `docs/index/architecture.md`:
+When project initialization or documentation updates are in scope and agents
+need non-obvious architecture guidance, add a compact block to the existing
+project prompt or architecture document. Include only applicable details:
 
 ```markdown
 ## Architecture Notes
@@ -108,7 +104,7 @@ When a research repo is being initialized or upgraded, add a compact architectur
 - Main evaluations: [benchmark/testbed/simulate/measure/train-serve/hardware]
 - Boundaries: workload, baseline, system, and artifact adapters.
 - Repro commands: [smoke] / [table or figure from manifest]
-- Docs routing: hot = current, index = maps, cold = archive.
+- Docs routing: [existing reproduction guide, architecture map, canonical ledger].
 - Claim link: every result-producing command states which paper claim/figure it supports.
 ```
 
@@ -127,12 +123,9 @@ When a research repo is being initialized or upgraded, add a compact architectur
 
 ## When to stay simpler
 
-Use a flat script/notebook only when all are true:
-
-- exploratory throwaway;
-- no paper claim depends on the output yet;
-- no user/reviewer/reproducer will run it;
-- no second workload, baseline, system adapter, or result consumer exists;
-- no hidden state or external side effect matters.
-
-Once a script supports a figure, table, benchmark, release artifact, or rebuttal experiment, promote it to a reproducible pipeline.
+A flat script or notebook can support a paper figure or reusable artifact when
+its inputs, configuration, execution order, provenance, and validation are
+explicit and reproducible. Add modules or adapters when actual variation,
+shared logic, or independently testable boundaries justify them. Claim-bearing
+use requires the evaluation and provenance contract above, not a particular
+directory layout.

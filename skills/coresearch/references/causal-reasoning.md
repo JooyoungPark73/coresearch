@@ -12,12 +12,14 @@ variables, and selection variables. Include workload, configuration, resource,
 placement, timing, quality, simulator, or modeling effects when they could
 explain a systems result.
 
-Produce three views:
+Use the views needed to answer the causal question. A narrow wording or
+identification check can report its reasoning directly without producing all
+three artifacts:
 
 1. **Competing explanations:** hypothesis, proposed cause, mechanism, predicted
    outcome, boundary conditions, and distinguishing evidence.
-2. **Causal-edge ledger:** `{from, to, relationship, evidence,
-   identification_strategy, confidence}`.
+2. **Causal-edge view:** `{from, to, relationship, evidence,
+   identification_strategy, confidence}` over the same model, not a second ledger.
 3. **Proxy audit:** target construct, observed proxy, why it is used, failure
    mode, and alternative measurement.
 

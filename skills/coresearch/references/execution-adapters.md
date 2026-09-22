@@ -4,6 +4,13 @@ Coresearch owns research routing, evidence quality, and the canonical ledger.
 Codex and Claude Code own their native session continuation and subagent
 execution. Neither host adapter is a second research router.
 
+For authorized durable execution, apply the orchestration-first policy in
+[agent-routing.md](agent-routing.md) on both hosts. The parent delegates
+substantial bounded work, including sequential assignments for context isolation,
+and retains research decisions, dependency joins, evidence reconciliation, and
+integration. Direct-work exceptions and unavailable-worker handling follow that
+same policy; assigned workers never spawn descendants.
+
 ## Shared durable-run contract
 
 Durable runs use one mission across both hosts:
@@ -104,3 +111,10 @@ failed lanes, integrates writable artifacts, and then starts an independent
 `coresearch-verifier` assignment for claim-bearing completion. On terminal
 status, return the result to the parent, apply only authorized idempotent ledger
 updates, and re-enter `coresearch` for the next stage.
+
+Handoffs request compact findings, artifact and evidence pointers, validation
+outcomes, uncertainty, counterevidence, and blockers. Raw logs stay in ignored
+scratch and claim evidence stays in declared artifacts. The parent reads the
+support needed to assess consequential results without importing entire worker
+histories. Record actual attempts in existing `role_runs`; context isolation
+does not introduce another ledger, mailbox, or provider-specific state tree.

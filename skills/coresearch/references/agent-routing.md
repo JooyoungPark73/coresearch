@@ -28,9 +28,10 @@ less effort than a difficult reading assignment. Record `requested_effort` and
 a brief complexity rationale in the handoff before spawning. Do not pass the
 manifest's `assignment` policy label as an effort value.
 
-Use `fork_turns="none"` or a bounded history fork when needed to pass an explicit
-effort; full-history forks may reject effort overrides. Supply enough task
-context and artifact pointers for the child. If the host cannot accept the
+Prefer `fork_turns="none"` or a bounded history fork with the relevant task
+context and artifact pointers to isolate detailed work. For Codex effort
+selection, use a compatible fork; full-history forks may reject effort
+overrides. If the host cannot accept the
 selected effort, report that limitation instead of silently inheriting effort
 or claiming verified routing. The child does not choose its own effort.
 
@@ -60,13 +61,38 @@ changes role capabilities, stage ownership, validators, or independence.
   boundary, and again after an evidence-changing edit. It never approves its
   own implementation.
 
-Use the fewest roles that materially improve quality, speed, or safety. Do not
-delegate a narrow task the parent can complete directly, do not assign two
-roles to mutate the same files, and do not add a role merely to re-check an
-unchanged result.
+Use the fewest roles that materially improve context isolation, quality, speed,
+or safety. Keep trivial tasks in the parent; bounded scope alone is not a reason
+to retain substantial work there. Do not assign two roles to mutate the same
+files or add a role merely to re-check an unchanged result.
 
 Use at most one fixed role per bounded assignment. Multiple independent assignments
 may run concurrently when their inputs and owned scopes do not overlap.
+
+## Orchestration-first durable runs
+
+For authorized durable research runs, the parent primarily orchestrates.
+Delegate substantial source reading, discovery, decomposed implementation,
+experiment execution, and bounded diagnosis to their fixed roles. Sequential
+delegation is useful when it keeps detailed investigation and execution traces
+out of the parent's context, even without a parallel speedup.
+
+The parent owns the research question, hypotheses, evaluation contract,
+decomposition, dependency decisions, evidence reconciliation, integration, and
+final conclusions. It must inspect the source passages, code, or measurements
+needed to assess consequential findings; a worker summary is not independent
+evidence. Resolve conflicting definitions and mechanism choices before asking
+a synthesizer to consolidate them.
+
+Keep trivial edits and tightly coupled reasoning in the parent when handoff
+would lose essential context or add more work than it saves. Decompose substantial
+implementation once its boundaries are clear. If workers are unavailable or
+prohibited, continue bounded parent work when authority and budget permit;
+report the limitation and do not fabricate role runs or waive required
+independent verification. Respect user limits on delegation and concurrency.
+
+This policy applies to the parent session. An assigned role performs its own
+bounded work and returns to the parent; it never recursively delegates.
 
 ## Required handoff
 
@@ -82,6 +108,23 @@ Every role assignment states:
 8. explicit stop and escalation conditions;
 9. `working_modes` with explicit Ponytail or Caveman levels when active.
 10. exact `requested_effort` and, for Codex, the assignment-complexity rationale.
+
+Supply only relevant mission context, definitions, constraints, prior decisions,
+and input artifact pointers, with precise source locations where available.
+Enough context to interpret the evidence is essential; unrelated conversation
+history and raw logs are not. Define the return contract in the handoff:
+
+- result or finding and affected artifact paths;
+- evidence locations and relevant commands/configuration for consequential claims;
+- validation outcomes, uncertainty, counterevidence, and concrete blockers;
+- stop reason and any decision the parent must resolve.
+
+Keep raw logs in ignored scratch following
+[execution-safe.md](execution-safe.md); preserve claim-bearing evidence in
+declared artifacts. Return concise summaries with pointers, not full transcripts
+or log dumps. The parent selectively opens supporting material to challenge or
+integrate results. Use existing mission, ledger, and result fields; do not create
+a separate context store or another state schema.
 
 The role must not broaden the research question, choose the next research
 stage, silently change the evaluation contract, or write outside its owned

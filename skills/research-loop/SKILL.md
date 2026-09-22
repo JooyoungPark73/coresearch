@@ -18,30 +18,42 @@ host-neutral mission; Coresearch owns stage selection.
 - **Audit:** assess validators, scope, routing, budgets, and stop conditions
   against the mission schema; return findings in chat unless edits are requested.
 
+Complete a mission-drafting request with the requested plan or files, and an
+audit with findings. Neither authorizes running experiments or creating execution
+state. Apply the execution requirements below only when run execution is
+authorized; preserve any authorization already established in the session.
+
 Bind hypotheses to falsifiers, claim-bearing evidence, artifacts, and validators.
 A smoke test cannot validate an empirical claim. Declare dependencies, retry
 budgets, and success, blocked, failed, cancelled, and human-decision conditions.
-Continue authorized units through validation and repair until a terminal
-condition is met; a first implementation alone is not completion.
+During execution, continue authorized units through validation and repair until
+a terminal condition is met; a first implementation alone is not completion.
 
 For durable execution, use
 [execution-adapters.md](../coresearch/references/execution-adapters.md) with one
-host per run. When delegating, read
-[agent-routing.md](../coresearch/references/agent-routing.md) for bounded fixed-role
-assignments and per-attempt provenance. Use
+host per run. The parent primarily orchestrates: delegate substantial reading,
+bounded implementation, experiments, and diagnosis, including sequential work
+when context isolation helps. Retain research decisions, evidence reconciliation,
+integration, and final conclusions. Use
+[agent-routing.md](../coresearch/references/agent-routing.md) for handoffs,
+compact evidence-backed returns, and direct-work exceptions. Assigned workers
+execute their own unit and return; they do not delegate. Use
 [execution-safe.md](../coresearch/references/execution-safe.md) for long commands.
 Load shared evidence or field contracts only for scientific controls the mission
 needs to define.
 
-Keep run artifacts under `docs/research/runs/<run-id>/`. Use
+Keep authorized run artifacts under `docs/research/runs/<run-id>/`. During
+authorized run initialization or execution, use
 [state-ledger.md](../coresearch/references/state-ledger.md) for authorized keys in
 `docs/research/decisions/ledger.yaml`. If the canonical ledger does not exist,
 initialize it once after fixing run identity. Never replace an existing ledger
 or create a second ledger.
 
-At termination, use [result-schema.md](references/result-schema.md). Completion
-requires `result.json`, validator evidence, a terminal role-run record for every
-attempted assignment, remaining risks, and independent verification after
-writable artifacts are integrated. Record observed routing only when exposed;
-otherwise use `static-only`. Host continuation cannot silently change mission
-scope or select another research stage.
+At run termination, use [result-schema.md](references/result-schema.md) for
+`result.json`, validator outcomes, a terminal role-run record for every attempted
+assignment, and remaining risks. Successful claim-bearing completion requires
+validator evidence and independent verification after writable artifacts are
+integrated; blocked, failed, or cancelled runs record their terminal reason.
+Use the result schema's routing criteria; absent observations never establish
+`verified`. Host continuation cannot silently change mission scope or select
+another research stage.

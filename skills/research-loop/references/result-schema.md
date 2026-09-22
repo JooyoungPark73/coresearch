@@ -37,8 +37,11 @@ Every durable run ends with
 
 Record every attempted assignment in `role_runs`, including independent
 verification and blocked, failed, or cancelled lanes. `verified` requires host
-metadata matching both requested model and effort. Missing or partial metadata
-is `static-only`; substitution, unavailability, or mismatch is `mismatch`.
+metadata matching the requested role, model, and effort. Successful execution
+with missing or partial metadata is `static-only`; blocked execution,
+substitution, unavailability, or a different role, model, or effort is `mismatch`.
+Record the host evidence establishing role identity in the assignment's validator
+evidence; the `role` field alone is a request, not proof of observed routing.
 
 For Codex, `requested_effort` is the parent's concrete assignment choice
 (`low`, `medium`, `high`, or `xhigh`), never the manifest label `assignment`.

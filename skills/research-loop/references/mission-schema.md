@@ -29,6 +29,15 @@ Record:
 - success, blocked, failure, cancellation, and human-decision stop conditions;
 - canonical ledger path and authorized keys.
 
+Plan substantial reading, bounded implementation, experiments, and diagnosis as
+fixed-role assignments under the shared
+[orchestration policy](../../coresearch/references/agent-routing.md). Dependencies
+may require sequential workers; context isolation remains useful. Keep research
+decisions and evidence reconciliation with the parent. Use the existing
+assignment artifact and validator fields to specify compact returns with evidence
+locations, uncertainty, and blockers; retain raw traces outside the main context.
+Trivial tasks and tightly coupled reasoning may stay in the parent.
+
 Every implementation unit must instantiate an insight, test a hypothesis, or
 produce claim-bearing evidence. A build or smoke validator cannot validate an
 empirical claim.

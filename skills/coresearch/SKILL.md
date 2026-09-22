@@ -49,8 +49,8 @@ Load references conditionally:
   without synthesis, or stops producing useful artifacts.
 - [execution-safe.md](references/execution-safe.md) before long or noisy
   commands.
-- [agent-routing.md](references/agent-routing.md) when a bounded native-role
-  assignment materially improves speed, quality, or independence.
+- [agent-routing.md](references/agent-routing.md) for orchestration-first durable
+  runs or delegation that improves context isolation, speed, quality, or independence.
 - [execution-adapters.md](references/execution-adapters.md) for durable Codex
   goals or Claude Code session continuation.
 

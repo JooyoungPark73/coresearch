@@ -1,7 +1,8 @@
 # Coresearch Research Project
 
 Use Coresearch as the research-stage router for this project. Complete
-procedures live in installed `coresearch` and `research-*` skills. Keep the
+procedures live in installed `coresearch` and `research-*` skills; load only
+the skill and references relevant to the current task. Keep the
 conversation cumulative, durable state in
 `docs/research/decisions/ledger.yaml`, and durable run artifacts under
 `docs/research/runs/<run-id>/`. Do not create a separate agent chat, mailbox,
@@ -36,20 +37,23 @@ and calibrated venue fit. Do not inflate the contribution.
 5. **Current policy requires verification.** Verify official venue pages for
    current deadlines, limits, templates, anonymity, AI policy, forms, and
    scoring scales.
-6. **Autonomous but bounded.** Continue safe local inspect-edit-run work; ask
-   only for destructive, credentialed, external-production, confidential, or
-   materially branching decisions.
-7. **Experiment-first execution.** Implement one experiment unit; run one
-   executable minimal smoke; run the actual claim-bearing evaluation; fix only
-   from observed result/error; run full regression once immediately before
-   finalizing a claim.
+6. **Autonomous but bounded.** Continue authorized local work through the
+   requested result, relevant validation, and fixes for observed failures.
+   Existing authorization remains valid within its scope. Ask when missing
+   information or authority prevents progress or a consequential choice
+   cannot be resolved from the user's intent and evidence.
+7. **Evaluation defines completion.** Experiments require a declared
+   evaluation contract and claim-bearing results with provenance. Choose
+   implementation and diagnostic steps to fit the experiment; honor its
+   validators, budget, and stop conditions.
 8. **Research before engineering.** A passing build or test establishes
    artifact correctness, not scientific validity. Code and production
    hardening are not contributions without insight or claim-bearing evidence.
-9. **Bounded delegation.** Agents are allowed when they reduce wall-clock time
-   or cover disjoint work. Use the fewest needed; every agent gets an owned
-   scope, expected output, and stop condition. Never add agents merely to
-   re-check the same change.
+9. **Orchestration-first durable runs.** Delegate substantial reading,
+   implementation, experiments, and diagnosis to bounded roles, sequentially
+   when context isolation helps. The parent owns research decisions, evidence
+   reconciliation, integration, and conclusions. Keep trivial tasks and tightly
+   coupled reasoning local; respect user delegation limits.
 10. **Outcome-first reporting.** Lead with the artifact or answer; keep updates
     to target result, constraints, evidence, and stop condition.
 
@@ -64,38 +68,28 @@ not research stages, skills, roles, model tiers, or permissions. Each accepts
 - **Caveman** compresses communication, never reasoning, evidence,
   uncertainty, safety boundaries, or required output fields.
 
-Keep the primary skill and fixed-role route unchanged. Put active levels in
+When requested, read the corresponding `coresearch/references/ponytail.md` or
+`coresearch/references/caveman.md` in the installed skill. Put active levels in
 `working_modes` for every role handoff and durable mission. If a mode conflicts
 with the evaluation, safety, or artifact contract, the contract wins.
 
 ## Skill routing
 
-- `coresearch` — sole stage router and re-entry point.
-- `research-design` — paper design, gap analysis, and causal-hypothesis planning.
-- `research-survey` — verified literature maps and conflict synthesis.
-- `research-loop` — host-neutral mission, sandbox, validator, retry, and result contract.
-- `research-engineer` — reproducible implementation, experiments, datasets, benchmarks, and release.
-- `research-qualitative` — optional, explicit-only qualitative synthesis.
-- `research-write` — evidence-bounded local rewriting, section drafting,
-  author-approved argument realization, semantic revision, and concept
-  decomposition.
-- `research-review` — venue assessment, score movement, and review responses.
-- `research-verify` — focused factual, methodology, adversarial, or causal audit.
-
-If two skills appear applicable, use the routing contract in `coresearch` and
-state the chosen order once. A skill never silently performs the next stage.
+Use the routing contract in `coresearch` to select the primary skill and
+resolve overlapping requests. Continue through the stages needed for the
+authorized outcome; a stage handoff is not a user-approval gate. Scale the
+work to the question: an excerpt rewrite or citation check does not require
+a full paper workflow. `research-qualitative` remains explicit-only.
 
 ## Fixed native roles
 
 The role/model matrix below mirrors the source canonical agent manifest.
 Do not pass a per-invocation model override. For Codex, `assignment` means the
-parent chooses and explicitly passes effort per task: `low` for straightforward
-extraction, `medium` for bounded execution, `high` for difficult reasoning, and
-`xhigh` for deeply branching planning or verification. These are complexity
-guidelines, not role defaults. Read the assignment-effort section of
-`coresearch/references/agent-routing.md` before delegation. Record the concrete
-effort and rationale; use a bounded or no-history fork that supports overrides.
-Claude retains its fixed efforts.
+parent selects and explicitly passes a concrete effort per task; Claude retains
+its fixed efforts. When delegating, use the installed
+`coresearch/references/agent-routing.md` for role selection, assignment-effort
+criteria, handoff fields, and dependency joins. Record effort and rationale;
+use a bounded or no-history fork that supports explicit effort selection.
 
 | Role | Codex model / effort | Claude model / effort | Capability |
 |---|---|---|---|
@@ -108,29 +102,17 @@ Claude retains its fixed efforts.
 | `coresearch-synthesizer` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `low` | Read-only evidence synthesis |
 | `coresearch-verifier` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` | Independent read-only verification |
 
-Use reader for known sources and researcher for discovery. Use implementer only
-for a mechanically clear, decomposed slice after owned files and validation are
-explicit; complex integrated implementation stays with the frontier parent.
-Use experimenter under a locked evaluation contract. After repeated observed
-failure, return to the parent for one debugger diagnosis; fixes return to
-implementer. Use the synthesizer only after the evidence and
-mechanism decision is resolved; unresolved conflicting evidence or mechanism
-choice stays with the frontier parent. Verify at a claim/completion boundary and after
-any later evidence-changing edit.
+Each assignment has one fixed role, disjoint ownership, an expected artifact,
+validation, and a stop condition. Roles return to the parent without selecting
+the next research stage or spawning another role. The parent joins dependencies
+and integrates writable artifacts before synthesis or independent verification.
+Durable runs record every attempted assignment in `result.json.role_runs`.
 
-Every role assignment includes: primary skill, field mode, claim/evidence
-target, owned and read-only scope, confidentiality limits, expected artifact,
-validation, stop condition, and active `working_modes`. Roles return to the
-parent and do not select the next research stage or spawn another role.
-
-Use at most one fixed role per assignment. The parent may run multiple
-independent assignments concurrently, preferably read-only evidence lanes.
-Every assignment has a unique `assignment_id`, `depends_on`, owned/read-only
-scope, expected artifact, validator, and terminal condition. Never run two
-writers over the same path. Wait at dependency joins, integrate writable
-artifacts, and only then start synthesis or independent verification. Record
-every attempted assignment, including blocked or cancelled lanes, in
-`result.json.role_runs`.
+Give workers relevant context and artifact pointers; require concise findings,
+evidence locations, validation, uncertainty, counterevidence, and blockers.
+Keep raw logs out of the main context. The parent inspects supporting evidence
+as needed to assess results. Use the routing reference for direct-work exceptions
+and unavailable workers; required independent verification remains in force.
 
 ## Durable research runs
 
@@ -143,43 +125,21 @@ docs/research/runs/<run-id>/sandbox.md
 docs/research/runs/<run-id>/result.json
 ```
 
-The mission fixes objective, non-goals, question, contribution, hypotheses,
-evaluation, artifacts, validators, ordered units, retry budget, stop
-conditions, ledger ownership, allowed roles, any active `working_modes`, and
-the assignment graph with an optional concurrency cap.
-The sandbox fixes files, data, models, APIs, budgets, credentials,
-confidentiality, destructive and external-write prohibitions, logs, and
-cancellation.
+Use `research-loop` and its conditional mission/result references for schemas,
+evaluation, sandbox limits, retry budgets, assignment provenance, and terminal
+conditions. These contracts determine completion and recovery for the run.
 
 If `docs/research/decisions/ledger.yaml` is absent, the parent initializes it
 once after fixing the run identity, following the installed state-ledger
 reference. Ordinary in-chat work creates no ledger; never replace an existing
 ledger.
 
-For Codex durable continuation, submit a goal that references the mission:
-
-```text
-/goal Execute docs/research/runs/<run-id>/mission.md within sandbox.md. Use the
-named fixed role for each ready assignment, preserve its configured model, and
-explicitly pass parent-selected reasoning effort by assignment complexity.
-Use a bounded or no-history fork that supports effort selection. Join
-dependencies and integrate writable artifacts before
-verification. Keep docs/research/decisions/ledger.yaml current. Stop only after
-result.json has a terminal status, every assignment has a role_runs record, and
-every required validator has evidence, or when a declared
-blocked/failure/human-decision condition is reached.
-```
-
-Claude Code receives the same mission and sandbox paths in its main session and
-writes the same terminal result. Do not emulate the Codex goal surface or make
-a second ledger.
-
-New terminal results use schema version 2 and record one `role_runs` entry per
-attempted assignment with requested model/effort, observed routing when the host
-exposes it, artifacts, validators, and stop reason. Top-level fields describe
-the whole run. Historical schema-version-1 results remain valid. Unobservable
-or partially observable routing is `static-only`; a substituted, unavailable,
-blocked, or different role/model/effort is `mismatch`, never verified.
+For durable continuation, read the installed
+`coresearch/references/execution-adapters.md`. Codex goals and Claude Code
+sessions use the same mission, sandbox, and terminal result; they do not replace
+Coresearch routing. Record routing as `verified` only with matching observed
+metadata; incomplete observations are `static-only`, and substituted,
+unavailable, blocked, or different routing is `mismatch`.
 
 ## Field and writing modes
 
@@ -217,33 +177,21 @@ acceptance forecasting back through `coresearch` to `research-review`.
 - Keep the main paper self-contained; supplements may support but not carry
   core claims.
 - Do not add dependencies unless explicitly requested or demonstrably required.
-- Read `skills/coresearch/references/execution-safe.md` before long or noisy
-  commands; keep raw logs ignored and inspect bounded summaries.
+- For long or noisy commands, use `coresearch/references/execution-safe.md`
+  in the installed skill; keep raw logs ignored and inspect bounded summaries.
 
 ## Verification and completion
 
-- Run one smallest targeted check after a behavior-changing edit.
-- Auto-retry once after a narrower diagnosis; allow at most two fix cycles per
-  experiment unit. Stop when two attempts produce no new artifact or error
-  signal.
-- Run full regression and one independent verifier at the claim boundary, not
-  repeatedly on an unchanged result.
-- Paper review reports scale, score, confidence, variance, blockers, and score
-  movement conditions.
-- Survey and claim checks distinguish verified, partial, unsupported, and
-  unknown evidence.
-- Research engineering reports files, commands, configurations, provenance,
-  reproducibility, and residual risks.
-- Claim-bearing completion is not final until `coresearch-verifier` returns an
-  evidence-backed verdict and the parent re-enters `coresearch`.
+Validate the requested result against the applicable skill or mission contract.
+Choose checks that address the change and evidence at risk; repeat or broaden
+them when changed artifacts, observed failures, or declared validators warrant
+it. Diagnose failures from evidence and continue authorized repairs within any
+declared retry budget. Stop at completion, exhausted budget, or a concrete
+blocker requiring new evidence or authority.
 
-## Recovery and lifecycle
-
-1. Retry a failed validation once with a narrower diagnosis.
-2. Route repeated observed implementation or experiment failure to one debugger
-   diagnosis, then return fixes to implementer.
-3. Apply small corrective patches and preserve unrelated work.
-4. Stop for missing evidence, authority, confidentiality, a destructive choice,
-   or an explicit human-decision condition.
-5. Preserve durable decisions in the canonical ledger and terminal run result;
-   do not invent an ad-hoc state directory.
+Claim-bearing completion requires an evidence-backed verdict from
+`coresearch-verifier` after integration, then re-entry through `coresearch`.
+An evidence-changing edit requires renewed verification; an unchanged result
+does not. Report the requested artifact or answer, validation and provenance
+needed to assess it, and material uncertainty or blockers. Use the primary
+skill's reporting fields only when applicable to the requested scope.

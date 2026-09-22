@@ -69,13 +69,21 @@ flowchart TD
     V --> R
 ```
 
-Intake is classified by `coresearch`, which selects one skill and optionally a
-bounded graph of one-role assignments. Host execution returns artifacts and
-routing provenance. The
+Intake is classified by `coresearch`, which selects one skill. Authorized durable
+runs default to parent orchestration with bounded one-role assignments for
+substantial work, including sequential delegation for context isolation.
+Trivial tasks and tightly coupled reasoning may remain with the parent; user
+delegation limits and host availability still apply. Host execution returns
+compact findings, evidence/artifact pointers, validation, uncertainty,
+counterevidence, blockers, and routing provenance. The
 parent may run multiple ready assignments concurrently, records each terminal
 role attempt, joins dependencies, integrates writable artifacts, applies
 authorized ledger updates, invokes the verifier only after the integrated
 artifact is stable, and re-enters `coresearch` before choosing another stage.
+The parent owns research direction and final conclusions and inspects supporting
+evidence when needed to assess worker findings. Raw logs and detailed traces
+stay outside its main context. Existing mission, result, and ledger contracts
+carry this work; no new workflow engine or context-state store is introduced.
 
 ## 5. Skill architecture
 
@@ -103,6 +111,13 @@ approval for already-authorized work. Local implementation continues through
 applicable validation and observed-failure repair until the requested outcome
 or a declared stop condition. Runtime permission boundaries and independent
 verification at claim-bearing completion remain in force.
+
+Mission drafting and audit do not authorize execution or execution-state writes.
+Run initialization and terminal-result obligations apply to authorized runs.
+Engineering layouts are illustrative: reproducible flat artifacts are valid,
+and documentation references the canonical ledger rather than duplicating claim
+state. Causal, writing, and rebuttal outputs scale to the requested question
+while retaining the evidence needed to assess their conclusions.
 
 `research-write` preserves a fast local-rewrite path and progressively loads
 [`argument-architecture.md`](skills/research-write/references/argument-architecture.md),
@@ -137,7 +152,7 @@ evidence-changing fixes trigger a new verifier.
 One role owns one assignment. Several independent read-only assignments may
 run concurrently; writable assignments require disjoint owned paths. The
 parent serializes overlapping writes, joins declared dependencies, owns complex
-integrated implementation, and retains unresolved conflicting evidence or
+integrated implementation until it can be decomposed, and retains unresolved conflicting evidence or
 mechanism choices. The synthesizer consolidates evidence only after the
 mechanism decision is resolved. Roles never spawn descendants.
 
@@ -314,6 +329,11 @@ Static validation parses manifests and scripts, locks the 9-skill and 8-role
 sets, checks all sixteen native definitions, resolves links, verifies research
 contracts and entrypoint budgets, audits active surfaces, and exercises the
 install, pruning, and prompt matrix.
+Bounded behavioral cases in
+[`orchestration-scenarios.md`](scripts/fixtures/orchestration-scenarios.md)
+exercise sequential delegation, direct-work exceptions, unavailable workers,
+and child-role boundaries through independent forward tests. They assess
+decisions separately from static wording checks and live model-routing probes.
 Strict doctor checks repository definitions, installed copies/links, capability
 and pin drift, environment override risk, and broken entries. Explicit live
 role-routing probes invoke named roles and require role/model/effort metadata

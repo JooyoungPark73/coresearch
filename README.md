@@ -309,6 +309,15 @@ contributions, evaluation claims, and conclusion.
 
 ## Durable run contract
 
+Durable runs use the main agent primarily as an orchestrator. It delegates
+substantial reading, bounded implementation, experiments, and diagnosis to
+fixed roles, including sequential assignments when context isolation helps.
+The parent retains research decisions, evidence reconciliation, integration,
+and final conclusions. Workers return concise findings with evidence and
+artifact pointers; raw logs stay outside the main context. Trivial tasks and
+tightly coupled reasoning can stay with the parent, subject to the existing
+verification contract and user limits on delegation.
+
 `research-loop` creates or updates:
 
 ```text

@@ -151,9 +151,11 @@ Before expanding a whole paper, compare:
 If they disagree, reconcile the claim graph before polishing prose. Missing
 evidence remains visible; fluent language is not a repair.
 
-## Output floor
+## Output at the requested scope
 
-Return the coherent payload, claim/dependency map, unsupported or conflicting
-claims, section promises, manuscript plan, any requested draft, and remaining
-evidence/revision risks. Separate author-provided facts, inference,
-recommendation, and unknown.
+Return the requested draft, plan, or coherence diagnosis first. Include the
+coherent payload, claim/dependency map, section promises, or manuscript plan
+when they help explain or resolve the requested argument problem. A focused
+diagnosis need not produce a complete manuscript plan. Keep material unsupported
+or conflicting claims and evidence/revision risks visible; distinguish
+author-provided facts, inference, recommendation, and unknown.
