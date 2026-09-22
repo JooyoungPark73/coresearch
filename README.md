@@ -25,36 +25,43 @@ and single-source ownership.
 The root `AGENTS.md` is development guidance for this repository, not the
 template installed into research projects.
 
-## Fixed role and model matrix
+## Fixed roles and assignment models
 
 [`agents/manifest.json`](agents/manifest.json) is the source authority. Native
-files repeat model pins and implement each provider's effort policy. The harness
+files preserve role capabilities and implement each provider's selection policy. The harness
 does not install the manifest under `.codex/agents`
 or `.claude/agents`, and its absence there is not a registration failure.
 
 | Role | Codex model / effort | Claude model / effort |
 |---|---|---|
-| `coresearch-planner` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` |
-| `coresearch-researcher` | `gpt-6-astra` / `assignment` | `claude-sonnet-5` / `high` |
-| `coresearch-reader` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `low` |
-| `coresearch-implementer` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` |
-| `coresearch-experimenter` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` |
-| `coresearch-debugger` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `high` |
-| `coresearch-synthesizer` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `low` |
-| `coresearch-verifier` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` |
+| `coresearch-planner` | `assignment` / `assignment` | `claude-opus-5` / `xhigh` |
+| `coresearch-researcher` | `assignment` / `assignment` | `claude-sonnet-5` / `high` |
+| `coresearch-reader` | `assignment` / `assignment` | `claude-haiku-4-5-20251001` / `low` |
+| `coresearch-implementer` | `assignment` / `assignment` | `claude-haiku-4-5-20251001` / `medium` |
+| `coresearch-experimenter` | `assignment` / `assignment` | `claude-haiku-4-5-20251001` / `medium` |
+| `coresearch-debugger` | `assignment` / `assignment` | `claude-opus-5` / `high` |
+| `coresearch-synthesizer` | `assignment` / `assignment` | `claude-opus-5` / `low` |
+| `coresearch-verifier` | `assignment` / `assignment` | `claude-opus-5` / `xhigh` |
 
-All eight Codex roles use Astra. `assignment` means the parent explicitly
-chooses effort for each task: `low` for extraction or resolved synthesis,
-`medium` for bounded execution, `high` for difficult reasoning, and `xhigh` for
-deeply branching planning or verification. These are complexity guidelines,
-not fixed role defaults. See [assignment effort](skills/coresearch/references/agent-routing.md).
+For Codex, `assignment` means the parent explicitly chooses both model and
+effort. Approved models are `gpt-6-astra`, `gpt-5.6-sol`, `gpt-5.6-terra`, and
+`gpt-5.6-luna`; Astra is the default and uncertainty fallback. Use Astra for
+research decisions and scientific verification, Sol for substantial judgment,
+Terra for bounded implementation and extraction, and Luna for mechanical work
+with directly checkable outputs. These are initial selection criteria, not
+measured quality or cost guarantees. Effort remains independently selected from
+`low`, `medium`, `high`, and `xhigh`.
+See [assignment selection](skills/coresearch/references/agent-routing.md).
 After updating this checkout, run `./harness link --surface codex` to refresh
 installed role copies, then start a new Codex session to load them.
 
-Rolling provider aliases are rejected. Codex role files omit effort overrides;
-the parent must pass the chosen effort explicitly at spawn time. Claude retains
-fixed efforts. Stale Codex role copies with fixed effort fail strict doctor.
-Coresearch instructions do not pass a per-invocation model override.
+Unapproved model aliases are rejected. Codex role files omit model and effort
+overrides; the parent must pass both explicitly at spawn time. Custom role-file
+values take precedence over spawn values under the official
+[Codex configuration rules](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+Claude retains fixed model and effort. Stale Codex copies with either override
+fail strict doctor. The installed routing reference carries selection guidance;
+there is no runtime manifest lookup or global model-setting mutation.
 The implementer handles mechanically clear, decomposed slices;
 complex integrated implementation stays with the frontier parent. The
 synthesizer consolidates already-resolved evidence; unresolved
@@ -201,7 +208,7 @@ harness rollback --scope global -y
 ## Harness commands
 
 ```bash
-harness status                         # skills, roles, prompts, requested pins
+harness status                         # skills, roles, prompts, selection policy
 harness inventory --include-plugins    # Coresearch ownership and overlap audit
 harness doctor --strict                # static source + installed Codex audit
 harness doctor --strict --surface both # static + both installed providers
@@ -238,17 +245,21 @@ audit, run:
 harness doctor --strict --surface both --probe-models
 harness doctor --strict --surface codex --probe-models \
   --probe-role coresearch-reader
+harness doctor --strict --surface codex --probe-models \
+  --probe-role coresearch-reader --probe-model gpt-5.6-luna
 ```
 
-This explicit command invokes each named role without a model override. Codex
-probes explicitly request `low` effort for their simple diagnostic assignment;
-Claude probes retain configured effort. `--probe-role` limits a diagnostic run to one role.
+This explicit command invokes each named role. Codex probes explicitly request
+the manifest's diagnostic model (Astra by default) and `low` effort;
+`--probe-model` selects another approved Codex model and requires
+`--strict --probe-models` with a Codex surface. Claude probes retain configured
+model and effort. `--probe-role` limits a diagnostic run to one role.
 Codex probes are ephemeral, use the doctor target as their project root, and do
 not depend on the shell's starting directory. A full probe may make eight host
 calls per selected surface; each role probe has a 120-second timeout. Bounded
 host errors such as an unavailable agent type are included in failures.
 
-- `verified` — observed role, model, and effort metadata match the requested assignment, with the model pinned by the manifest;
+- `verified` — observed role, model, and effort metadata match the explicit approved assignment;
 - `static-only` — the host or CLI does not expose all three observed values;
 - `mismatch` — the role is missing or a role/model/effort is blocked,
   substituted, unavailable, or different.
@@ -371,7 +382,7 @@ Run the complete local suite:
 ./scripts/validate.sh
 ```
 
-It validates structure, all role pins and capabilities, zero active runtime
+It validates structure, model/effort policy, role capabilities, zero active runtime
 coupling, copy/symlink installation across user/project and both providers,
 prompt backup/rollback safety, durable research contracts, documentation drift,
 and strict doctor failures for wrong or missing routing data.

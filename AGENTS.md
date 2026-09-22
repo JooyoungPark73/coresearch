@@ -33,9 +33,10 @@ to evidence, validators, and the canonical ledger.
    canonical ledger at `docs/research/decisions/ledger.yaml`.
 4. `agents/manifest.json` is the only authority for role names, capabilities,
    provider models, and effort policies. Native definitions match it.
-5. Maintain exactly eight roles on each provider. Keep explicit model pins;
-   Codex effort is selected by the parent per assignment, while Claude effort
-   remains fixed. Never silently inherit an unspecified assignment effort.
+5. Maintain exactly eight roles on each provider. Codex model and effort are
+   explicitly selected by the parent per assignment under the manifest policy;
+   native Codex files must not override them. Claude model and effort remain
+   fixed. Never silently inherit an unspecified assignment selection.
 6. Codex goals and Claude Code sessions continue host-neutral missions; they do
    not replace Coresearch routing or create another workflow engine.
 7. Do not create provider-specific research state forests.

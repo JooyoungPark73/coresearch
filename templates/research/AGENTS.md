@@ -84,23 +84,25 @@ a full paper workflow. `research-qualitative` remains explicit-only.
 ## Fixed native roles
 
 The role/model matrix below mirrors the source canonical agent manifest.
-Do not pass a per-invocation model override. For Codex, `assignment` means the
-parent selects and explicitly passes a concrete effort per task; Claude retains
-its fixed efforts. When delegating, use the installed
-`coresearch/references/agent-routing.md` for role selection, assignment-effort
-criteria, handoff fields, and dependency joins. Record effort and rationale;
-use a bounded or no-history fork that supports explicit effort selection.
+For Codex, `assignment` means the parent selects and explicitly passes model
+and effort per task. Approved models are `gpt-6-astra`, `gpt-5.6-sol`,
+`gpt-5.6-terra`, and `gpt-5.6-luna`; Astra is the default and fallback for
+uncertainty and remains the choice for scientific claim verification. Claude
+retains fixed model and effort. When delegating, use the installed
+`coresearch/references/agent-routing.md` for selection criteria, bounded
+escalation, handoff fields, and dependency joins. Record model, effort, and
+selection rationale; use a bounded or no-history fork that accepts both.
 
 | Role | Codex model / effort | Claude model / effort | Capability |
 |---|---|---|---|
-| `coresearch-planner` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` | Read-only planning and browsing |
-| `coresearch-researcher` | `gpt-6-astra` / `assignment` | `claude-sonnet-5` / `high` | Read, search, and web |
-| `coresearch-reader` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `low` | Read and bounded extraction |
-| `coresearch-implementer` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` | Bounded workspace writes and tests |
-| `coresearch-experimenter` | `gpt-6-astra` / `assignment` | `claude-haiku-4-5-20251001` / `medium` | Bounded execution and result capture |
-| `coresearch-debugger` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `high` | Read-only root-cause diagnosis |
-| `coresearch-synthesizer` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `low` | Read-only evidence synthesis |
-| `coresearch-verifier` | `gpt-6-astra` / `assignment` | `claude-opus-5` / `xhigh` | Independent read-only verification |
+| `coresearch-planner` | `assignment` / `assignment` | `claude-opus-5` / `xhigh` | Read-only planning and browsing |
+| `coresearch-researcher` | `assignment` / `assignment` | `claude-sonnet-5` / `high` | Read, search, and web |
+| `coresearch-reader` | `assignment` / `assignment` | `claude-haiku-4-5-20251001` / `low` | Read and bounded extraction |
+| `coresearch-implementer` | `assignment` / `assignment` | `claude-haiku-4-5-20251001` / `medium` | Bounded workspace writes and tests |
+| `coresearch-experimenter` | `assignment` / `assignment` | `claude-haiku-4-5-20251001` / `medium` | Bounded execution and result capture |
+| `coresearch-debugger` | `assignment` / `assignment` | `claude-opus-5` / `high` | Read-only root-cause diagnosis |
+| `coresearch-synthesizer` | `assignment` / `assignment` | `claude-opus-5` / `low` | Read-only evidence synthesis |
+| `coresearch-verifier` | `assignment` / `assignment` | `claude-opus-5` / `xhigh` | Independent read-only verification |
 
 Each assignment has one fixed role, disjoint ownership, an expected artifact,
 validation, and a stop condition. Roles return to the parent without selecting

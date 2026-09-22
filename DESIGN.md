@@ -28,7 +28,8 @@ state.
 - `docs/research/decisions/ledger.yaml` is the only durable research ledger.
 - Delegation is bounded by owned scope, artifact, validation, confidentiality,
   and stop conditions.
-- Exactly eight role names exist; provider model pins and effort policies live in one manifest.
+- Exactly eight role names exist; model allowlists, defaults, selection criteria,
+  effort policies, and fixed Claude pins live in one manifest.
 - Claim-bearing completion receives independent verification.
 - Mission, sandbox, and result artifacts are host-neutral; no provider-specific
   state forest is created.
@@ -161,20 +162,28 @@ effort policies live only in [`agents/manifest.json`](agents/manifest.json). Nat
 files repeat required host fields and are validated against that manifest. The
 source manifest is not installed into provider agent directories and is not a
 runtime registration mechanism; each native file is self-contained. This
-document intentionally does not duplicate the model matrix. Codex roles share
-one explicit model pin and their capability boundaries. Manifest schema version 2
-uses `effort: assignment` for Codex: native TOMLs omit effort overrides and the
-parent explicitly selects `low`, `medium`, `high`, or `xhigh` per assignment.
-The shared `codex_effort_policy` defines allowed levels and the diagnostic probe
-effort. Claude keeps fixed model and effort settings. Version-1 source manifests
-require migration with the harness; existing installed roles remain owned and
-are safely replaceable. Old fixed-effort Codex copies fail strict doctor until
-refreshed. Run result schemas are unchanged: `requested_effort` records the actual
-assignment choice, and observed effort is checked against it.
+document intentionally does not duplicate the model matrix. Manifest schema
+version 3 uses `model: assignment` and `effort: assignment` for Codex. The
+`codex_model_policy` owns approved model IDs, default and fallback models,
+diagnostic model, and workload-selection criteria; `codex_effort_policy` owns
+allowed effort levels and diagnostic effort. Native Codex TOMLs omit both
+overrides because custom-file settings take precedence over spawn values under
+the [official host contract](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+The parent explicitly passes model and effort while preserving named-role scope.
+Claude keeps fixed model and effort. Older source schemas fail validation;
+recognized installed roles remain safely replaceable through link/repair.
+Old fixed-model or fixed-effort Codex copies fail strict doctor until refreshed.
+Run result schemas are unchanged: existing requested model/effort fields record
+each attempt, and observed routing is checked against that request. Selection
+rationale lives in the mission assignment/handoff; escalation uses a new attempt
+ID and preserves prior failures within the existing retry budget.
 
-Effort selection follows assignment complexity, not role identity. Parent
-instructions require explicit spawn effort and a compatible bounded or
-no-history fork; omission alone would inherit effort. Static checks establish
+Model selection considers ambiguity, error consequence, and ease of validation;
+effort is selected independently. Astra remains the uncertainty fallback and
+scientific-verification choice. Cheaper tiers are initial workload hypotheses,
+not established quality or cost equivalence. Parent instructions require explicit
+spawn model/effort and a compatible bounded or no-history fork; omission may
+inherit host defaults and is not an approved selection. Static checks establish
 configuration intent only, while host metadata establishes observed routing.
 
 ## 7. Host adapters
@@ -203,9 +212,10 @@ Shared semantics and the canonical handoffs live in
 Provider differences remain limited to native definition syntax,
 permissions/tools, invocation, and observable routing metadata.
 
-Explicit routing probes invoke each named native role without a model override.
-Codex probes explicitly pass the manifest's diagnostic effort for the bounded
-probe assignment; Claude uses its configured effort. Codex probes are ephemeral and execute with the selected
+Explicit routing probes invoke each named native role. Codex probes explicitly
+pass the manifest's diagnostic model and effort for the bounded assignment;
+`--probe-model` can choose an approved Codex model only under the strict explicit
+probe path. Claude uses its configured model and effort. Codex probes are ephemeral and execute with the selected
 doctor target as their project root, independent of the caller's working
 directory. A direct model invocation is an availability test, not a
 role-routing test. Only host-reported role, model, and effort metadata can
@@ -283,7 +293,7 @@ then validates and diagnoses them.
 - External writes, destructive actions, and production changes require explicit
   authorization outside the research mission.
 - Native roles receive least privilege; read-only roles do not edit.
-- Exact requested model pins are static configuration, not proof of observed
+- Approved requested models are static configuration, not proof of observed
   routing. Known environment overrides fail strict doctor.
 - Live probes are explicit network/token operations. An unobservable route is
   `static-only`; substitution, unavailability, or a different model is
@@ -334,12 +344,16 @@ Bounded behavioral cases in
 exercise sequential delegation, direct-work exceptions, unavailable workers,
 and child-role boundaries through independent forward tests. They assess
 decisions separately from static wording checks and live model-routing probes.
+[`model-selection-scenarios.md`](scripts/fixtures/model-selection-scenarios.md)
+adds assignment-choice and escalation cases and a separate comparative-evaluation
+protocol. Model availability probes and offline fixtures do not establish task
+quality, cost, or latency improvements.
 Strict doctor checks repository definitions, installed copies/links, capability
-and pin drift, environment override risk, and broken entries. Explicit live
+and selection-policy drift, environment override risk, and broken entries. Explicit live
 role-routing probes invoke named roles and require role/model/effort metadata
 for `verified`; they are never part of ordinary validation.
 
-Model-pin upgrades are reviewed changes to the agent manifest, both provider
+Model-policy upgrades are reviewed changes to the agent manifest, affected provider
 definitions, relevant docs, and regression expectations. Schema changes state
 their compatibility policy. Architectural boundary, manifest ownership,
 run-artifact, or installation-topology changes require a matching update to
@@ -349,8 +363,9 @@ this file.
 
 - **Standalone research bundle:** keeps Coresearch behavior portable across
   the two hosts and avoids coupling research validity to an external runtime.
-- **Fixed roles:** bounded responsibilities and exact pins make delegation
-  auditable, installable, and testable at the cost of reviewed pin upgrades.
+- **Fixed roles, explicit model selection:** stable responsibilities and scoped
+  capabilities are separate from Codex assignment models; approved selections
+  and per-attempt evidence make delegation auditable. Claude retains fixed pins.
 - **Host-neutral run contract:** one mission/sandbox/result shape preserves
   research meaning while native hosts retain their own continuation semantics.
 - **Per-assignment provenance:** schema-version-2 `role_runs` makes multi-role
@@ -390,7 +405,7 @@ sequenceDiagram
         L->>H: Main session receives mission and sandbox paths
     end
     loop Each ready assignment
-        H->>A: Named fixed role with exact configured pin
+        H->>A: Named role with explicit approved model/effort
         A->>G: Terminal role_runs entry, artifacts, validators
     end
     H->>G: Join dependencies, integrate, finalize result and ledger updates
@@ -404,7 +419,7 @@ sequenceDiagram
 | Concern | Authoritative file |
 |---|---|
 | Owned skill inventory | [`skills/manifest.json`](skills/manifest.json) |
-| Fixed roles, model pins, and effort policies | [`agents/manifest.json`](agents/manifest.json) |
+| Fixed roles, model selection, and effort policies | [`agents/manifest.json`](agents/manifest.json) |
 | Stage/skill routing behavior | [`skills/coresearch/SKILL.md`](skills/coresearch/SKILL.md) |
 | Claim/evidence rules | [`evidence-grounding.md`](skills/coresearch/references/evidence-grounding.md) |
 | Durable research state | [`state-ledger.md`](skills/coresearch/references/state-ledger.md) |

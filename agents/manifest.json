@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "role_description_version": 2,
   "bundle": "coresearch",
   "roles": [
@@ -14,7 +14,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -34,7 +34,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -54,7 +54,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -73,7 +73,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -93,7 +93,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -113,7 +113,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -133,7 +133,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -152,7 +152,7 @@
       ],
       "providers": {
         "codex": {
-          "model": "gpt-6-astra",
+          "model": "assignment",
           "effort": "assignment"
         },
         "claude": {
@@ -170,5 +170,22 @@
       "xhigh"
     ],
     "probe_effort": "low"
+  },
+  "codex_model_policy": {
+    "allowed": [
+      "gpt-6-astra",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-5.6-luna"
+    ],
+    "default_model": "gpt-6-astra",
+    "fallback_model": "gpt-6-astra",
+    "probe_model": "gpt-6-astra",
+    "selection": {
+      "gpt-6-astra": "Research decisions, difficult evidence reconciliation, scientific verification, and assignments with uncertain requirements or costly, hard-to-detect errors.",
+      "gpt-5.6-sol": "Substantial implementation, investigation, and synthesis of resolved evidence requiring broad judgment.",
+      "gpt-5.6-terra": "Bounded implementation, structured extraction, and routine experiment setup with clear scope and validators.",
+      "gpt-5.6-luna": "Mechanical transformations, metadata extraction, and prescribed execution or collection with directly checkable outputs."
+    }
   }
 }

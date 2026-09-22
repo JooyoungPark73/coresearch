@@ -23,8 +23,9 @@ Record:
 - role assignments with `assignment_id`, fixed role, `depends_on`, owned or
   read-only scope, expected artifact, validator, working modes, and stop or
   escalation condition;
-- exact `requested_effort` for each assignment; for Codex, the parent's
-  complexity rationale and explicit spawn effort, with no fixed role override;
+- exact `requested_model` and `requested_effort` for each assignment; for Codex,
+  the parent's selection rationale and explicit spawn values, with no native
+  file overrides; Claude retains its configured model and effort;
 - retry/fix budget;
 - success, blocked, failure, cancellation, and human-decision stop conditions;
 - canonical ledger path and authorized keys.
@@ -37,6 +38,9 @@ decisions and evidence reconciliation with the parent. Use the existing
 assignment artifact and validator fields to specify compact returns with evidence
 locations, uncertainty, and blockers; retain raw traces outside the main context.
 Trivial tasks and tightly coupled reasoning may stay in the parent.
+If an observed failure warrants model escalation, record the reason and a new
+attempt ID within the existing retry budget. Preserve earlier attempts and
+their evidence; do not turn escalation into an automatic model ladder.
 
 Every implementation unit must instantiate an insight, test a hypothesis, or
 produce claim-bearing evidence. A build or smoke validator cannot validate an

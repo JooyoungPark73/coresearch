@@ -844,6 +844,9 @@ def parse_role_definition(path: Path, provider: str) -> dict[str, object]:
 
 def role_status(roles_root: Path, provider: str) -> list[str]:
     rows: list[str] = []
+    model_policy = agent_manifest().get("codex_model_policy", {})
+    if not isinstance(model_policy, dict):
+        model_policy = {}
     suffix = ".toml" if provider == "codex" else ".md"
     by_name = {item["name"]: item for item in roles()}
     for name in ROLES:
@@ -866,11 +869,13 @@ def role_status(roles_root: Path, provider: str) -> list[str]:
         config = parse_role_definition(dst, provider)
         effort_key = "model_reasoning_effort" if provider == "codex" else "effort"
         observed = (config.get("model"), config.get(effort_key))
-        expected = (pin["model"], None if pin["effort"] == "assignment" else pin["effort"])
+        expected = (None if provider == "codex" else pin["model"], None if provider == "codex" else pin["effort"])
         if dst.exists() and observed != expected:
             kind += f" CONFIG-MISMATCH requested={pin['model']}/{pin['effort']} observed={observed[0]}/{observed[1]}"
         elif dst.exists():
-            kind += f" model={expected[0]} effort={pin['effort']}"
+            kind += f" model={pin['model']} effort={pin['effort']}"
+            if provider == "codex":
+                kind += f" default_model={model_policy.get('default_model', '<invalid>')}"
         rows.append(f"{name}: {kind}")
 
     if roles_root.is_dir():
@@ -1038,8 +1043,11 @@ def cmd_inventory(args: argparse.Namespace) -> int:
             )
     print()
     print("# Coresearch native role inventory")
-    print("surface\tclass\tname\tkind\tpath\trequested-model\trequested-effort")
+    print("surface\tclass\tname\tkind\tpath\trequested-model\trequested-effort\tdefault-model")
     role_map = {item["name"]: item for item in roles()}
+    model_policy = agent_manifest().get("codex_model_policy", {})
+    if not isinstance(model_policy, dict):
+        model_policy = {}
     for provider, home in (("codex", codex_home(args.codex_home)), ("claude", claude_home(args.claude_home))):
         suffix = ".toml" if provider == "codex" else ".md"
         root = home / "agents"
@@ -1050,19 +1058,36 @@ def cmd_inventory(args: argparse.Namespace) -> int:
             kind = "symlink" if path.is_symlink() else "file"
             klass = "owned" if _is_managed_entry(path, "role") else "unrelated"
             pin = role_map[name]["providers"][provider]
-            print("\t".join((f"{provider}-user", klass, name, kind, str(path), pin["model"], pin["effort"])))
+            print("\t".join((f"{provider}-user", klass, name, kind, str(path), pin["model"], pin["effort"],
+                            model_policy.get("default_model", "<invalid>") if provider == "codex" else pin["model"])))
     return 0
 
 
 def validate_source_roles() -> list[str]:
     failures: list[str] = []
     manifest = agent_manifest()
-    if manifest.get("schema_version") != 2:
-        failures.append("agents/manifest.json schema_version must be 2")
+    if manifest.get("schema_version") != 3:
+        failures.append("agents/manifest.json schema_version must be 3")
     policy = manifest.get("codex_effort_policy", {})
     allowed = policy.get("allowed", [])
     if allowed != ["low", "medium", "high", "xhigh"] or policy.get("probe_effort") not in allowed:
         failures.append("agents/manifest.json invalid Codex assignment effort policy")
+    model_policy = manifest.get("codex_model_policy", {})
+    model_allowed = ["gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"]
+    if not isinstance(model_policy, dict):
+        model_policy = {}
+    if model_policy.get("allowed") != model_allowed:
+        failures.append("agents/manifest.json invalid Codex allowed models")
+    for key in ("default_model", "fallback_model", "probe_model"):
+        if model_policy.get(key) not in model_allowed:
+            failures.append(f"agents/manifest.json invalid Codex {key}")
+    for key in ("default_model", "fallback_model"):
+        if model_policy.get(key) != "gpt-6-astra":
+            failures.append(f"agents/manifest.json Codex {key} must be gpt-6-astra")
+    selection = model_policy.get("selection", {})
+    if (not isinstance(selection, dict) or set(selection) != set(model_allowed)
+            or any(not isinstance(value, str) or not value.strip() for value in selection.values())):
+        failures.append("agents/manifest.json invalid Codex model selection criteria")
     if manifest.get("role_description_version") != 2:
         failures.append("agents/manifest.json role_description_version must be 2")
     manifest_roles = manifest.get("roles", [])
@@ -1090,7 +1115,10 @@ def validate_source_roles() -> list[str]:
             effort_key = "model_reasoning_effort" if provider == "codex" else "effort"
             if config.get("name") != name:
                 failures.append(f"{path}: name mismatch {config.get('name')!r}")
-            if config.get("model") != pin["model"]:
+            expected_model = None if provider == "codex" else pin["model"]
+            if provider == "codex" and pin.get("model") != "assignment":
+                failures.append(f"{name}: Codex model must be assignment-selected")
+            if config.get("model") != expected_model:
                 failures.append(f"{path}: model mismatch requested={pin['model']} observed={config.get('model')}")
             expected_effort = None if provider == "codex" else pin.get("effort")
             if provider == "codex" and pin.get("effort") != "assignment":
@@ -1199,9 +1227,17 @@ def probe_role_routing(
     homes: dict[str, Path],
     target: Path,
     role_filter: str | None = None,
+    probe_model: str | None = None,
 ) -> tuple[list[str], list[str]]:
     reports: list[str] = []
     failures: list[str] = []
+    model_policy = agent_manifest().get("codex_model_policy", {})
+    if not isinstance(model_policy, dict):
+        model_policy = {}
+    codex_model = probe_model if probe_model is not None else model_policy.get("probe_model")
+    if "codex" in providers and (not isinstance(codex_model, str)
+            or codex_model not in (model_policy.get("allowed") or [])):
+        return [], [f"Codex probe model is not allowed: {codex_model}"]
     selected_roles = [role for role in roles() if role_filter is None or role["name"] == role_filter]
     for provider in providers:
         executable = shutil.which(provider)
@@ -1210,7 +1246,7 @@ def probe_role_routing(
                 pin = role["providers"][provider]
                 effort = agent_manifest()["codex_effort_policy"]["probe_effort"] if provider == "codex" else pin["effort"]
                 reports.append(
-                    f"routing provider={provider} role={role['name']} requested={pin['model']}/{effort} "
+                    f"routing provider={provider} role={role['name']} requested={codex_model if provider == 'codex' else pin['model']}/{effort} "
                     "observed_role=null observed=null/null status=static-only"
                 )
             failures.append(f"{provider} named-role probes are static-only: CLI not found")
@@ -1218,8 +1254,8 @@ def probe_role_routing(
         for role in selected_roles:
             name = role["name"]
             pin = role["providers"][provider]
-            model = pin["model"]
-            # The probe is a bounded assignment: select its effort explicitly,
+            model = codex_model if provider == "codex" else pin["model"]
+            # The probe is a bounded assignment: select model and effort explicitly,
             # then compare observed metadata against that request, not a role pin.
             effort = agent_manifest()["codex_effort_policy"]["probe_effort"] if provider == "codex" else pin["effort"]
             marker = f"CORESEARCH_ROLE_PROBE {name}"
@@ -1228,9 +1264,13 @@ def probe_role_routing(
                 if not _is_git_worktree(target):
                     command.append("--skip-git-repo-check")
                 command.append(
-                    f"Spawn exactly the custom agent named {name} with reasoning_effort={effort} "
-                    "and fork_turns=none. Do not override its model. The child must reply exactly "
-                    f"{marker}. Return that child reply unchanged and do not perform the probe yourself."
+                    f"Spawn exactly the custom agent named {name} with model={model}, reasoning_effort={effort} "
+                    "and fork_turns=none. Pass this explicit handoff to the child: "
+                    f"requested_model={model}; requested_effort={effort}; primary_skill=coresearch; "
+                    "scope=diagnostic echo only, no writes or network; "
+                    f"validator=reply exactly {marker}; stop after the marker reply. "
+                    f"The child must reply exactly {marker}. "
+                    "Return that child reply unchanged and do not perform the probe yourself."
                 )
             else:
                 command = [
@@ -1326,6 +1366,28 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     }
     failures = validate_source_roles()
     warnings: list[str] = []
+    if args.probe_models and failures:
+        for failure in failures:
+            print(f"FAIL {failure}")
+        print("Doctor result: FAIL (source validation failed; live probes skipped)")
+        return 1
+    probe_model = getattr(args, "probe_model", None)
+    probe_argument_failures = []
+    if args.probe_models and not args.strict:
+        probe_argument_failures.append("--probe-models requires --strict")
+    if probe_model is not None:
+        if not args.strict or not args.probe_models:
+            probe_argument_failures.append("--probe-model requires --strict --probe-models")
+        if "codex" not in providers:
+            probe_argument_failures.append("--probe-model requires a Codex surface")
+        model_policy = agent_manifest().get("codex_model_policy", {})
+        allowed_models = model_policy.get("allowed", []) if isinstance(model_policy, dict) else []
+        if not isinstance(allowed_models, list) or probe_model not in allowed_models:
+            probe_argument_failures.append(f"Codex probe model is not allowed: {probe_model}")
+    if probe_argument_failures:
+        for failure in probe_argument_failures:
+            print(f"FAIL {failure}")
+        return 1
     if getattr(args, "probe_role", None) and not args.probe_models:
         failures.append("--probe-role requires --probe-models")
 
@@ -1419,12 +1481,15 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     else:
         warnings.append(f"command `{args.command_name}` not found on PATH")
 
-    if args.probe_models:
+    if args.probe_models and failures:
+        print("Live probes skipped: static doctor checks failed.")
+    elif args.probe_models:
         reports, probe_failures = probe_role_routing(
             providers,
             runtime_homes,
             target,
             getattr(args, "probe_role", None),
+            probe_model,
         )
         for report in reports:
             print(report)
@@ -1623,6 +1688,7 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument("--strict", action="store_true", help="return nonzero on failures")
     doctor.add_argument("--validate", action="store_true", help="also run scripts/validate.sh")
     doctor.add_argument("--probe-models", action="store_true", help="spend network/tokens to invoke each named role and compare host-reported role/model/effort metadata with the manifest")
+    doctor.add_argument("--probe-model", help="Codex diagnostic model from the allowed policy; requires --strict --probe-models")
     doctor.add_argument("--probe-role", choices=ROLES, help="limit an explicit live probe to one named role")
     doctor.set_defaults(func=cmd_doctor)
 

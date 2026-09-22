@@ -56,8 +56,8 @@ Load references conditionally:
 
 ## Native roles and re-entry
 
-For Codex assignments, choose and explicitly pass reasoning effort by complexity
-using [agent-routing.md](references/agent-routing.md); retain the role's model pin.
+For Codex assignments, explicitly select an approved model and reasoning effort
+using [agent-routing.md](references/agent-routing.md). Claude retains fixed pins.
 
 Roles execute bounded assignments, not stage selection. Give each disjoint
 ownership, artifact, validator, and stop condition. Installed roles are

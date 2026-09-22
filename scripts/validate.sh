@@ -76,7 +76,8 @@ for path in files:
     assert path.name == f"{name}.toml", path
     assert name in roles, name
     pin = roles[name]["providers"]["codex"]
-    assert config["model"] == pin["model"], (path, config["model"], pin["model"])
+    assert pin["model"] == "assignment"
+    assert "model" not in config, path
     assert pin["effort"] == "assignment"
     assert "model_reasoning_effort" not in config, path
     expected_sandbox = "workspace-write" if roles[name]["capability"] == "workspace-write" else "read-only"
@@ -90,7 +91,7 @@ for path in files:
 PY
 pass "all eight Codex role definitions parse with tomllib and match the manifest"
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_effort_policy.py
-pass "parent-selected effort, fixed-override drift, and per-assignment routing evidence"
+pass "parent-selected model and effort, fixed-override drift, and per-assignment routing evidence"
 
 python3 - <<'PY'
 from pathlib import Path
@@ -165,17 +166,17 @@ qualitative = Path("skills/research-qualitative/SKILL.md").read_text().lower()
 assert "explicit" in qualitative and "optional" in qualitative
 
 manifest = json.loads(Path("agents/manifest.json").read_text())
-assert manifest["schema_version"] == 2
+assert manifest["schema_version"] == 3
 assert manifest["role_description_version"] == 2
 expected_roles = {
-    "coresearch-planner": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "xhigh")},
-    "coresearch-researcher": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-sonnet-5", "high")},
-    "coresearch-reader": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-haiku-4-5-20251001", "low")},
-    "coresearch-implementer": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-haiku-4-5-20251001", "medium")},
-    "coresearch-experimenter": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-haiku-4-5-20251001", "medium")},
-    "coresearch-debugger": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "high")},
-    "coresearch-synthesizer": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "low")},
-    "coresearch-verifier": {"codex": ("gpt-6-astra", "assignment"), "claude": ("claude-opus-5", "xhigh")},
+    "coresearch-planner": {"codex": ("assignment", "assignment"), "claude": ("claude-opus-5", "xhigh")},
+    "coresearch-researcher": {"codex": ("assignment", "assignment"), "claude": ("claude-sonnet-5", "high")},
+    "coresearch-reader": {"codex": ("assignment", "assignment"), "claude": ("claude-haiku-4-5-20251001", "low")},
+    "coresearch-implementer": {"codex": ("assignment", "assignment"), "claude": ("claude-haiku-4-5-20251001", "medium")},
+    "coresearch-experimenter": {"codex": ("assignment", "assignment"), "claude": ("claude-haiku-4-5-20251001", "medium")},
+    "coresearch-debugger": {"codex": ("assignment", "assignment"), "claude": ("claude-opus-5", "high")},
+    "coresearch-synthesizer": {"codex": ("assignment", "assignment"), "claude": ("claude-opus-5", "low")},
+    "coresearch-verifier": {"codex": ("assignment", "assignment"), "claude": ("claude-opus-5", "xhigh")},
 }
 roles = {item["name"]: item for item in manifest["roles"]}
 assert set(roles) == set(expected_roles) and len(roles) == 8
@@ -866,10 +867,13 @@ python3 - "$case_root-codex/agents/coresearch-planner.toml" <<'PY'
 from pathlib import Path
 import sys
 path = Path(sys.argv[1])
-path.write_text(path.read_text().replace('model = "gpt-6-astra"', 'model = "wrong-model"', 1))
+path.write_text('model = "gpt-6-astra"\n' + path.read_text())
 PY
 if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-model.log" 2>&1; then fail "doctor accepted wrong model"; fi
 grep -q 'CONFIG-MISMATCH' "$TMP_ROOT/doctor-wrong-model.log" || fail "wrong-model diagnostic missing"
+
+./harness repair --no-self-install --no-validate --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-model-repair.log" 2>&1 || fail "legacy fixed model repair failed"
+./harness doctor --strict --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-model-repaired.log" 2>&1 || fail "legacy model drift remained after repair"
 
 case_root="$(doctor_case wrong-effort)"
 python3 - "$case_root-codex/agents/coresearch-planner.toml" <<'PY'
@@ -922,6 +926,11 @@ if grep -q 'routing provider=claude' "$TMP_ROOT/probe-codex-only.log"; then
   fail "Codex-only probe contacted or reported the unselected Claude provider"
 fi
 
+for probe_args in "--probe-model gpt-6-astra" "--strict --probe-model gpt-6-astra" "--probe-models --probe-model gpt-6-astra" "--strict --probe-models --probe-model disallowed-model"; do
+  if ./harness doctor --surface codex $probe_args >"$TMP_ROOT/probe-invalid-options.log" 2>&1; then fail "doctor accepted invalid probe options: $probe_args"; fi
+done
+if ./harness doctor --strict --surface claude --probe-models --probe-model gpt-6-astra >"$TMP_ROOT/probe-claude-model.log" 2>&1; then fail "Claude-only probe accepted Codex model option"; fi
+
 probe_bin="$TMP_ROOT/probe-bin"
 mkdir -p "$probe_bin"
 cat >"$probe_bin/codex" <<'SH'
@@ -937,7 +946,8 @@ for candidate in coresearch-planner coresearch-researcher coresearch-reader core
 done
 [[ -n "$role" ]]
 config="$CODEX_HOME/agents/$role.toml"
-model="$(sed -n 's/^model = "\(.*\)"/\1/p' "$config")"
+model="$(printf '%s' "$*" | sed -n 's/.* model=\([^, ]*\).*/\1/p')"
+[[ -n "$model" ]] || exit 93
 [[ "$*" == *"fork_turns=none"* ]] || exit 91
 [[ "$*" == *"reasoning_effort=low"* ]] || exit 92
 effort=low
@@ -965,6 +975,10 @@ PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface both --probe
 [[ "$(grep -c '^routing provider=codex role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Codex named-role probes did not verify all roles"
 [[ "$(grep -c '^routing provider=claude role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Claude named-role probes did not verify all roles"
 
+for selected_model in gpt-6-astra gpt-5.6-sol gpt-5.6-terra gpt-5.6-luna; do
+  PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --probe-role coresearch-reader --probe-model "$selected_model" --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/probe-$selected_model.log" 2>&1 || fail "selected model fixture failed: $selected_model"
+  grep -q "requested=$selected_model/low .*status=verified" "$TMP_ROOT/probe-$selected_model.log" || fail "selected model request absent"
+done
 (cd "$TMP_ROOT" && PATH="$probe_bin:/usr/bin:/bin" "$ROOT_DIR/harness" doctor --strict --surface codex --probe-models --probe-role coresearch-reader --target "$ROOT_DIR" --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills") >"$TMP_ROOT/probe-single-role.log" 2>&1 || \
   fail "single named-role probe failed outside a Git repository (log $TMP_ROOT/probe-single-role.log)"
 [[ "$(grep -c '^routing provider=codex role=' "$TMP_ROOT/probe-single-role.log")" == "1" ]] || fail "single-role filter probed more than one role"
@@ -982,6 +996,6 @@ if PATH="$probe_error_bin:/usr/bin:/bin" ./harness doctor --strict --surface cod
   fail "failed role probe was incorrectly accepted"
 fi
 grep -q 'agent type is currently not available' "$TMP_ROOT/probe-error.log" || fail "failed role probe suppressed bounded host error"
-pass "strict doctor rejects config drift and environment overrides; named-role probes select Codex effort without model overrides and preserve static-only semantics"
+pass "strict doctor rejects config drift and environment overrides; named-role probes select Codex model and effort explicitly and preserve static-only semantics"
 
 pass "all validations completed"

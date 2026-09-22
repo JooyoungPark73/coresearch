@@ -9,11 +9,50 @@ names, provider models, effort policies, capabilities, and intended skills. Inst
 runtimes do not receive or require a manifest under `.codex/agents` or
 `.claude/agents`; every native role definition is complete. Do not look for a
 runtime manifest, infer registration failure from its absence, substitute
-another role name, or pass a per-invocation model override.
+another role name, or relax its capabilities when selecting a model.
+
+## Assignment model
+
+For Codex, choose a model and reasoning effort for every assignment and pass
+both explicitly with the named role. Native Codex files omit `model` and
+`model_reasoning_effort`: a file-level value would override the spawn request.
+Use a bounded or no-history fork that accepts the selection. If the host cannot
+apply it, report the limitation; never claim a different model was requested
+or verified. Claude keeps its configured model and effort without overrides.
+
+The following installed policy mirrors `agents/manifest.json`:
+
+| Model | Assignment criteria |
+| --- | --- |
+| `gpt-6-astra` | Research decisions, difficult evidence reconciliation, scientific verification, uncertain requirements, or costly errors that are hard to detect |
+| `gpt-5.6-sol` | Substantial implementation, investigation, and synthesis of resolved evidence requiring broad judgment |
+| `gpt-5.6-terra` | Bounded implementation, structured extraction, and routine experiment setup with clear scope and validators |
+| `gpt-5.6-luna` | Mechanical transformations, metadata extraction, and prescribed execution or collection with directly checkable outputs |
+
+Astra is the default and fallback for uncertainty, not a forced model for every
+role. Keep the main research session on Astra when model choice is available;
+do not silently switch the user's parent session. Select workers by ambiguity,
+error consequence, and ease of validation, not just task length or role name.
+For example, a reader extracting identifiers can use Luna; assessing subtle
+limitations may need Sol or Astra. These are initial workload hypotheses,
+not measured guarantees. Keep scientific claim verification on Astra.
+
+Effort is a separate choice; increasing a smaller model's effort does not
+establish equivalence to Astra. Respect explicit user selections and budgets;
+an unavailable or unapproved model requires reporting or a new authorized
+selection, not silent substitution.
+
+After a meaningful validation failure or demonstrated capability gap, the parent
+may select a more capable model for a new bounded attempt within the existing
+retry budget. Diagnose missing data, broken tools, or contract ambiguity first;
+these do not justify cycling models. Preserve failed artifacts and record the
+reason for escalation. Avoid automatic retry ladders. For unavailable models,
+use the declared fallback only when permitted and accessible, recording the
+changed request; a failed attempt remains a failed routing attempt.
 
 ## Assignment effort
 
-Codex roles keep their model pins but do not set `model_reasoning_effort`.
+Codex roles do not set `model` or `model_reasoning_effort`.
 The parent chooses and explicitly passes `reasoning_effort` for each assignment:
 
 | Effort | Assignment complexity |
@@ -107,7 +146,9 @@ Every role assignment states:
 7. validation command or evidence requirement;
 8. explicit stop and escalation conditions;
 9. `working_modes` with explicit Ponytail or Caveman levels when active.
-10. exact `requested_effort` and, for Codex, the assignment-complexity rationale.
+10. exact `requested_model` and `requested_effort`; for Codex, a selection rationale
+    covering complexity, error consequence, and validation, plus the escalation
+    reason when this is a retry.
 
 Supply only relevant mission context, definitions, constraints, prior decisions,
 and input artifact pointers, with precise source locations where available.
@@ -125,6 +166,11 @@ declared artifacts. Return concise summaries with pointers, not full transcripts
 or log dumps. The parent selectively opens supporting material to challenge or
 integrate results. Use existing mission, ledger, and result fields; do not create
 a separate context store or another state schema.
+
+Keep model/effort rationale in the mission assignment or handoff; terminal
+`role_runs` retains the actual requested values. Each attempt, including a
+model escalation, gets its own assignment ID and terminal provenance. Compare
+observed routing to that attempt's request, not a fixed historical model pin.
 
 The role must not broaden the research question, choose the next research
 stage, silently change the evaluation contract, or write outside its owned

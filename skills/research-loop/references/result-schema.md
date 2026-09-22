@@ -43,7 +43,13 @@ substitution, unavailability, or a different role, model, or effort is `mismatch
 Record the host evidence establishing role identity in the assignment's validator
 evidence; the `role` field alone is a request, not proof of observed routing.
 
-For Codex, `requested_effort` is the parent's concrete assignment choice
+For Codex, `requested_model` is one of the approved Astra, Sol, Terra, or Luna
+model IDs, never the policy label `assignment`. Keep selection rationale in the
+mission assignment or handoff; record each escalated attempt separately with
+its requested values, failure evidence, and stop reason. Compare the observed
+model to that attempt's requested model, not a historical role pin.
+
+`requested_effort` is the parent's concrete assignment choice
 (`low`, `medium`, `high`, or `xhigh`), never the manifest label `assignment`.
 For Claude it remains the configured role effort. Compare observed effort with
 this recorded request, not a historical Codex role default. This uses existing
