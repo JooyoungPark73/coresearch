@@ -24,18 +24,32 @@ The following installed policy mirrors `agents/manifest.json`:
 
 | Model | Assignment criteria |
 | --- | --- |
-| `gpt-6-astra` | Research decisions, difficult evidence reconciliation, scientific verification, uncertain requirements, or costly errors that are hard to detect |
-| `gpt-5.6-sol` | Substantial implementation, investigation, and synthesis of resolved evidence requiring broad judgment |
-| `gpt-5.6-terra` | Bounded implementation, structured extraction, and routine experiment setup with clear scope and validators |
-| `gpt-5.6-luna` | Mechanical transformations, metadata extraction, and prescribed execution or collection with directly checkable outputs |
+| `gpt-6-sol` | Default orchestration, implementation, investigation, and synthesis; medium for clear contracts, high for complex dependencies or substantial replanning |
+| `gpt-6-luna` | Prefer for known-source extraction, metadata, mechanical transformations, and prescribed execution with directly checkable outputs |
+| `gpt-6-astra` | Difficult research design, conflicting evidence, causal judgments, and scientific claim verification where errors are consequential or hard to detect |
 
-Astra is the default and fallback for uncertainty, not a forced model for every
-role. Keep the main research session on Astra when model choice is available;
-do not silently switch the user's parent session. Select workers by ambiguity,
-error consequence, and ease of validation, not just task length or role name.
-For example, a reader extracting identifiers can use Luna; assessing subtle
-limitations may need Sol or Astra. These are initial workload hypotheses,
-not measured guarantees. Keep scientific claim verification on Astra.
+Start the main research session with Sol at medium effort when model choice is
+available. This is a launch recommendation, not an automatic session switch;
+respect the user's selected parent model and effort. The manifest's default
+model and orchestrator effort describe this starting point. Workers still
+require explicit model and effort on every assignment.
+
+Prefer Luna when inputs, transformation, and validation are unambiguous. Use
+Sol when an assignment requires interpretation, implementation judgment, or
+substantive synthesis. Select by ambiguity, error consequence, and ease of
+validation, not task length or role name. Start Sol assignments at medium;
+use high for complex dependencies, diagnosis, or substantial replanning.
+Luna can use low/medium for mechanical work and high for bounded reasoning;
+checkable outputs remain required. These are workload hypotheses, not measured
+guarantees.
+
+Astra remains the uncertainty fallback. Request an Astra planner or verifier
+for difficult research design, conflicting evidence, evaluation-contract
+changes requiring scientific judgment, or consequential causal conclusions.
+Keep scientific claim verification on Astra. The Sol parent must inspect the
+supporting evidence before integrating the result; worker confidence is not
+validation. If the parent itself needs a stronger model, report the need for
+an explicit session selection rather than claiming to switch it automatically.
 
 Effort is a separate choice; increasing a smaller model's effort does not
 establish equivalence to Astra. Respect explicit user selections and budgets;

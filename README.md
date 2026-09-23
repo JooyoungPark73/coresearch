@@ -44,13 +44,22 @@ or `.claude/agents`, and its absence there is not a registration failure.
 | `coresearch-verifier` | `assignment` / `assignment` | `claude-opus-5` / `xhigh` |
 
 For Codex, `assignment` means the parent explicitly chooses both model and
-effort. Approved models are `gpt-6-astra`, `gpt-5.6-sol`, `gpt-5.6-terra`, and
-`gpt-5.6-luna`; Astra is the default and uncertainty fallback. Use Astra for
-research decisions and scientific verification, Sol for substantial judgment,
-Terra for bounded implementation and extraction, and Luna for mechanical work
-with directly checkable outputs. These are initial selection criteria, not
-measured quality or cost guarantees. Effort remains independently selected from
-`low`, `medium`, `high`, and `xhigh`.
+effort. Approved models are `gpt-6-sol`, `gpt-6-luna`, and `gpt-6-astra`.
+Start the orchestrator with Sol at medium effort:
+
+```bash
+codex --model gpt-6-sol -c model_reasoning_effort='"medium"'
+```
+
+This selects the parent session; changing the bundle policy alone does not
+switch an existing session. Sol is the default for orchestration, implementation,
+investigation, and synthesis. Prefer Luna for known-source extraction and
+prescribed mechanical work with directly checkable outputs. Use Sol at high
+for complex dependencies or substantial replanning, and Astra for difficult
+research design, evidence conflicts, and scientific claim verification.
+Astra remains the uncertainty fallback. Workers require explicit model and
+effort; allowed efforts remain `low`, `medium`, `high`, and `xhigh`.
+These are selection criteria, not measured quality or cost guarantees.
 See [assignment selection](skills/coresearch/references/agent-routing.md).
 After updating this checkout, run `./harness link --surface codex` to refresh
 installed role copies, then start a new Codex session to load them.
@@ -246,7 +255,7 @@ harness doctor --strict --surface both --probe-models
 harness doctor --strict --surface codex --probe-models \
   --probe-role coresearch-reader
 harness doctor --strict --surface codex --probe-models \
-  --probe-role coresearch-reader --probe-model gpt-5.6-luna
+  --probe-role coresearch-reader --probe-model gpt-6-luna
 ```
 
 This explicit command invokes each named role. Codex probes explicitly request

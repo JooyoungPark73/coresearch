@@ -169,23 +169,22 @@
       "high",
       "xhigh"
     ],
-    "probe_effort": "low"
+    "probe_effort": "low",
+    "orchestrator_effort": "medium"
   },
   "codex_model_policy": {
     "allowed": [
       "gpt-6-astra",
-      "gpt-5.6-sol",
-      "gpt-5.6-terra",
-      "gpt-5.6-luna"
+      "gpt-6-sol",
+      "gpt-6-luna"
     ],
-    "default_model": "gpt-6-astra",
+    "default_model": "gpt-6-sol",
     "fallback_model": "gpt-6-astra",
-    "probe_model": "gpt-6-astra",
+    "probe_model": "gpt-6-sol",
     "selection": {
-      "gpt-6-astra": "Research decisions, difficult evidence reconciliation, scientific verification, and assignments with uncertain requirements or costly, hard-to-detect errors.",
-      "gpt-5.6-sol": "Substantial implementation, investigation, and synthesis of resolved evidence requiring broad judgment.",
-      "gpt-5.6-terra": "Bounded implementation, structured extraction, and routine experiment setup with clear scope and validators.",
-      "gpt-5.6-luna": "Mechanical transformations, metadata extraction, and prescribed execution or collection with directly checkable outputs."
+      "gpt-6-astra": "Difficult research design, conflicting evidence, causal judgments, and scientific claim verification where errors are consequential or hard to detect.",
+      "gpt-6-sol": "Default orchestration, implementation, investigation, and synthesis; use medium for clear contracts and high for complex dependencies or substantial replanning.",
+      "gpt-6-luna": "Prefer for known-source extraction, metadata, mechanical transformations, and prescribed execution with directly checkable outputs; use Sol when interpretation or implementation judgment is required."
     }
   }
 }

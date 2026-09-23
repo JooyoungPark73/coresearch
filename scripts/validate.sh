@@ -212,7 +212,7 @@ for path in claude_files:
 for role in roles.values():
     for provider in ("codex", "claude"):
         model = role["providers"][provider]["model"]
-        assert model not in {"gpt-5.6", "opus", "sonnet", "haiku", "inherit"}, (role["name"], provider, model)
+        assert model not in {"opus", "sonnet", "haiku", "inherit"}, (role["name"], provider, model)
         assert role["providers"][provider]["effort"] in ({"assignment"} if provider == "codex" else {"low", "medium", "high", "xhigh"})
 
 evidence_contract = " ".join(Path("skills/coresearch/references/evidence-grounding.md").read_text().lower().split())
@@ -546,6 +546,7 @@ active.extend(sorted(Path("agents").rglob("*.toml")))
 active.extend(sorted(Path("agents").rglob("*.md")))
 for path in active:
     text = path.read_text(errors="replace")
+    assert not re.search(r"gpt[- ]5", text, re.IGNORECASE), (path, "retired model family")
     if path == Path("DESIGN.md"):
         text = text.replace("docs/migrations/from-" + legacy + ".md", "")
     assert legacy not in text.lower(), path
@@ -975,7 +976,7 @@ PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface both --probe
 [[ "$(grep -c '^routing provider=codex role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Codex named-role probes did not verify all roles"
 [[ "$(grep -c '^routing provider=claude role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Claude named-role probes did not verify all roles"
 
-for selected_model in gpt-6-astra gpt-5.6-sol gpt-5.6-terra gpt-5.6-luna; do
+for selected_model in gpt-6-astra gpt-6-sol gpt-6-luna; do
   PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --probe-role coresearch-reader --probe-model "$selected_model" --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/probe-$selected_model.log" 2>&1 || fail "selected model fixture failed: $selected_model"
   grep -q "requested=$selected_model/low .*status=verified" "$TMP_ROOT/probe-$selected_model.log" || fail "selected model request absent"
 done

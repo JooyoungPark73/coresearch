@@ -166,7 +166,12 @@ document intentionally does not duplicate the model matrix. Manifest schema
 version 3 uses `model: assignment` and `effort: assignment` for Codex. The
 `codex_model_policy` owns approved model IDs, default and fallback models,
 diagnostic model, and workload-selection criteria; `codex_effort_policy` owns
-allowed effort levels and diagnostic effort. Native Codex TOMLs omit both
+allowed effort levels, diagnostic effort, and the recommended orchestrator
+effort. The parent starts with the default model at orchestrator effort; this
+is guidance for host session selection, not a runtime model-switch mechanism.
+Workers still receive explicit per-assignment selections. Routine work favors
+Sol and directly checkable mechanical work favors Luna; Astra handles difficult
+scientific judgments and remains the uncertainty fallback. Native Codex TOMLs omit both
 overrides because custom-file settings take precedence over spawn values under
 the [official host contract](https://learn.chatgpt.com/docs/agent-configuration/subagents).
 The parent explicitly passes model and effort while preserving named-role scope.

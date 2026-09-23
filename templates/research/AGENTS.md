@@ -85,9 +85,14 @@ a full paper workflow. `research-qualitative` remains explicit-only.
 
 The role/model matrix below mirrors the source canonical agent manifest.
 For Codex, `assignment` means the parent selects and explicitly passes model
-and effort per task. Approved models are `gpt-6-astra`, `gpt-5.6-sol`,
-`gpt-5.6-terra`, and `gpt-5.6-luna`; Astra is the default and fallback for
-uncertainty and remains the choice for scientific claim verification. Claude
+and effort per task. Approved models are `gpt-6-sol`, `gpt-6-luna`, and
+`gpt-6-astra`. Start the parent on Sol at medium effort; preserve explicit user
+selections and never claim that policy changes switch the running session.
+Use Sol for orchestration, implementation, investigation, and synthesis; prefer
+Luna for known-source extraction and prescribed work with directly checkable
+outputs. Use Sol high for complex dependencies or substantial replanning.
+Astra is the uncertainty fallback and handles difficult research design,
+evidence conflicts, and scientific claim verification. Claude
 retains fixed model and effort. When delegating, use the installed
 `coresearch/references/agent-routing.md` for selection criteria, bounded
 escalation, handoff fields, and dependency joins. Record model, effort, and

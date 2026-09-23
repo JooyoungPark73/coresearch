@@ -13,6 +13,28 @@ spec.loader.exec_module(harness)
 
 
 class EffortPolicyTests(unittest.TestCase):
+    def test_orchestrator_defaults(self):
+        manifest = harness.agent_manifest()
+        self.assertEqual(manifest['codex_model_policy']['default_model'], 'gpt-6-sol')
+        self.assertEqual(manifest['codex_model_policy']['fallback_model'], 'gpt-6-astra')
+        self.assertEqual(manifest['codex_effort_policy']['orchestrator_effort'], 'medium')
+
+    def test_invalid_orchestrator_effort(self):
+        for effort in (None, 'low', 'automatic'):
+            manifest = copy.deepcopy(harness.agent_manifest())
+            manifest['codex_effort_policy']['orchestrator_effort'] = effort
+            with patch.object(harness, 'agent_manifest', return_value=manifest):
+                self.assertTrue(harness.validate_source_roles())
+
+    def test_retired_models_never_run(self):
+        for model in ('gpt-5', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'):
+            with self.subTest(model=model), patch.object(harness.subprocess, 'run') as run:
+                _, failures = harness.probe_role_routing(
+                    ['codex'], {'codex': Path('/fixture')}, harness.ROOT,
+                    'coresearch-reader', model)
+                self.assertTrue(failures)
+                run.assert_not_called()
+
     def test_native_roles_allow_assignment_effort(self):
         self.assertEqual(harness.validate_source_roles(), [])
         for role in harness.roles():
@@ -88,7 +110,7 @@ class EffortPolicyTests(unittest.TestCase):
                 self.assertIn('status=verified', reports[0])
 
     def test_same_role_accepts_all_model_effort_combinations(self):
-        for model in ('gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'):
+        for model in ('gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna'):
             for effort in ('low', 'medium', 'high', 'xhigh'):
                 with self.subTest(model=model, effort=effort):
                     reports, failures = self.probe(effort, effort, model)
@@ -96,7 +118,7 @@ class EffortPolicyTests(unittest.TestCase):
                     self.assertIn('status=verified', reports[0])
 
     def test_model_mismatch_and_missing_metadata(self):
-        for observed, status in (('gpt-5.6-sol', 'mismatch'), (None, 'static-only')):
+        for observed, status in (('gpt-6-sol', 'mismatch'), (None, 'static-only')):
             reports, failures = self.probe('low', 'low', observed_model=observed)
             self.assertTrue(failures)
             self.assertIn('status=' + status, reports[0])
@@ -131,8 +153,8 @@ class EffortPolicyTests(unittest.TestCase):
     def test_invalid_model_policies(self):
         for key, value in (
             ('allowed', ['gpt-6-astra']), ('default_model', 'unknown'),
-            ('fallback_model', 'unknown'), ('default_model', 'gpt-5.6-sol'),
-            ('fallback_model', 'gpt-5.6-sol'), ('probe_model', 'unknown'),
+            ('fallback_model', 'unknown'), ('default_model', 'gpt-6-astra'),
+            ('fallback_model', 'gpt-6-sol'), ('probe_model', 'unknown'),
             ('selection', {}), ('selection', {'gpt-6-astra': ''}),
         ):
             manifest = copy.deepcopy(harness.agent_manifest())

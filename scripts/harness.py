@@ -1072,8 +1072,10 @@ def validate_source_roles() -> list[str]:
     allowed = policy.get("allowed", [])
     if allowed != ["low", "medium", "high", "xhigh"] or policy.get("probe_effort") not in allowed:
         failures.append("agents/manifest.json invalid Codex assignment effort policy")
+    if policy.get("orchestrator_effort") != "medium":
+        failures.append("agents/manifest.json Codex orchestrator_effort must be medium")
     model_policy = manifest.get("codex_model_policy", {})
-    model_allowed = ["gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"]
+    model_allowed = ["gpt-6-astra", "gpt-6-sol", "gpt-6-luna"]
     if not isinstance(model_policy, dict):
         model_policy = {}
     if model_policy.get("allowed") != model_allowed:
@@ -1081,9 +1083,9 @@ def validate_source_roles() -> list[str]:
     for key in ("default_model", "fallback_model", "probe_model"):
         if model_policy.get(key) not in model_allowed:
             failures.append(f"agents/manifest.json invalid Codex {key}")
-    for key in ("default_model", "fallback_model"):
-        if model_policy.get(key) != "gpt-6-astra":
-            failures.append(f"agents/manifest.json Codex {key} must be gpt-6-astra")
+    for key, expected in (("default_model", "gpt-6-sol"), ("fallback_model", "gpt-6-astra")):
+        if model_policy.get(key) != expected:
+            failures.append(f"agents/manifest.json Codex {key} must be {expected}")
     selection = model_policy.get("selection", {})
     if (not isinstance(selection, dict) or set(selection) != set(model_allowed)
             or any(not isinstance(value, str) or not value.strip() for value in selection.values())):
@@ -1095,7 +1097,7 @@ def validate_source_roles() -> list[str]:
         failures.append("agents/manifest.json must contain exactly the eight Coresearch roles")
         return failures
 
-    forbidden = {"gpt-5.6", "opus", "sonnet", "haiku", "inherit"}
+    forbidden = {"opus", "sonnet", "haiku", "inherit"}
     for role in manifest_roles:
         name = role["name"]
         capability = role.get("capability")
