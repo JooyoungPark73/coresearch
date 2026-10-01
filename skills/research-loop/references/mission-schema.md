@@ -26,6 +26,9 @@ Record:
 - exact `requested_model` and `requested_effort` for each assignment; for Codex,
   the parent's selection rationale and explicit spawn values, with no native
   file overrides; Claude retains its configured model and effort;
+- `attempt_id`, `execution_provider` (`codex` or `claude`), and
+  `execution_method` (`native` or `claude-cli`); a Claude CLI assignment also
+  declares its provider-selection reason, local inputs, and time/cost limits;
 - retry/fix budget;
 - success, blocked, failure, cancellation, and human-decision stop conditions;
 - canonical ledger path and authorized keys.

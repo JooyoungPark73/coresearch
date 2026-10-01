@@ -25,6 +25,37 @@ and single-source ownership.
 The root `AGENTS.md` is development guidance for this repository, not the
 template installed into research projects.
 
+## Optional Claude workers from Codex
+
+Codex can remain the main research session and call Claude for an independent
+claim review or a diagnosis after repeated failures. Explicit assignments can
+also request experiment criticism or interpretation of supplied local sources.
+Routine implementation and experiment execution stay with Codex; required
+Sol scientific verification still applies. Standalone Claude use is supported.
+
+Install Claude roles with the existing harness install/link commands, then give
+Codex a bounded assignment and provider access limits. The optional adapter
+requires authenticated Claude Code with `--restricted` support (v2.1.248+):
+
+```bash
+./harness claude-worker --project-dir /path/to/project \
+  --assignment /path/to/project/.tmp/review.json \
+  --output /path/to/project/.tmp/review-a1.json
+```
+
+Each attempt defaults to one hour with no dollar cap. Override with
+`--timeout SECONDS`; add `--max-budget-usd USD` only for an explicit dollar cap.
+Subscription usage limits still apply. For sandboxed Codex sessions, use the
+documented authentication check and host-approved execution mode; keep existing
+credentials in place. See the
+[assignment format and execution contract](skills/coresearch/references/claude-worker.md).
+Installed skills also include `coresearch/scripts/claude_worker.py`, callable
+directly with Python and the same arguments. No source checkout is required.
+The worker reads local files, returns structured findings and provenance, and
+cannot edit or delegate. Codex validates and integrates the result into the
+same mission. Existing output files are never overwritten; raw logs stay under
+ignored project `.tmp/`. Claude remains optional for Codex-only work.
+
 ## Fixed roles and assignment models
 
 [`agents/manifest.json`](agents/manifest.json) is the source authority. Native
@@ -44,25 +75,28 @@ or `.claude/agents`, and its absence there is not a registration failure.
 | `coresearch-verifier` | `assignment` / `assignment` | `claude-opus-5` / `xhigh` |
 
 For Codex, `assignment` means the parent explicitly chooses both model and
-effort. Approved models are `gpt-6-sol`, `gpt-6-luna`, and `gpt-6-astra`.
-Start the orchestrator with Sol at medium effort:
+effort. Approved models are `gpt-6-astra`, `gpt-6.1-sol`, and `gpt-6-luna`.
+Planner assignments default to Astra. Sol 6.1 assignments default to `xhigh`;
+all Luna assignments default to `max`, including implementer assignments.
+The parent passes the selected model and effort explicitly.
+Start the orchestrator with Sol 6.1 at xhigh effort:
 
 ```bash
-codex --model gpt-6-sol -c model_reasoning_effort='"medium"'
+codex --model gpt-6.1-sol -c model_reasoning_effort='"xhigh"'
 ```
 
 This selects the parent session; changing the bundle policy alone does not
 switch an existing session. Sol is the default for orchestration, implementation,
 investigation, and synthesis. Prefer Luna for known-source extraction and
-prescribed mechanical work with directly checkable outputs. Use Sol at high
-for complex dependencies or substantial replanning, and Astra for difficult
-research design, evidence conflicts, and scientific claim verification.
-Astra remains the uncertainty fallback. Workers require explicit model and
-effort; allowed efforts remain `low`, `medium`, `high`, and `xhigh`.
+prescribed mechanical work with directly checkable outputs. Default Sol 6.1
+to `xhigh` and Luna to `max`; explicit assignment overrides remain supported.
+Sol remains the uncertainty fallback. Workers require explicit model and
+effort; allowed efforts remain `low`, `medium`, `high`, `xhigh`, and `max`.
 These are selection criteria, not measured quality or cost guarantees.
 See [assignment selection](skills/coresearch/references/agent-routing.md).
-After updating this checkout, run `./harness link --surface codex` to refresh
-installed role copies, then start a new Codex session to load them.
+After updating this checkout, run `harness link --surface codex` in the
+research project to refresh its installed role copies, then start a new Codex
+session to load them. Add `--scope user` for a user-wide installation.
 
 Unapproved model aliases are rejected. Codex role files omit model and effort
 overrides; the parent must pass both explicitly at spawn time. Custom role-file
@@ -86,15 +120,17 @@ harness link --surface both
 harness doctor --strict --surface both
 ```
 
-This creates user-scope skill symlinks and provider-native roles. Current Codex
+This creates project-scope skill symlinks and provider-native roles in the
+current directory. Add `--scope user` to both link and doctor for user-wide
+installation. Current Codex
 requires role TOMLs to be regular files, so Codex roles are copied even in link
 mode:
 
 ```text
-~/.agents/skills/<skill>                   -> <repo>/skills/<skill>
-${CODEX_HOME:-~/.codex}/agents/<role>.toml    copied regular file
-${CLAUDE_CONFIG_DIR:-~/.claude}/skills/<skill> -> <repo>/skills/<skill>
-${CLAUDE_CONFIG_DIR:-~/.claude}/agents/<role>.md -> <repo>/agents/claude/<role>.md
+.agents/skills/<skill>       -> <repo>/skills/<skill>
+.codex/agents/<role>.toml     copied regular file
+.claude/skills/<skill>       -> <repo>/skills/<skill>
+.claude/agents/<role>.md     -> <repo>/agents/claude/<role>.md
 ```
 
 Local skill edits and Claude role edits then appear immediately through their
@@ -102,16 +138,16 @@ symlinks. Re-run `harness link --surface codex` after changing a Codex role so
 its required regular-file copy is refreshed. Restart Codex and Claude Code
 after installation to reload skill and role metadata.
 
-For a copy install:
+For a project copy install:
 
 ```bash
-harness install --scope user --surface both --mode copy
+harness install --surface both --mode copy
 ```
 
 The compatibility wrapper is equivalent:
 
 ```bash
-./scripts/install.sh --scope user --surface both --mode copy
+./scripts/install.sh --surface both --mode copy
 ```
 
 ## Installation matrix
@@ -135,6 +171,23 @@ harness install --scope project --surface both --mode copy \
 harness install --scope project --surface both --mode symlink \
   --project-dir /path/to/research-repo
 ```
+
+To remove the current nine skills and eight roles from either scope:
+
+```bash
+# Preview and then remove user installations for both providers
+harness uninstall --scope user --surface both --dry-run
+harness uninstall --scope user --surface both
+
+# Remove only a project's installation
+harness uninstall --scope project --surface both --project-dir /path/to/research-repo
+```
+
+Uninstall removes recognized Coresearch links and copies, preserves unrelated
+entries, and leaves source files, prompts, bridges, and the `harness` command
+intact. Missing entries are harmless; unrelated entries with owned names are
+reported and return exit status 3. Restart the affected host after uninstalling.
+`harness self-uninstall` separately removes only the command launcher.
 
 Project destinations are `<project>/.agents/skills`,
 `<project>/.codex/agents`, and `<project>/.claude/{skills,agents}`. Install at
@@ -216,11 +269,16 @@ harness rollback --scope global -y
 
 ## Harness commands
 
+`install`, `link`, `uninstall`, `doctor`, `repair`, and `update` default to
+project scope in the current directory. Use `--scope user` for a user-wide
+installation or audit. Codex project skills live in `.agents/skills` and roles
+in `.codex/agents`; Claude uses `.claude/skills` and `.claude/agents`.
+
 ```bash
 harness status                         # skills, roles, prompts, selection policy
 harness inventory --include-plugins    # Coresearch ownership and overlap audit
-harness doctor --strict                # static source + installed Codex audit
-harness doctor --strict --surface both # static + both installed providers
+harness doctor --strict                # static source + project Codex audit
+harness doctor --strict --surface both # static + both project providers
 harness repair --surface both          # relink, validate, strict doctor
 harness update --surface both          # relink and validate
 harness self-install                   # link command into ~/.local/bin
@@ -259,7 +317,7 @@ harness doctor --strict --surface codex --probe-models \
 ```
 
 This explicit command invokes each named role. Codex probes explicitly request
-the manifest's diagnostic model (Astra by default) and `low` effort;
+the manifest's diagnostic model (Sol by default) and `low` effort;
 `--probe-model` selects another approved Codex model and requires
 `--strict --probe-models` with a Codex surface. Claude probes retain configured
 model and effort. `--probe-role` limits a diagnostic run to one role.

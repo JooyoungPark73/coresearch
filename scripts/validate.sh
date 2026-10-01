@@ -48,7 +48,7 @@ python3 -m json.tool agents/manifest.json >/dev/null
 python3 - <<'PY'
 from pathlib import Path
 
-for rel in ("scripts/harness.py", "skills/research-survey/crawler.py"):
+for rel in ("scripts/harness.py", "skills/research-survey/crawler.py", "skills/coresearch/scripts/claude_worker.py"):
     compile(Path(rel).read_text(), rel, "exec")
 PY
 bash -n scripts/install.sh
@@ -90,8 +90,13 @@ for path in files:
     assert re.search(r"spawn(?:ing)? subagents", normalized), path
 PY
 pass "all eight Codex role definitions parse with tomllib and match the manifest"
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_scope_defaults.py
+pass "installation and diagnostics default to project scope without touching user roots"
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_effort_policy.py
-pass "parent-selected model and effort, fixed-override drift, and per-assignment routing evidence"
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_uninstall.py
+pass "scope-aware uninstall preserves unrelated entries, sources, and prompts"
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_claude_worker.py
+pass "parent-selected model/effort, routing evidence, and bounded Claude worker contracts"
 
 python3 - <<'PY'
 from pathlib import Path
@@ -422,6 +427,13 @@ for field in (
     "validators", "stop_reason",
 ):
     assert field in role_run, field
+for field in ("attempt_id", "execution_provider", "execution_method"):
+    assert field in role_run and field in adapter and field in mission_schema, field
+worker_doc = Path("skills/coresearch/references/claude-worker.md").read_text()
+worker_example = json.loads(re.search(r"```json\n(.*?)\n```", worker_doc, re.S).group(1))
+worker_pin = next(role for role in manifest["roles"] if role["name"] == worker_example["role"])["providers"]["claude"]
+assert worker_example["requested_model"] == worker_pin["model"]
+assert worker_example["requested_effort"] == worker_pin["effort"]
 for field in (
     "schema_version", "run_id", "mission_path", "status", "host", "goal_id",
     "role_runs", "artifacts", "validators", "claim_evidence", "ledger_updates",
@@ -542,6 +554,7 @@ active = [
     Path("scripts/link-local.sh"), Path("scripts/validate.sh"),
 ]
 active.extend(sorted(Path("skills").rglob("*.md")))
+active.extend(sorted(Path("skills").rglob("*.py")))
 active.extend(sorted(Path("agents").rglob("*.toml")))
 active.extend(sorted(Path("agents").rglob("*.md")))
 for path in active:
@@ -607,6 +620,8 @@ verify_provider_install() {
   done
   local compact_ref
   for compact_ref in \
+    coresearch/scripts/claude_worker.py \
+    coresearch/references/claude-worker.md \
     coresearch/references/causal-reasoning.md \
     research-design/references/paper-design.md \
     research-design/references/gap-analysis.md \
@@ -751,13 +766,13 @@ pass "external entries are preserved; explicit force and recognized stale-entry 
 repair_codex="$TMP_ROOT/repair-codex"
 repair_codex_skills="$TMP_ROOT/repair-codex-skills"
 repair_claude="$TMP_ROOT/repair-claude"
-./harness link --surface both --codex-home "$repair_codex" --codex-skills-root "$repair_codex_skills" --claude-home "$repair_claude" >"$TMP_ROOT/repair-setup.log" 2>&1
+./harness link --scope user --surface both --codex-home "$repair_codex" --codex-skills-root "$repair_codex_skills" --claude-home "$repair_claude" >"$TMP_ROOT/repair-setup.log" 2>&1
 [[ ! -L "$repair_codex/agents/coresearch-reader.toml" ]] || fail "harness link created an unsupported Codex role symlink"
 unlink "$repair_codex_skills/research-loop"
 ln -s "$ROOT_DIR/skills/research-loop-missing" "$repair_codex_skills/research-loop"
 unlink "$repair_claude/agents/coresearch-reader.md"
 ln -s "$ROOT_DIR/agents/claude/coresearch-reader-missing.md" "$repair_claude/agents/coresearch-reader.md"
-./harness repair --surface both --codex-home "$repair_codex" --codex-skills-root "$repair_codex_skills" --claude-home "$repair_claude" --no-self-install --no-validate >"$TMP_ROOT/repair.log" 2>&1 || fail "repair failed (log $TMP_ROOT/repair.log)"
+./harness repair --scope user --surface both --codex-home "$repair_codex" --codex-skills-root "$repair_codex_skills" --claude-home "$repair_claude" --no-self-install --no-validate >"$TMP_ROOT/repair.log" 2>&1 || fail "repair failed (log $TMP_ROOT/repair.log)"
 [[ -e "$repair_codex_skills/research-loop" ]] || fail "repair left broken managed skill"
 [[ -e "$repair_claude/agents/coresearch-reader.md" ]] || fail "repair left broken managed role"
 grep -q 'Doctor result: PASS' "$TMP_ROOT/repair.log" || fail "repair did not finish with strict doctor"
@@ -779,7 +794,7 @@ grep -q 'Doctor result: PASS' "$TMP_ROOT/repair-project.log" || fail "project re
 repair_collision="$TMP_ROOT/repair-collision"
 mkdir -p "$repair_collision/agents"
 printf '%s\n' 'external repair role' > "$repair_collision/agents/coresearch-planner.toml"
-if ./harness repair --surface codex --mode copy --codex-home "$repair_collision" --codex-skills-root "$TMP_ROOT/repair-collision-skills" --no-self-install --no-validate >"$TMP_ROOT/repair-collision.log" 2>&1; then
+if ./harness repair --scope user --surface codex --mode copy --codex-home "$repair_collision" --codex-skills-root "$TMP_ROOT/repair-collision-skills" --no-self-install --no-validate >"$TMP_ROOT/repair-collision.log" 2>&1; then
   fail "repair silently replaced or accepted an unrelated role collision"
 fi
 grep -q '^external repair role$' "$repair_collision/agents/coresearch-planner.toml" || fail "repair overwrote an unrelated role"
@@ -852,7 +867,7 @@ doctor_codex="$TMP_ROOT/doctor-codex"
 doctor_skills="$TMP_ROOT/doctor-skills"
 doctor_claude="$TMP_ROOT/doctor-claude"
 ./harness install --scope user --surface both --mode copy --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-install.log" 2>&1
-./harness doctor --strict --surface both --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-pass.log" 2>&1 || fail "strict doctor rejected correct fixture (log $TMP_ROOT/doctor-pass.log)"
+./harness doctor --scope user --strict --surface both --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-pass.log" 2>&1 || fail "strict doctor rejected correct fixture (log $TMP_ROOT/doctor-pass.log)"
 grep -q 'Doctor result: PASS' "$TMP_ROOT/doctor-pass.log" || fail "strict doctor PASS summary missing"
 
 doctor_case() {
@@ -870,11 +885,11 @@ import sys
 path = Path(sys.argv[1])
 path.write_text('model = "gpt-6-astra"\n' + path.read_text())
 PY
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-model.log" 2>&1; then fail "doctor accepted wrong model"; fi
+if ./harness doctor --scope user --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-model.log" 2>&1; then fail "doctor accepted wrong model"; fi
 grep -q 'CONFIG-MISMATCH' "$TMP_ROOT/doctor-wrong-model.log" || fail "wrong-model diagnostic missing"
 
-./harness repair --no-self-install --no-validate --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-model-repair.log" 2>&1 || fail "legacy fixed model repair failed"
-./harness doctor --strict --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-model-repaired.log" 2>&1 || fail "legacy model drift remained after repair"
+./harness repair --scope user --no-self-install --no-validate --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-model-repair.log" 2>&1 || fail "legacy fixed model repair failed"
+./harness doctor --scope user --strict --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-model-repaired.log" 2>&1 || fail "legacy model drift remained after repair"
 
 case_root="$(doctor_case wrong-effort)"
 python3 - "$case_root-codex/agents/coresearch-planner.toml" <<'PY'
@@ -883,7 +898,7 @@ import sys
 path = Path(sys.argv[1])
 path.write_text('model_reasoning_effort = "low"\n' + path.read_text())
 PY
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-effort.log" 2>&1; then fail "doctor accepted wrong effort"; fi
+if ./harness doctor --scope user --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-wrong-effort.log" 2>&1; then fail "doctor accepted wrong effort"; fi
 grep -q 'CONFIG-MISMATCH' "$TMP_ROOT/doctor-wrong-effort.log" || fail "wrong-effort diagnostic missing"
 
 case_root="$(doctor_case alias)"
@@ -893,32 +908,32 @@ import sys
 path = Path(sys.argv[1])
 path.write_text(path.read_text().replace('model: claude-opus-5', 'model: opus', 1))
 PY
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-alias.log" 2>&1; then fail "doctor accepted rolling alias"; fi
+if ./harness doctor --scope user --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-alias.log" 2>&1; then fail "doctor accepted rolling alias"; fi
 grep -q 'observed=opus' "$TMP_ROOT/doctor-alias.log" || fail "alias diagnostic missing observed value"
 
 case_root="$(doctor_case missing)"
 unlink "$case_root-codex/agents/coresearch-reader.toml"
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-missing.log" 2>&1; then fail "doctor accepted missing role"; fi
+if ./harness doctor --scope user --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-missing.log" 2>&1; then fail "doctor accepted missing role"; fi
 grep -q 'coresearch-reader: missing' "$TMP_ROOT/doctor-missing.log" || fail "missing-role diagnostic absent"
 
 case_root="$(doctor_case symlink-role)"
 mv "$case_root-codex/agents/coresearch-reader.toml" "$case_root-codex/agents/coresearch-reader-source.toml"
 ln -s "$case_root-codex/agents/coresearch-reader-source.toml" "$case_root-codex/agents/coresearch-reader.toml"
-if ./harness doctor --strict --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-symlink-role.log" 2>&1; then fail "doctor accepted unsupported Codex role symlink"; fi
+if ./harness doctor --scope user --strict --surface codex --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/doctor-symlink-role.log" 2>&1; then fail "doctor accepted unsupported Codex role symlink"; fi
 grep -q 'symlink:UNSUPPORTED' "$TMP_ROOT/doctor-symlink-role.log" || fail "unsupported Codex role symlink diagnostic absent"
 
 case_root="$(doctor_case broken)"
 unlink "$case_root-claude/agents/coresearch-reader.md"
 ln -s "$case_root-claude/agents/does-not-exist.md" "$case_root-claude/agents/coresearch-reader.md"
-if ./harness doctor --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-broken.log" 2>&1; then fail "doctor accepted broken role link"; fi
+if ./harness doctor --scope user --strict --surface both --codex-home "$case_root-codex" --codex-skills-root "$doctor_skills" --claude-home "$case_root-claude" >"$TMP_ROOT/doctor-broken.log" 2>&1; then fail "doctor accepted broken role link"; fi
 grep -q 'symlink:BROKEN' "$TMP_ROOT/doctor-broken.log" || fail "broken-link diagnostic absent"
 
-if CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-5 ./harness doctor --strict --surface both --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-override.log" 2>&1; then fail "doctor accepted Claude environment override"; fi
+if CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-5 ./harness doctor --scope user --strict --surface both --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/doctor-override.log" 2>&1; then fail "doctor accepted Claude environment override"; fi
 grep -q 'CLAUDE_CODE_SUBAGENT_MODEL overrides Coresearch Claude role pins' "$TMP_ROOT/doctor-override.log" || fail "override diagnostic absent"
 
 grep -q -- '--probe-models' <(./harness doctor --help) || fail "explicit model probe option missing"
 grep -q -- '--probe-role' <(./harness doctor --help) || fail "single-role probe option missing"
-if PATH="/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$TMP_ROOT/probe-empty-claude" >"$TMP_ROOT/probe-codex-only.log" 2>&1; then
+if PATH="/usr/bin:/bin" ./harness doctor --scope user --strict --surface codex --probe-models --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$TMP_ROOT/probe-empty-claude" >"$TMP_ROOT/probe-codex-only.log" 2>&1; then
   fail "unobservable model probe was incorrectly reported as verified"
 fi
 grep -q 'routing provider=codex role=coresearch-reader .*status=static-only' "$TMP_ROOT/probe-codex-only.log" || fail "Codex static-only named-role probe record missing"
@@ -972,12 +987,12 @@ effort="$(sed -n 's/^effort: //p' "$config")"
 printf '{"agent_type":"%s","model":"%s","effort":"%s","result":"CORESEARCH_ROLE_PROBE %s"}\n' "$role" "$model" "$effort" "$role"
 SH
 chmod +x "$probe_bin/codex" "$probe_bin/claude"
-PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface both --probe-models --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/probe-named-roles.log" 2>&1 || fail "named-role probe rejected exact fixture (log $TMP_ROOT/probe-named-roles.log)"
+PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --scope user --strict --surface both --probe-models --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" --claude-home "$doctor_claude" >"$TMP_ROOT/probe-named-roles.log" 2>&1 || fail "named-role probe rejected exact fixture (log $TMP_ROOT/probe-named-roles.log)"
 [[ "$(grep -c '^routing provider=codex role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Codex named-role probes did not verify all roles"
 [[ "$(grep -c '^routing provider=claude role=.*status=verified$' "$TMP_ROOT/probe-named-roles.log")" == "8" ]] || fail "Claude named-role probes did not verify all roles"
 
-for selected_model in gpt-6-astra gpt-6-sol gpt-6-luna; do
-  PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --probe-role coresearch-reader --probe-model "$selected_model" --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/probe-$selected_model.log" 2>&1 || fail "selected model fixture failed: $selected_model"
+for selected_model in gpt-6-astra gpt-6.1-sol gpt-6-luna; do
+  PATH="$probe_bin:/usr/bin:/bin" ./harness doctor --scope user --strict --surface codex --probe-models --probe-role coresearch-reader --probe-model "$selected_model" --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/probe-$selected_model.log" 2>&1 || fail "selected model fixture failed: $selected_model"
   grep -q "requested=$selected_model/low .*status=verified" "$TMP_ROOT/probe-$selected_model.log" || fail "selected model request absent"
 done
 (cd "$TMP_ROOT" && PATH="$probe_bin:/usr/bin:/bin" "$ROOT_DIR/harness" doctor --strict --surface codex --probe-models --probe-role coresearch-reader --target "$ROOT_DIR" --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills") >"$TMP_ROOT/probe-single-role.log" 2>&1 || \
@@ -993,7 +1008,7 @@ printf '{"type":"error","message":"agent type is currently not available"}\n'
 exit 1
 SH
 chmod +x "$probe_error_bin/codex"
-if PATH="$probe_error_bin:/usr/bin:/bin" ./harness doctor --strict --surface codex --probe-models --probe-role coresearch-reader --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/probe-error.log" 2>&1; then
+if PATH="$probe_error_bin:/usr/bin:/bin" ./harness doctor --scope user --strict --surface codex --probe-models --probe-role coresearch-reader --codex-home "$doctor_codex" --codex-skills-root "$doctor_skills" >"$TMP_ROOT/probe-error.log" 2>&1; then
   fail "failed role probe was incorrectly accepted"
 fi
 grep -q 'agent type is currently not available' "$TMP_ROOT/probe-error.log" || fail "failed role probe suppressed bounded host error"

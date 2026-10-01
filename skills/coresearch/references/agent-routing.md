@@ -20,15 +20,20 @@ Use a bounded or no-history fork that accepts the selection. If the host cannot
 apply it, report the limitation; never claim a different model was requested
 or verified. Claude keeps its configured model and effort without overrides.
 
-The following installed policy mirrors `agents/manifest.json`:
+The following installed policy mirrors `agents/manifest.json`. Its
+`codex_model_policy.role_defaults` assigns Astra to `coresearch-planner` and
+Luna at `max` to `coresearch-implementer`. These are parent assignment
+defaults. `codex_effort_policy.model_defaults` sets Sol 6.1 to `xhigh`
+and every Luna assignment to `max`. Pass the chosen values explicitly and
+respect user overrides:
 
 | Model | Assignment criteria |
 | --- | --- |
-| `gpt-6-sol` | Default orchestration, implementation, investigation, and synthesis; medium for clear contracts, high for complex dependencies or substantial replanning |
-| `gpt-6-luna` | Prefer for known-source extraction, metadata, mechanical transformations, and prescribed execution with directly checkable outputs |
-| `gpt-6-astra` | Difficult research design, conflicting evidence, causal judgments, and scientific claim verification where errors are consequential or hard to detect |
+| `gpt-6-astra` | Default for planner assignments: research architecture, hypotheses, evaluation planning, and mission decomposition |
+| `gpt-6.1-sol` | Default orchestration, implementation, investigation, synthesis, and scientific claim verification at `xhigh` effort |
+| `gpt-6-luna` | Prefer for known-source extraction, metadata, mechanical transformations, and prescribed execution with directly checkable outputs at `max` effort |
 
-Start the main research session with Sol at medium effort when model choice is
+Start the main research session with Sol 6.1 at xhigh effort when model choice is
 available. This is a launch recommendation, not an automatic session switch;
 respect the user's selected parent model and effort. The manifest's default
 model and orchestrator effort describe this starting point. Workers still
@@ -37,22 +42,22 @@ require explicit model and effort on every assignment.
 Prefer Luna when inputs, transformation, and validation are unambiguous. Use
 Sol when an assignment requires interpretation, implementation judgment, or
 substantive synthesis. Select by ambiguity, error consequence, and ease of
-validation, not task length or role name. Start Sol assignments at medium;
-use high for complex dependencies, diagnosis, or substantial replanning.
-Luna can use low/medium for mechanical work and high for bounded reasoning;
-checkable outputs remain required. These are workload hypotheses, not measured
+validation, not task length or role name. Default Sol 6.1 assignments to
+`xhigh` and all Luna assignments to `max`, including implementer assignments.
+Explicit user or assignment effort overrides remain supported; checkable
+outputs remain required. These are workload hypotheses, not measured
 guarantees.
 
-Astra remains the uncertainty fallback. Request an Astra planner or verifier
-for difficult research design, conflicting evidence, evaluation-contract
-changes requiring scientific judgment, or consequential causal conclusions.
-Keep scientific claim verification on Astra. The Sol parent must inspect the
+Use Astra for planner assignments, including difficult research design and
+evaluation-contract planning. Sol remains the fallback and the verifier
+choice at `xhigh` by default for conflicting evidence or consequential causal conclusions.
+Keep scientific claim verification on Sol. The Sol parent must inspect the
 supporting evidence before integrating the result; worker confidence is not
 validation. If the parent itself needs a stronger model, report the need for
 an explicit session selection rather than claiming to switch it automatically.
 
-Effort is a separate choice; increasing a smaller model's effort does not
-establish equivalence to Astra. Respect explicit user selections and budgets;
+Effort is a separate choice; increasing Luna's effort does not establish
+equivalence to Sol. Respect explicit user selections and budgets;
 an unavailable or unapproved model requires reporting or a new authorized
 selection, not silent substitution.
 
@@ -75,8 +80,10 @@ The parent chooses and explicitly passes `reasoning_effort` for each assignment:
 | `medium` | Bounded implementation or experiment setup with clear inputs and validators |
 | `high` | Multi-source reasoning, difficult diagnosis, or substantial uncertainty |
 | `xhigh` | Deeply branching planning or verification with difficult claim dependencies |
+| `max` | Highest Codex effort; default for all Luna assignments |
 
-These are decision criteria, not role defaults. A narrow verifier check can use
+These are general decision criteria. Sol 6.1 assignments default to `xhigh`
+and Luna assignments default to `max` unless explicitly overridden. A narrow verifier check can use
 less effort than a difficult reading assignment. Record `requested_effort` and
 a brief complexity rationale in the handoff before spawning. Do not pass the
 manifest's `assignment` policy label as an effort value.
@@ -90,6 +97,23 @@ or claiming verified routing. The child does not choose its own effort.
 
 Claude roles retain their configured model and effort. Effort selection never
 changes role capabilities, stage ownership, validators, or independence.
+
+## Optional Claude worker from Codex
+
+Codex is the default parent and worker surface for Codex-led missions. Invoke
+the [Claude adapter](claude-worker.md) for an authorized independent claim
+review or a diagnosis after repeated observed failures. Explicit assignments
+may also request experiment criticism or independent interpretation of supplied
+local sources. Provider selection is a parent decision with a recorded reason,
+not an automatic retry ladder. Respect provider access, confidentiality, and
+budget limits; an unavailable Claude worker returns a blocker to the parent.
+
+The adapter supports read-only planner, reader, researcher, debugger, and
+verifier assignments. It narrows native tools to local file reading, preserves
+Claude pins, and disables further delegation. Codex owns implementation,
+experiment execution, integration, and ledger updates. Required scientific claim
+verification stays on Sol; a Claude review supplies additional criticism.
+Treat cross-provider benefit as a workload hypothesis, not a measured guarantee.
 
 ## Role selection
 

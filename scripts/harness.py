@@ -6,6 +6,7 @@ import difflib
 import json
 import os
 import re
+import runpy
 import shutil
 import subprocess
 import sys
@@ -445,13 +446,14 @@ def _prune_removed_roles(root: Path, provider: str) -> None:
             print(f"WARN unrelated Coresearch-named role preserved: {dst}", file=sys.stderr)
 
 
-def _provider_roots(args: argparse.Namespace, provider: str) -> tuple[Path, Path, Path]:
+def _provider_roots(args: argparse.Namespace, provider: str, *, create: bool = True) -> tuple[Path, Path, Path]:
     if args.scope == "project":
         if not args.project_dir:
             project = Path.cwd()
         else:
             project = Path(args.project_dir).expanduser().resolve()
-        project.mkdir(parents=True, exist_ok=True)
+        if create:
+            project.mkdir(parents=True, exist_ok=True)
         if provider == "codex":
             return project / ".agents" / "skills", project / ".codex" / "agents", project / ".codex"
         home = project / ".claude"
@@ -577,8 +579,39 @@ def cmd_install(args: argparse.Namespace) -> int:
     return 3 if failures else 0
 
 
+def cmd_uninstall(args: argparse.Namespace) -> int:
+    providers = ["codex", "claude"] if args.surface == "both" else [args.surface]
+    entries = []
+    for provider in providers:
+        skills_root, roles_root, _ = _provider_roots(args, provider, create=False)
+        for root in (skills_root, roles_root):
+            if any(_inside(root, ROOT / source) for source in ("skills", "agents")):
+                print(f"Refusing to uninstall from source directory: {root}", file=sys.stderr)
+                return 2
+        entries.extend((skills_root / name, "skill") for name in SKILLS)
+        suffix = ".toml" if provider == "codex" else ".md"
+        entries.extend((roles_root / f"{name}{suffix}", "role") for name in ROLES)
+
+    failures = 0
+    for path, kind in entries:
+        if not path.exists() and not path.is_symlink():
+            continue
+        if not _is_managed_entry(path, kind):
+            print(f"Preserved unrelated {kind}: {path}", file=sys.stderr)
+            failures += 1
+            continue
+        if args.dry_run:
+            print(f"Would remove {kind}: {path}")
+        else:
+            _remove_entry(path)
+            print(f"Removed {kind}: {path}")
+    print(f"Scope: {args.scope}; surface: {args.surface}")
+    if not args.dry_run:
+        print("Restart Codex or Claude Code to reload skill and role metadata.")
+    return 3 if failures else 0
+
+
 def cmd_link(args: argparse.Namespace) -> int:
-    args.scope = "user"
     args.mode = "symlink"
     args.force = False
     if not hasattr(args, "surface") or not args.surface:
@@ -1070,12 +1103,14 @@ def validate_source_roles() -> list[str]:
         failures.append("agents/manifest.json schema_version must be 3")
     policy = manifest.get("codex_effort_policy", {})
     allowed = policy.get("allowed", [])
-    if allowed != ["low", "medium", "high", "xhigh"] or policy.get("probe_effort") not in allowed:
+    if allowed != ["low", "medium", "high", "xhigh", "max"] or policy.get("probe_effort") not in allowed:
         failures.append("agents/manifest.json invalid Codex assignment effort policy")
-    if policy.get("orchestrator_effort") != "medium":
-        failures.append("agents/manifest.json Codex orchestrator_effort must be medium")
+    if policy.get("orchestrator_effort") != "xhigh":
+        failures.append("agents/manifest.json Codex orchestrator_effort must be xhigh")
+    if policy.get("model_defaults") != {"gpt-6.1-sol": "xhigh", "gpt-6-luna": "max"}:
+        failures.append("agents/manifest.json invalid Codex model effort defaults")
     model_policy = manifest.get("codex_model_policy", {})
-    model_allowed = ["gpt-6-astra", "gpt-6-sol", "gpt-6-luna"]
+    model_allowed = ["gpt-6-astra", "gpt-6.1-sol", "gpt-6-luna"]
     if not isinstance(model_policy, dict):
         model_policy = {}
     if model_policy.get("allowed") != model_allowed:
@@ -1083,9 +1118,15 @@ def validate_source_roles() -> list[str]:
     for key in ("default_model", "fallback_model", "probe_model"):
         if model_policy.get(key) not in model_allowed:
             failures.append(f"agents/manifest.json invalid Codex {key}")
-    for key, expected in (("default_model", "gpt-6-sol"), ("fallback_model", "gpt-6-astra")):
+    for key, expected in (("default_model", "gpt-6.1-sol"), ("fallback_model", "gpt-6.1-sol")):
         if model_policy.get(key) != expected:
             failures.append(f"agents/manifest.json Codex {key} must be {expected}")
+    expected_role_defaults = {
+        "coresearch-planner": {"model": "gpt-6-astra"},
+        "coresearch-implementer": {"model": "gpt-6-luna", "effort": "max"},
+    }
+    if model_policy.get("role_defaults") != expected_role_defaults:
+        failures.append("agents/manifest.json invalid Codex role assignment defaults")
     selection = model_policy.get("selection", {})
     if (not isinstance(selection, dict) or set(selection) != set(model_allowed)
             or any(not isinstance(value, str) or not value.strip() for value in selection.values())):
@@ -1346,7 +1387,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     user_claude = claude_home(getattr(args, "claude_home", None))
     target_value = getattr(args, "project_dir", None) or arg_target(args)
     target = Path(target_value).expanduser().resolve()
-    scope = getattr(args, "scope", "user")
+    scope = getattr(args, "scope", "project")
     if scope == "project":
         codex_skills = target / ".agents" / "skills"
         codex_roles = target / ".codex" / "agents"
@@ -1528,7 +1569,7 @@ def cmd_update(args: argparse.Namespace) -> int:
             global_bridge=args.global_bridge,
             project_bridge=False,
             project_dir=None,
-            scope=getattr(args, "scope", "user"),
+            scope=getattr(args, "scope", "project"),
             mode=getattr(args, "mode", "symlink"),
             force=False,
         )
@@ -1544,7 +1585,7 @@ def cmd_update(args: argparse.Namespace) -> int:
 
 
 def cmd_repair(args: argparse.Namespace) -> int:
-    project_dir = arg_target(args) if getattr(args, "scope", "user") == "project" else None
+    project_dir = arg_target(args) if getattr(args, "scope", "project") == "project" else None
     link_args = argparse.Namespace(
         codex_home=args.codex_home,
         codex_skills_root=getattr(args, "codex_skills_root", None),
@@ -1553,7 +1594,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
         global_bridge=args.global_bridge,
         project_bridge=False,
         project_dir=project_dir,
-        scope=getattr(args, "scope", "user"),
+        scope=getattr(args, "scope", "project"),
         mode=getattr(args, "mode", "symlink"),
         force=False,
     )
@@ -1573,7 +1614,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
         codex_skills_root=getattr(args, "codex_skills_root", None),
         claude_home=getattr(args, "claude_home", None),
         surface=getattr(args, "surface", "codex"),
-        scope=getattr(args, "scope", "user"),
+        scope=getattr(args, "scope", "project"),
         project_dir=project_dir,
         target=arg_target(args),
         target_arg=None,
@@ -1591,7 +1632,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     install = sub.add_parser("install", help="Install Coresearch skills and native roles")
-    install.add_argument("--scope", choices=["user", "project"], default="user")
+    install.add_argument("--scope", choices=["user", "project"], default="project", help="installation scope (default: project)")
     install.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     install.add_argument("--mode", choices=["copy", "symlink"], default="copy")
     install.add_argument("--codex-home")
@@ -1606,8 +1647,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     link = sub.add_parser(
         "link",
-        help="Link supported user-scope entries and copy Codex roles as required by the host",
+        help="Link supported skills and copy Codex roles in the selected scope",
     )
+    link.add_argument("--scope", choices=["user", "project"], default="project", help="installation scope (default: project)")
     link.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
     link.add_argument("--codex-home")
     link.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
@@ -1616,6 +1658,16 @@ def build_parser() -> argparse.ArgumentParser:
     link.add_argument("--project-bridge", action="store_true")
     link.add_argument("--project-dir")
     link.set_defaults(func=cmd_link)
+
+    uninstall = sub.add_parser("uninstall", help="Remove recognized Coresearch skills and roles; preserve prompts and the harness command")
+    uninstall.add_argument("--scope", choices=["user", "project"], default="project", help="installation scope (default: project)")
+    uninstall.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
+    uninstall.add_argument("--project-dir")
+    uninstall.add_argument("--codex-home")
+    uninstall.add_argument("--codex-skills-root")
+    uninstall.add_argument("--claude-home")
+    uninstall.add_argument("--dry-run", action="store_true", help="show removals without changing files")
+    uninstall.set_defaults(func=cmd_uninstall)
 
     self_install = sub.add_parser("self-install", help="Install the `harness` command into a bin directory")
     self_install.add_argument("--bin-dir")
@@ -1677,12 +1729,17 @@ def build_parser() -> argparse.ArgumentParser:
     inventory.add_argument("--include-plugins", action="store_true", help="also scan Claude plugin marketplaces/cache")
     inventory.set_defaults(func=cmd_inventory)
 
+    worker = sub.add_parser("claude-worker", help="Execute one bounded read-only Claude role assignment")
+    adapter = runpy.run_path(str(ROOT / "skills" / "coresearch" / "scripts" / "claude_worker.py"))
+    adapter["add_arguments"](worker)
+    worker.set_defaults(func=adapter["execute"])
+
     doctor = sub.add_parser("doctor", help="Run install and exact role-routing checks")
     doctor.add_argument("--codex-home")
     doctor.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     doctor.add_argument("--claude-home")
     doctor.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
-    doctor.add_argument("--scope", choices=["user", "project"], default="user")
+    doctor.add_argument("--scope", choices=["user", "project"], default="project", help="installation scope (default: project)")
     doctor.add_argument("--project-dir")
     doctor.add_argument("target_arg", nargs="?", help="target directory (default: .)")
     doctor.add_argument("--target", help="target directory (overrides positional target)")
@@ -1701,7 +1758,7 @@ def build_parser() -> argparse.ArgumentParser:
     repair.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     repair.add_argument("--claude-home")
     repair.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
-    repair.add_argument("--scope", choices=["user", "project"], default="user")
+    repair.add_argument("--scope", choices=["user", "project"], default="project", help="installation scope (default: project)")
     repair.add_argument("--mode", choices=["copy", "symlink"], default="symlink")
     repair.add_argument("--bin-dir")
     repair.add_argument("--name", default="harness")
@@ -1710,13 +1767,13 @@ def build_parser() -> argparse.ArgumentParser:
     repair.add_argument("--no-validate", action="store_true")
     repair.set_defaults(func=cmd_repair)
 
-    update = sub.add_parser("update", help="Optionally pull, relink user skills, and validate")
+    update = sub.add_parser("update", help="Optionally pull, relink skills in the selected scope, and validate")
     update.add_argument("--pull", action="store_true", help="run git pull --ff-only before relinking")
     update.add_argument("--codex-home")
     update.add_argument("--codex-skills-root", help="Codex user skill directory (default: ~/.agents/skills)")
     update.add_argument("--claude-home")
     update.add_argument("--surface", choices=["codex", "claude", "both"], default="codex")
-    update.add_argument("--scope", choices=["user", "project"], default="user")
+    update.add_argument("--scope", choices=["user", "project"], default="project", help="installation scope (default: project)")
     update.add_argument("--mode", choices=["copy", "symlink"], default="symlink")
     update.add_argument("--global-bridge", action="store_true")
     update.add_argument("--no-link", action="store_true")

@@ -165,13 +165,19 @@ runtime registration mechanism; each native file is self-contained. This
 document intentionally does not duplicate the model matrix. Manifest schema
 version 3 uses `model: assignment` and `effort: assignment` for Codex. The
 `codex_model_policy` owns approved model IDs, default and fallback models,
-diagnostic model, and workload-selection criteria; `codex_effort_policy` owns
-allowed effort levels, diagnostic effort, and the recommended orchestrator
-effort. The parent starts with the default model at orchestrator effort; this
+diagnostic model, workload-selection criteria, and `role_defaults`; `codex_effort_policy` owns
+allowed effort levels, diagnostic effort, per-model assignment effort defaults
+in `model_defaults`, and the recommended orchestrator effort. Sol 6.1 defaults
+to `xhigh` for orchestration and assignments; Luna defaults to `max` for all
+assignments. Explicit user or assignment overrides remain supported. The parent starts with the default model at orchestrator effort; this
 is guidance for host session selection, not a runtime model-switch mechanism.
-Workers still receive explicit per-assignment selections. Routine work favors
-Sol and directly checkable mechanical work favors Luna; Astra handles difficult
-scientific judgments and remains the uncertainty fallback. Native Codex TOMLs omit both
+Workers still receive explicit per-assignment selections. Planner assignments
+default to Astra; implementer assignments default to Luna at `max`, the
+highest allowed effort. Role defaults guide the parent and never add native
+Codex file overrides. `gpt-6.1-sol` remains the general default and fallback.
+Routine work favors Sol 6.1 and directly checkable mechanical work favors Luna;
+Sol 6.1 at `xhigh`
+handles difficult scientific judgments and remains the uncertainty fallback. Native Codex TOMLs omit both
 overrides because custom-file settings take precedence over spawn values under
 the [official host contract](https://learn.chatgpt.com/docs/agent-configuration/subagents).
 The parent explicitly passes model and effort while preserving named-role scope.
@@ -184,7 +190,7 @@ rationale lives in the mission assignment/handoff; escalation uses a new attempt
 ID and preserves prior failures within the existing retry budget.
 
 Model selection considers ambiguity, error consequence, and ease of validation;
-effort is selected independently. Astra remains the uncertainty fallback and
+effort is selected independently. Sol remains the uncertainty fallback and
 scientific-verification choice. Cheaper tiers are initial workload hypotheses,
 not established quality or cost equivalence. Parent instructions require explicit
 spawn model/effort and a compatible bounded or no-history fork; omission may
@@ -216,6 +222,56 @@ Shared semantics and the canonical handoffs live in
 [`execution-adapters.md`](skills/coresearch/references/execution-adapters.md).
 Provider differences remain limited to native definition syntax,
 permissions/tools, invocation, and observable routing metadata.
+
+### Codex-led execution with optional Claude workers
+
+Codex remains the parent and default worker surface in Codex-led missions.
+Consequential claim review and diagnosis after repeated failures may use a
+bounded Claude worker; explicit assignments may also request experiment
+criticism or interpretation of local sources. Required Sol scientific
+verification remains in place. Standalone Claude-led missions remain supported.
+
+[`claude_worker.py`](skills/coresearch/scripts/claude_worker.py) is the optional,
+standard-library execution adapter packaged inside the installed router skill.
+`harness claude-worker` delegates to that same implementation. This is one
+process invocation, with no scheduling, continuation, automatic retry, or
+runtime manifest lookup. Copy and symlink skill installs include it; no new
+installation root, role, dependency, or plugin role registration is introduced.
+Claude is an optional host executable, not a required runtime dependency for
+Codex. Installation, repair, and diagnostics remain owned by the harness.
+
+The parent provides a bounded JSON handoff and output path. Each attempt defaults
+to a 3600-second wall timeout and no dollar cap; callers can override the timeout
+and explicitly supply a positive API dollar cap. An omitted cap is recorded as
+`limits.max_budget_usd: null` and no budget flag is passed to Claude.
+The child preserves the inherited credential environment, including an unset
+`CLAUDE_CONFIG_DIR`; explicit `--claude-home` overrides both role discovery and
+the child's config/credential context. Authentication preflight and any approved
+outside-sandbox execution belong to the parent host, not the adapter. The skill
+guides that recovery without copying credentials or changing global permissions.
+The adapter resolves a Coresearch-owned project or user native Claude role,
+checks requested pins, and passes a snapshot through `--agents` with `--agent`.
+Duplicate names within a discovery scope and incompatible project overrides
+block execution. The snapshot preserves instructions, skills, model and effort;
+it narrows tools to Read/Glob/Grep and denies permission prompts. Restricted
+mode, disabled configurable hooks, and empty strict MCP configuration limit the
+worker to local reading without shell access or further delegation. Managed
+host policy still applies. The working directory is the host-enforced boundary;
+narrower assignment scopes remain instructions rather than filesystem ACLs.
+
+Each call produces one terminal role-run record. Additive version-2 fields
+`attempt_id`, `execution_provider`, and `execution_method` distinguish a worker
+from the top-level parent `host`. Historical entries keep their existing native
+host meaning and are not rewritten. Only host envelopes establish observed
+routing; generated reports cannot. Parent validation and evidence promotion
+precede integration into the existing run result and canonical ledger. Logs and
+the role snapshot stay in ignored project `.tmp/`; no runtime state goes inside
+the packaged skill. The adapter never mutates installed roles or global settings.
+
+The executable contract and invocation examples live in
+[`claude-worker.md`](skills/coresearch/references/claude-worker.md). Offline
+regressions use a fake CLI; paid routing probes remain exclusive to the explicit
+strict doctor probe path.
 
 Explicit routing probes invoke each named native role. Codex probes explicitly
 pass the manifest's diagnostic model and effort for the bounded assignment;
@@ -273,6 +329,9 @@ flowchart LR
     B[Marker-bounded bridge] --> GA[Optional global/project AGENTS.md block]
 ```
 
+`install`, `link`, `uninstall`, `doctor`, `repair`, and `update` default to
+project scope in the current directory; user-wide operations require
+`--scope user`. Doctor audits the same selected scope as installation.
 User and project scopes support copy and symlink modes for Codex, Claude, or
 both, except Codex role TOMLs are always copied as regular files. The harness
 installs skills plus provider-specific roles, replaces only recognized
@@ -285,6 +344,12 @@ backing up a changed config first. Prompt bridges are
 optional, marker-bounded, diffable, backed up, idempotent, removable, and
 rollback-capable. Full project templates require an absent file or explicit
 replacement semantics.
+
+Uninstall selects user or project scope and one or both providers, removing
+only recognized entries named by the current skill and role manifests. It
+supports a read-only dry run, tolerates missing entries, and reports preserved
+unrelated collisions with a nonzero exit status. It protects source directories
+and leaves prompts, bridges, parent directories, and the command launcher intact.
 
 Status and inventory report installed objects. Doctor validates exact routing
 and broken links. Repair deterministically reinstalls Coresearch-owned entries,

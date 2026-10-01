@@ -49,6 +49,12 @@ New `result.json` files use schema version 2 and record `schema_version`,
 Allowed terminal statuses are `success`, `blocked`, `failed`, and `cancelled`.
 Allowed routing statuses are `verified`, `static-only`, and `mismatch`.
 
+New assignments also declare `attempt_id`, `execution_provider` (`codex` or
+`claude`), and `execution_method` (`native` or `claude-cli`). These additive
+version-2 role-run fields distinguish the top-level parent `host` from each
+worker. Historical entries without them retain native execution on the parent
+host; do not rewrite historical records. Record each retry separately.
+
 Schema version 1 remains valid for historical zero- or one-role results. New or
 resumed multi-role runs use version 2; do not rewrite historical results solely
 for migration.
@@ -101,6 +107,18 @@ joins dependencies and integrates writable artifacts before verification. Do
 not emulate the
 Codex goal surface, create a parallel state forest, or introduce a second
 ledger.
+
+## Codex parent with a Claude worker
+
+Use the optional [Claude worker adapter](claude-worker.md) for one authorized
+read-only assignment. The parent calls `harness claude-worker` or the runner
+packaged inside its installed `coresearch` skill. The runner selects and
+snapshots an installed native Claude role, validates its pins, restricts tools,
+passes the handoff through stdin, and returns a terminal record. It does not
+schedule, retry, change stages, or write the ledger. The run's `host` remains
+`codex`; the worker entry has `execution_provider: claude` and
+`execution_method: claude-cli`. Apply the same evidence and validation contract
+as native assignments. Claude review supplements required Sol verification.
 
 ## Result return
 

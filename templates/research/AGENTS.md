@@ -57,6 +57,18 @@ and calibrated venue fit. Do not inflate the contribution.
 10. **Outcome-first reporting.** Lead with the artifact or answer; keep updates
     to target result, constraints, evidence, and stop condition.
 
+## Optional Claude workers
+
+For Codex-led work, keep Codex as parent and default worker. Use the installed
+`coresearch/references/claude-worker.md` contract for an authorized Claude second
+opinion on consequential claims or stalled diagnosis; explicit assignments may
+also request experiment criticism or local-source interpretation. The parent
+records provider, method, attempt, reason, and limits, validates returned
+evidence, and owns integration and ledger updates. Claude workers read local
+files only and cannot delegate. Preserve required Sol scientific verification.
+Claude availability is optional; report unavailable workers without inventing
+results or silently replacing a required check.
+
 ## Optional working modes
 
 Ponytail and Caveman are explicit task- or mission-scoped modifiers. They are
@@ -85,14 +97,16 @@ a full paper workflow. `research-qualitative` remains explicit-only.
 
 The role/model matrix below mirrors the source canonical agent manifest.
 For Codex, `assignment` means the parent selects and explicitly passes model
-and effort per task. Approved models are `gpt-6-sol`, `gpt-6-luna`, and
-`gpt-6-astra`. Start the parent on Sol at medium effort; preserve explicit user
+and effort per task. Approved models are `gpt-6-astra`, `gpt-6.1-sol`, and `gpt-6-luna`.
+Planner assignments default to Astra. Sol 6.1 assignments default to `xhigh`;
+all Luna assignments default to `max`, including implementer assignments.
+The parent passes the selected model and effort explicitly.
+Start the parent on Sol 6.1 at xhigh effort; preserve explicit user
 selections and never claim that policy changes switch the running session.
 Use Sol for orchestration, implementation, investigation, and synthesis; prefer
 Luna for known-source extraction and prescribed work with directly checkable
-outputs. Use Sol high for complex dependencies or substantial replanning.
-Astra is the uncertainty fallback and handles difficult research design,
-evidence conflicts, and scientific claim verification. Claude
+outputs. Sol 6.1 at `xhigh` handles evidence conflicts
+and scientific claim verification; Sol is also the uncertainty fallback. Claude
 retains fixed model and effort. When delegating, use the installed
 `coresearch/references/agent-routing.md` for selection criteria, bounded
 escalation, handoff fields, and dependency joins. Record model, effort, and

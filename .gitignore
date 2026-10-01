@@ -7,3 +7,5 @@ __pycache__/
 *.pyc
 
 AGENTS.md.back
+.agents
+.codex

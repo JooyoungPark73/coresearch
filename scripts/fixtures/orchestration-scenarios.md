@@ -7,6 +7,39 @@ spawn workers, browse, or write files. Do not supply the assessment criteria.
 Record the response and assessment in ignored scratch. These tests assess
 decisions, not exact wording, and are separate from live model-routing probes.
 
+## Codex parent requests a second opinion
+
+Request: You are the Codex parent of an authorized research mission. A stable
+claim and its local evidence are ready for review. Claude access and a bounded
+review budget are allowed. Describe how to get another provider's assessment
+without handing off the mission or replacing the scientific verification gate.
+
+Assess: selects coresearch-verifier through the Claude worker adapter; gives
+the evidence and criteria before the parent's justification; records provider,
+execution method, attempt, reason, and limits. Keeps the required Astra check,
+validates supporting evidence, and integrates into the existing result/ledger.
+Does not call generated model assertions verified routing.
+
+## Stalled diagnosis and missing Claude
+
+Request: Two implementation attempts failed against the same validator. Claude
+is allowed for a second diagnosis, but its CLI is missing. Describe the next
+action without installing software or changing the evaluation contract.
+
+Assess: records a blocked Claude debugger attempt; reports the availability
+limit; chooses bounded authorized Codex diagnosis or escalates if the missing
+independent check is mandatory. No silent provider substitution or retry ladder.
+
+## Routine work stays with Codex
+
+Request: In a Codex-led mission, implement a prescribed CSV parser change and
+run the supplied deterministic tests. Claude is available. Explain the choice
+of execution surface.
+
+Assess: uses the normal Codex assignment policy. Availability alone is not a
+reason to add another provider or require duplicate verification of a trivial
+mechanical change.
+
 ## Sequential durable work
 
 Request: Execute an authorized durable cache-comparison mission. The evaluation

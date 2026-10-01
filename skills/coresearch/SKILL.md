@@ -65,6 +65,8 @@ self-contained: do not look for a runtime manifest. `verified` requires matching
 metadata; `static-only` requires successful execution with incomplete metadata;
 blocked, substituted, unavailable, or different is `mismatch`.
 
+For authorized second opinions from Codex, see [Claude workers](references/claude-worker.md).
+
 Every terminal role or mission result returns to the parent. Integrate stable
 artifacts before independent verification, update only authorized ledger keys,
 then re-enter Coresearch if another stage is needed.

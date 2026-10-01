@@ -167,24 +167,38 @@
       "low",
       "medium",
       "high",
-      "xhigh"
+      "xhigh",
+      "max"
     ],
     "probe_effort": "low",
-    "orchestrator_effort": "medium"
+    "orchestrator_effort": "xhigh",
+    "model_defaults": {
+      "gpt-6.1-sol": "xhigh",
+      "gpt-6-luna": "max"
+    }
   },
   "codex_model_policy": {
     "allowed": [
       "gpt-6-astra",
-      "gpt-6-sol",
+      "gpt-6.1-sol",
       "gpt-6-luna"
     ],
-    "default_model": "gpt-6-sol",
-    "fallback_model": "gpt-6-astra",
-    "probe_model": "gpt-6-sol",
+    "default_model": "gpt-6.1-sol",
+    "fallback_model": "gpt-6.1-sol",
+    "probe_model": "gpt-6.1-sol",
     "selection": {
-      "gpt-6-astra": "Difficult research design, conflicting evidence, causal judgments, and scientific claim verification where errors are consequential or hard to detect.",
-      "gpt-6-sol": "Default orchestration, implementation, investigation, and synthesis; use medium for clear contracts and high for complex dependencies or substantial replanning.",
-      "gpt-6-luna": "Prefer for known-source extraction, metadata, mechanical transformations, and prescribed execution with directly checkable outputs; use Sol when interpretation or implementation judgment is required."
+      "gpt-6.1-sol": "Default orchestration, implementation, investigation, synthesis, and scientific claim verification at xhigh effort; planner assignments default to Astra.",
+      "gpt-6-luna": "Prefer for known-source extraction, metadata, mechanical transformations, and prescribed execution with directly checkable outputs at max effort by default, including coresearch-implementer. Use Sol when interpretation or implementation judgment is required.",
+      "gpt-6-astra": "Default for coresearch-planner assignments; research architecture, hypotheses, evaluation planning, and durable mission decomposition."
+    },
+    "role_defaults": {
+      "coresearch-planner": {
+        "model": "gpt-6-astra"
+      },
+      "coresearch-implementer": {
+        "model": "gpt-6-luna",
+        "effort": "max"
+      }
     }
   }
 }
