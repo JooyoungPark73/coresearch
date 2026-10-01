@@ -1,0 +1,13 @@
+{
+  "name": "coresearch",
+  "version": "2.0.0",
+  "description": "Astra-led research with on-demand resources and bounded worker delegation.",
+  "author": {"name": "Alan Synn"},
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Coresearch",
+    "shortDescription": "Evidence-grounded research, experiments, and manuscripts.",
+    "defaultPrompt": ["Use Coresearch to complete this research task and verify the result."]
+  }
+}
