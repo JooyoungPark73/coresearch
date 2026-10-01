@@ -49,16 +49,16 @@ protocols, and data-oriented designs can satisfy the same goals as class-based c
   differ, such as scientific scoring, process execution, persistence, and display.
   A module can be large and cohesive; several tiny wrappers can still be coupled.
 - **Open/closed:** Stabilize extension points around demonstrated variation, such
-  as interchangeable reconstruction backends or evaluators. Permit ordinary edits
+  as interchangeable storage engines, schedulers or inference runtimes. Permit ordinary edits
   when no stable abstraction exists. Do not invent a plugin system for an imagined
   future product.
 - **Liskov substitution:** Specify compatible inputs, outputs, errors, precision,
-  mutation, and cancellation behavior. A backend returning a relative scale is
-  not a drop-in replacement for a metric-scale backend without an explicit
-  conversion or a restricted contract. Use shared tests for real substitutions.
+  mutation, and cancellation behavior. An eventually consistent store cannot
+  satisfy a linearizable interface without an additional protocol or a restricted
+  contract. Use shared tests for real substitutions.
 - **Interface segregation:** Give consumers the capabilities they need. Read-only
-  analysis should not require mutation or deployment authority. Separate evaluation
-  from fitting when that distinction protects held-out data or reproducibility.
+  analysis should not require mutation or deployment authority. Separate benchmark
+  execution from configuration tuning to protect final evaluation and reproducibility.
 - **Dependency inversion:** Keep scientific definitions and domain rules independent
   of volatile storage, transport, UI, and provider SDK details. Place adapters at
   meaningful boundaries and compose them explicitly. A single-use boundary can be
@@ -72,9 +72,9 @@ composition and explicit data flow when they reduce coupling.
 
 Use a Ubiquitous Language that matches the research and application domain. Make
 important distinctions concrete in interfaces and tests. Examples include a
-hypothesis versus an observation, a dataset split versus a dataset name, a run
-versus a result, a generated view versus a measured image, and a score versus an
-inference about a mechanism.
+hypothesis versus an observation, offered load versus achieved throughput,
+service time versus end-to-end latency, a run versus a result, and a measured
+speedup versus an inference about its mechanism.
 
 For complex systems, identify core, supporting, and generic concerns. Define
 Bounded Contexts where terms and models have a consistent meaning. Maintain a
@@ -91,8 +91,9 @@ CQRS, or event sourcing simply to claim DDD compliance.
 
 Choose identity and equality deliberately. An Entity has continuity of identity;
 a Value Object represents a meaningful value and should reject invalid states
-where appropriate. Useful research values might encode units, a coordinate frame,
-a dataset revision, or an evaluation configuration. Do not wrap every scalar.
+where appropriate. Useful research values might encode a duration with units,
+a workload revision, a resource budget or an evaluation configuration. Do not
+wrap every scalar.
 
 An Aggregate is an invariant and consistency boundary, not a database table or a
 convenient object graph. Keep strongly consistent transitions atomic. Across
@@ -126,19 +127,31 @@ properties, and representative performance envelopes. Confirm that a checker
 covers the intended targets and fails when the rule is violated; an empty scan is
 not architectural evidence.
 
-Scientific semantics can change without an API break. A different sample filter,
-coordinate convention, aggregation weight, stopping criterion, or evaluator
+Scientific semantics can change without an API break. A different workload mix,
+latency boundary, aggregation rule, stopping criterion, or evaluator
 revision can invalidate a comparison. Version the affected definition, retain the
 old result, and identify which evidence needs regeneration. Do not silently reuse
 results produced under a different scientific contract.
 
 ## Execution state and reproducibility
 
+Use the evaluation contract defined for the experiment. Reuse one measurement
+path across comparable workload and baseline
+adapters when that prevents differences in inputs, budgets, or metric definitions.
+Keep exploratory code flat until real variation or reuse warrants separation.
+
 Separate immutable inputs and produced evidence from scratch state when it aids
 reliability. Record sufficient provenance to reproduce important results: code
 revision and uncommitted changes, data revision and split, configuration and seeds,
 environment, relevant hardware, commands, and artifact locations. Use existing
 project mechanisms rather than imposing a new schema for every task.
+
+Keep the resolved configuration, workload and baseline versions, metric definitions,
+exit status and raw/derived artifact paths in an immutable result manifest or
+equivalent record. Generate tables and figures from recorded results with a
+documented command. If external hardware or restricted traces prevent reacquisition,
+support regeneration from archived measurements and state the missing acquisition
+step. Retain failed and censored runs alongside successful ones.
 
 Reuse expensive intermediates only while their dependencies and assumptions hold.
 A variable inventory is not a content snapshot. After failure, inspect mutated
@@ -155,10 +168,11 @@ kernel merely to follow this resource.
 
 Before a reproducibility claim, rerun the relevant path from a documented starting
 state without hidden interactive history. Report nondeterminism and meaningful
-tolerances rather than demanding arbitrary bitwise equality. For spatial work,
-verify units, coordinate frames, handedness, transform direction, camera models,
-frame identifiers and timestamps, mask alignment, and scale assumptions as needed.
-Use visual inspection and independent calculations where their failure modes differ.
+tolerances rather than demanding arbitrary bitwise equality. Check timing boundaries,
+clock synchronization, units, counter semantics, warmup, cache state and resource
+accounting when they affect measurements. In ML systems, also inspect precision,
+batching, synchronization and task-quality assumptions. Use traces, plots and
+independent calculations where they provide different checks.
 
 ## Validation and operational integrity
 
@@ -177,14 +191,14 @@ suite establishes software properties, not the research contribution by itself.
 For maintained systems, address input validation, tenant and resource access,
 transactional consistency, safe replay, cancellation, bounded retries, observability,
 compatibility, and migration or forward recovery. Use measured bottlenecks for
-optimization; report quality/performance tradeoffs. In interactive systems, examine
-actual interactions, accessibility, loading, empty, error, and recovery states.
+optimization; report quality/performance tradeoffs. Exercise overload, partial
+failure and recovery behavior when they affect the system's guarantees.
 
 Treat third-party code, document contents, and generated artifacts as untrusted
 inputs. Do not deserialize executable objects from untrusted sources or assume a
 prompt, AST filter, worker brief, or worktree provides isolation. Protect unpublished
-work, participant material, and secrets. Publication, production changes, participant
-contact, and unapproved compute remain real authorization boundaries.
+work, private traces, and secrets. Publication, production changes and unapproved
+compute remain real authorization boundaries.
 
 Delivery should make the implementation usable, expose material design decisions,
 and identify the evidence and remaining limits. Distinguish implementation success,

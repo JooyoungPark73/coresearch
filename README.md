@@ -30,9 +30,8 @@ Reload the host's skill discovery as needed and request, for example:
 > Use Coresearch to assess this research idea, implement the most informative
 > feasible experiment, and review what the results actually support.
 
-Select Astra as the lead in a host that supports it. Installation does not select
-models, provision workers, or grant tool permissions. A Claude-only session can
-use the research resources but is not, by itself, an Astra-led session.
+Select Astra as the sole lead in a host that supports it. Installation does not
+select models, provision workers, or grant tool permissions.
 The native Codex plugin manifest is also retained; choose plugin distribution or
 manual installation, not duplicate installations of the same skill.
 
@@ -50,7 +49,7 @@ independent resources, not a pipeline:
 | [Literature](skills/coresearch/references/literature.md) | Source-grounded synthesis, closest work, citation provenance, optional PDF collection |
 | [Experiments](skills/coresearch/references/experiments.md) | Contribution design, falsifiers, baselines, executable evaluation, reproducible artifacts |
 | [Engineering](skills/coresearch/references/engineering.md) | SOLID/DDD, research-code maturity, architectural decisions, executable contracts, reliable execution |
-| [Analysis](skills/coresearch/references/analysis.md) | Gaps, contradictory findings, causal explanations, qualitative analysis, evidence-chain audits |
+| [Analysis](skills/coresearch/references/analysis.md) | Gaps, contradictory findings, causal explanations, measurement analysis, evidence-chain audits |
 | [Manuscripts](skills/coresearch/references/manuscripts.md) | Writing, figures/slides, venue critique, rebuttal, verification, release |
 | [Delegation](skills/coresearch/references/delegation.md) | Coarse assignments, event-driven handoffs, and native workers, including Sol and Claude Code |
 
@@ -68,7 +67,7 @@ they do not need the lead's approval after each step. Completion, blockers, and
 material decision changes justify communication. Routine progress polling does not.
 The host owns telemetry, task supervision, permissions, and completion delivery.
 
-This is a default to evaluate, not a claim that hierarchy always beats one agent.
+Evaluate whether delegation helps the task.
 Compare direct Astra, direct Sol, and selective delegation on the same research
 and engineering tasks. See the [decision rationale](docs/architecture.md) and
 [host evaluation protocol](docs/validation.md). Model selection and heterogeneous

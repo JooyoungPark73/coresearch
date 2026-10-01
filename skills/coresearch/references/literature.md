@@ -12,6 +12,13 @@ upgrade either. Disagreement between versions or sources belongs in the synthesi
 Independent evidence means independent data or groups, not merely more citations.
 Use primary sources for precise claims and current official rules for venue advice.
 
+For comparisons of measured performance, extract the workload, platform/topology,
+scale, baseline version and configuration, metric definition, measurement window, and relevant
+limitations alongside the result. Mark undisclosed context as unknown. Compare
+mechanisms, assumptions, interfaces, and tradeoffs; normalize evaluation context
+before treating reported numbers as comparable. Separate direct competitors,
+enabling work, and adjacent work when that distinction affects a novelty claim.
+
 Existing notes, a small table, or a bibliography are sufficient. No compulsory
 source-state schema or minimum paper count is imposed. For a large collection,
 delegate discovery and metadata checks, then inspect the load-bearing evidence

@@ -31,15 +31,12 @@ repository-specific instructions. It is not copied into a persistent prompt.
 | Source collection should infer paper identity through multiple fuzzy APIs | The agent resolves identity. A small downloader fetches exact open URLs and records transport provenance. |
 | Every role needs repeated evidence and safety instructions | One short evidence floor, then only task-specific standards in relevant resources. |
 
-The research capability mapping is intentional, not a silent feature drop:
-`research-survey` and citation checking become Literature; `research-design`,
-`research-loop`, and `research-engineer` become Experiments; `research-gap`,
-`research-dialectic`, `research-causal`, `research-qualitative`, `research-audit`,
-and `research-adversary` become Analysis. `research-write`, `research-review`,
-`research-rebuttal`, and manuscript verification become Manuscripts. Source
-verification remains shared with Literature. AI/ML/CV, Robotics, Graphics, HCI,
-and hybrid evidence standards remain in the experiments resource. Office-format
-mechanics stay with appropriate external tools.
+Literature owns source synthesis and citation provenance. Experiments covers
+contributions, evaluation design and experimental controls; Engineering covers
+implementation, measurement pipelines and reproducible artifacts. Analysis handles
+gaps, contradictory findings, causal explanations and evidence audits.
+Manuscripts covers writing, review, rebuttal and release. Delegation describes
+bounded assignments using the host. Format mechanics remain with appropriate tools.
 
 A retrieved PDF is intentionally weaker evidence than an inspected paper, and an
 inspected paper is weaker than support for a particular claim. Transport reports
@@ -63,8 +60,8 @@ directly. Completion notifications or a blocking native call replace polling.
 The optional brief is project state, not persistent behavioral instruction. No
 reference is mandatory for every task; no initialization, output directory,
 agent, or approval ceremony is required merely to answer a small question.
-Real authorization boundaries still apply to confidential data, participant
-studies, external publication, compute, and destructive operations.
+Real authorization boundaries still apply to confidential data, external
+publication, compute, and destructive operations.
 
 The two Python utilities own only deterministic mechanics. Installation refuses
 conflicts instead of acquiring overwrite/backup/rollback responsibilities.
@@ -75,15 +72,15 @@ for hard deadlines. It does not parse or execute downloaded documents.
 
 ## Research engineering and event-driven coordination
 
-**Decision, 2026-09-29:** Retain Astra as the default lead, expose Engineering on
+**Decision, 2026-10-01:** Retain Astra as the sole lead, expose Engineering on
 demand, and use coarse, event-driven delegation instead of periodic model-facing
 check-ins. This extends the existing ownership boundary without adding a runtime.
-It does not encode a permanent model ranking or require delegation on every task.
+Worker choice follows the task; delegation is optional.
 
 The Engineering resource makes SOLID, strategic/tactical DDD, maturity, architectural
 decisions, and scientific contracts available when implementation choices warrant
 them. It does not prescribe a software framework for a small experiment. A changed
-metric, split, coordinate frame, or preprocessing rule can invalidate evidence
+metric, workload mix, latency boundary, or preprocessing rule can invalidate evidence
 without breaking an API; preserve the old definition and affected results.
 The optional personal example remains outside `skills/coresearch`. The installer,
 root maintenance instructions, discovery metadata, and Python utilities are unchanged.
@@ -108,17 +105,18 @@ selective inspection. Silence is not a success signal.
 ### Alternatives and reconsideration
 
 Direct Astra remains preferable for strongly coupled or difficult work where
-briefing and integration would dominate. Direct Sol is a candidate where it meets
-the quality bar without lead intervention. Astra plus capable workers is the
+briefing and integration would dominate. Astra plus capable workers is the
 default candidate for separable, substantial work, not an obligation to create a
 hierarchy. Nested coordinators and continual lead approval add coordination and
 must justify themselves against those simpler baselines.
 
-Reconsider the defaults when representative runs show a different quality/cost
-tradeoff, missed early failure, integration rework, or changed host capabilities.
+Reconsider worker choices and delegation policy when representative runs show a
+different quality/cost tradeoff, missed early failure, integration rework, or
+changed host capabilities.
 Measure time and spend to a valid deliverable, not just worker tokens or message
-count. The [host protocol](validation.md) separates model choice from check-in
-policy; no live comparative improvement is claimed by this change.
+count. The [host protocol](validation.md) keeps Astra as lead and separates
+delegation from check-in policy; no live comparative improvement is claimed by
+this change.
 
 ### Evidence and limits of the architectural analogy
 
@@ -144,10 +142,6 @@ they do not constitute a Coresearch performance evaluation.
   state or that looped transformers prove a particular orchestration topology.
   [Recurrent-depth research](https://arxiv.org/abs/2502.05171)
   concerns computation inside a model, a different level from inter-agent messaging.
-
-SpatialClaw's reusable, inspectable execution state informs Engineering's workspace
-contracts. It does not justify importing its full execution graph, nor does its
-spatial-reasoning performance establish a gain for this research harness.
 
 ## Migration from version 1
 

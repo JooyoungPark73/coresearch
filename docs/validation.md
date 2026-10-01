@@ -47,6 +47,12 @@ workflow and not claims that live agents were exercised by the unit tests.
 | Expensive run depends on an uncertain pilot | Inspect the pilot at the agreed decision boundary before committing resources. Low communication is not permission to skip scientific validation. |
 | Worker invalidates a shared assumption | Send the changed fact, evidence, and decision needed promptly; continue unrelated safe work. Do not wait for a timer or silently change the shared contract. |
 | Missing completion or unavailable mixed-model routing | Use actual host recovery or supported direct work. Do not infer success from silence, duplicate a live job, or claim an Astra/Sol topology the host cannot supply. |
+| Astra is unavailable as the lead | Report the host limitation. Do not substitute Sol or another model as lead or claim that the skill changed the running model. |
+| Local paragraph rewrite | Return the revised paragraph, preserving numbers, citations, qualifiers and unaffected text. No full-paper map or experiment audit unless the request needs one. |
+| ML serving runs are faster but use lower task quality | Preserve the observed speed and quality results; reject an equal-quality efficiency conclusion. Identify the matched comparison or explicit tradeoff needed. |
+| A workload study reports a reusable measurement finding | Build the argument around coverage, methodology, finding and transfer limits. Do not invent a proposed system or completed mechanism. |
+| A throughput gain shrinks and holds only for short requests | Inspect affected claims in the abstract, introduction, contributions, evaluation, captions and conclusion. Revise where necessary, retaining unrelated prose. |
+| A benchmark omits failed or timed-out trials | Preserve those outcomes, inspect censoring and the aggregation rule, and qualify conclusions. A passing executable does not validate the comparison. |
 
 Evaluate both the quality of the deliverable and overhead: unnecessary loaded
 references, worker launches, repeated status checks, and user approvals. No
@@ -61,12 +67,12 @@ Keep inputs, tools, permissions, output requirements, and evaluator fixed.
 Record exact model/version, reasoning setting, prompt revision, cache treatment,
 and resource limits. Equal setting names do not imply equal compute across models.
 
-Compare the following candidates where the host actually supports them:
+Keep Astra as the sole lead. Compare the following configurations where the host
+actually supports them:
 
 | Configuration | Question tested |
 |---|---|
 | Direct Astra | Does keeping judgment and execution together avoid decomposition loss? |
-| Direct GPT-6.1 Sol | Does the lower-cost model satisfy the same quality bar without lead overhead? |
 | Astra lead plus Sol workers, event-driven | Do coarse independent assignments add useful parallelism or specialization after briefing and integration? |
 | Same lead/workers and assignments, with scheduled check-ins | Does additional communication prevent enough rework to offset its interruption and coordination cost? |
 
@@ -83,11 +89,11 @@ failures and retries, coordination messages, lead interventions, and waiting tim
 Separate actual billing from estimates and distinguish supervision telemetry from
 model-facing traffic. A lower message count, a faster wrong answer, or an incomplete
 cheap run is not a win. Compare quality under a budget and cost to reach a quality
-threshold; choose deployment settings from the resulting tradeoff, not a model name.
+threshold; choose worker and delegation settings from the resulting tradeoff.
 
 These are evaluation instructions only. Offline bundle tests do not run models or
-establish that Astra is the optimal lead, that Sol is an optimal worker, or that
-check-ins reduce quality. Record actual host experiments separately.
+establish that Sol is an optimal worker or that check-ins reduce quality. Record
+actual host experiments separately.
 
 ## Final-review boundary
 
