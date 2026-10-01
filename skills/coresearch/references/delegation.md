@@ -11,6 +11,8 @@ Use the host's native workers or configured processes, not a Coresearch runtime.
 GPT-6.1 Sol is a worker candidate for substantial bounded engineering and analysis;
 Claude Code workers, Luna, or other capable models can also fit. Select by the
 actual task, tools, evidence of reliability, and total cost, not a fixed ladder.
+Where the host supports per-worker reasoning settings, Astra may choose each
+worker's effort based on task difficulty, uncertainty, and the cost of an error.
 Do not restrict a capable worker to mechanical edits.
 
 ## Give ownership, not a stream of micro-instructions
