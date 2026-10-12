@@ -28,17 +28,20 @@ class InstallTests(unittest.TestCase):
     def test_copy_install_is_complete_and_idempotent(self):
         result = self.cli("install", "--to", self.skills)
         self.assertEqual(result.returncode, 0, result.stderr)
-        copied = self.skills / "coresearch"
-        self.assertTrue(installer.identical(installer.payload(installer.SKILL), installer.payload(copied)))
+        self.assertEqual({path.name for path in self.skills.iterdir()}, {"coresearch", "gpt-claude"})
+        for source in installer.SKILLS:
+            copied = self.skills / source.name
+            self.assertTrue(installer.identical(installer.payload(source), installer.payload(copied)))
         result = self.cli("install", "--to", self.skills)
         self.assertIn("Already installed", result.stdout)
         self.assertEqual(result.returncode, 0)
 
     def test_link_install_and_same_link_are_idempotent(self):
         installer.install(self.skills, link=True)
-        destination = self.skills / "coresearch"
-        self.assertTrue(destination.is_symlink())
-        self.assertEqual(destination.resolve(), installer.SKILL)
+        for source in installer.SKILLS:
+            destination = self.skills / source.name
+            self.assertTrue(destination.is_symlink())
+            self.assertEqual(destination.resolve(), source)
         self.assertIn("Already linked", installer.install(self.skills, link=True))
 
     def test_foreign_destination_is_preserved(self):
@@ -58,6 +61,23 @@ class InstallTests(unittest.TestCase):
             installer.install(self.skills)
         self.assertEqual(path.read_text(), "local edits")
 
+    def test_companion_conflict_is_preserved_before_any_install(self):
+        destination = self.skills / "gpt-claude"
+        destination.mkdir(parents=True)
+        (destination / "SKILL.md").write_text("Local consultation skill")
+        for flags in ((), ("--link",), ("--dry-run",)):
+            result = self.cli("install", "--to", self.skills, *flags)
+            self.assertEqual(result.returncode, 2, result.stdout)
+            self.assertFalse((self.skills / "coresearch").exists())
+            self.assertEqual((destination / "SKILL.md").read_text(), "Local consultation skill")
+
+    def test_existing_coresearch_install_gains_companion(self):
+        installer.install_skill(installer.SKILL, self.skills, link=False, dry_run=False)
+        result = self.cli("install", "--to", self.skills)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Already installed", result.stdout)
+        self.assertTrue((self.skills / "gpt-claude/SKILL.md").is_file())
+
     def test_broken_link_is_preserved(self):
         self.skills.mkdir(parents=True)
         destination = self.skills / "coresearch"
@@ -75,12 +95,16 @@ class InstallTests(unittest.TestCase):
         result = self.cli("install", "--to", self.skills, "--dry-run")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(self.skills.parent.exists())
+        for source in installer.SKILLS:
+            self.assertIn(str(self.skills / source.name), result.stdout)
 
     def test_recursive_destination_rejected(self):
         with self.assertRaises(ValueError):
             installer.install(installer.SKILL / "nested")
         with self.assertRaises(ValueError):
             installer.install(installer.SKILL.parent)
+        with self.assertRaises(ValueError):
+            installer.install(installer.SKILLS[1] / "nested")
 
     def test_payload_rejects_symlinks(self):
         root = self.root / "source"

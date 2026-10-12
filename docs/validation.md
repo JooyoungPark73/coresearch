@@ -21,7 +21,8 @@ and credentials, timeouts, bad PDF signatures, truncated and oversized responses
 partial-batch reports, interruption, and refusal to reuse output directories.
 Dry-run performs no network requests or writes.
 
-Bundle tests check local Markdown links, one discoverable skill, routing-only
+Bundle tests check local Markdown links, two independently discoverable sibling
+skills, routing-only
 frontmatter, portable dependencies, and an installed end-to-end fixture workflow.
 This is software integration testing, **not** an evaluation of a model's research
 quality. The PDF transport fixture is synthetic and is never represented as a
@@ -97,7 +98,8 @@ actual host experiments separately.
 
 ## Final-review boundary
 
-The redesign can be reviewed structurally: one payload, no runtime dependencies,
+The redesign can be reviewed structurally: self-contained sibling payloads,
+standard-library Python utilities,
 no orchestration or prompt injection, explicit lead/worker responsibility, and
 research standards available on demand. The tests establish those software
 contracts. Live Astra/Claude delegation, external publisher availability, and

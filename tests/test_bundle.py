@@ -16,16 +16,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class BundleTests(unittest.TestCase):
-    def test_single_skill_and_routing_metadata(self):
-        paths = list((ROOT / "skills").glob("*/SKILL.md"))
-        self.assertEqual(paths, [ROOT / "skills/coresearch/SKILL.md"])
-        metadata = paths[0].read_text().split("---", 2)[1]
-        self.assertEqual(set(re.findall(r"^(\w+):", metadata, re.M)), {"name", "description"})
-        self.assertIn("name: coresearch", metadata)
-        self.assertLess(len(metadata.split("description:")[1].strip()), 160)
+    def test_sibling_skills_and_routing_metadata(self):
+        paths = sorted((ROOT / "skills").glob("*/SKILL.md"))
+        self.assertEqual(paths, [source / "SKILL.md" for source in installer.SKILLS])
+        for path in paths:
+            metadata = path.read_text().split("---", 2)[1]
+            self.assertEqual(set(re.findall(r"^(\w+):", metadata, re.M)), {"name", "description"})
+            self.assertIn(f"name: {path.parent.name}", metadata)
+            self.assertLess(len(metadata.split("description:")[1].strip()), 160)
         plugin = json.loads((ROOT / ".codex-plugin/plugin.json").read_text())
         self.assertEqual(plugin["name"], "coresearch")
         self.assertTrue((ROOT / plugin["skills"]).is_dir())
+        self.assertEqual(sorted((ROOT / plugin["skills"]).glob("*/SKILL.md")), paths)
 
     def test_markdown_local_links_exist(self):
         for file in ROOT.rglob("*.md"):

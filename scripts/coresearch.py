@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install one skill or create an optional research brief. Python 3.10+, stdlib."""
+"""Install bundled skills or create an optional research brief. Python 3.10+, stdlib."""
 from __future__ import annotations
 
 import argparse
@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "coresearch"
+SKILLS = (SKILL, ROOT / "skills" / "gpt-claude")
 
 
 def payload(root: Path) -> dict[str, Path]:
@@ -37,9 +38,20 @@ def identical(left: dict[str, Path], right: dict[str, Path]) -> bool:
 
 
 def install(directory: Path, *, link: bool = False, dry_run: bool = False) -> str:
-    source = SKILL.resolve()
-    destination = directory.expanduser().resolve() / "coresearch"
-    if destination == source or source in destination.parents:
+    # Check every payload and destination before installing either sibling.
+    for source in SKILLS:
+        install_skill(source, directory, link=link, dry_run=True)
+    return "\n".join(
+        install_skill(source, directory, link=link, dry_run=dry_run)
+        for source in SKILLS
+    )
+
+
+def install_skill(source: Path, directory: Path, *, link: bool, dry_run: bool) -> str:
+    source = source.resolve()
+    destination = directory.expanduser().resolve() / source.name
+    if any(destination == root.resolve() or root.resolve() in destination.parents
+           for root in SKILLS):
         raise ValueError("installation destination is inside the source skill")
     files = payload(source)
     if destination.is_symlink():
@@ -90,7 +102,7 @@ def initialize(project: Path, *, question: str | None = None, dry_run: bool = Fa
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    install_parser = commands.add_parser("install", help="install the skill without changing prompts")
+    install_parser = commands.add_parser("install", help="install both skills without changing prompts")
     install_parser.add_argument("--to", type=Path, required=True, help="host's skills directory")
     install_parser.add_argument("--link", action="store_true", help="link to this checkout instead of copying")
     install_parser.add_argument("--dry-run", action="store_true")

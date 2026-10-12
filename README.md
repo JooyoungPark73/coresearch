@@ -1,13 +1,16 @@
 # Coresearch
 
-An Astra-led research harness: one skill, on-demand research resources, and two
+An Astra-led research harness: one research skill, on-demand resources, and two
 small utilities. Astra frames the problem, chooses the strategy, synthesizes
 worker results, and verifies the deliverable. Native agents handle bounded work
 when that helps. Coresearch does not run a second agent framework.
 
+The repository also ships [gpt-claude](skills/gpt-claude/SKILL.md), an independent
+skill for consulting local Claude Code from Codex via `claude -p`.
+
 ## Start
 
-Use Python 3.10+; no packages or API keys are needed to install the skill.
+Use Python 3.10+; no packages or API keys are needed to install the skills.
 Run from this checkout and choose the host's skills directory:
 
 ```bash
@@ -20,8 +23,9 @@ python3 scripts/coresearch.py install --to "$HOME/.claude/skills" --link
 
 For one project, use `/path/to/project/.agents/skills` (Codex) or
 `/path/to/project/.claude/skills` (Claude Code) instead. Omit `--link` for a
-self-contained copy. The destination argument is the **skills directory**, not
-its `coresearch` child. Paths follow the current
+self-contained copy. Both commands install `coresearch/` and `gpt-claude/` as
+sibling skill directories. The destination argument is the **skills directory**,
+not either skill's child directory. Paths follow the current
 [Codex](https://developers.openai.com/codex/skills) and
 [Claude Code](https://code.claude.com/docs/en/skills) discovery interfaces.
 
@@ -37,6 +41,14 @@ manual installation, not duplicate installations of the same skill.
 
 Neither installation nor research work requires changing global or project
 `AGENTS.md` / `CLAUDE.md`. No OMX installation is needed.
+
+To use the companion skill, request, for example:
+
+> Use gpt-claude to ask Claude Code for a second opinion on this change.
+
+It requires an installed `claude` CLI and an existing login when invoked.
+It has its own discovery metadata and instructions, works outside research tasks,
+and is not imported by Coresearch. Installation does not run Claude or set up login.
 
 ## What the skill adds
 
@@ -122,9 +134,10 @@ This checks transport and a PDF signature, not scientific identity or validity.
 
 A linked installation follows the checkout. Review and update it through normal
 Git operations. An identical copy or identical link is a no-op; a conflicting,
-modified, or broken destination is preserved with an error. To replace a copy,
-move the existing `coresearch` directory aside for review, then install again.
-Removal is ordinary removal of that installed directory or symlink. No global
+modified, or broken destination is preserved with an error. Both destinations
+are checked for conflicts before either skill is installed. To replace a copy,
+move the conflicting skill directory aside for review, then install again.
+Removal is ordinary removal of either installed directory or symlink. No global
 prompt or host configuration needs restoring.
 
 Version 2 intentionally removes the old `harness` command, prompt bridges,

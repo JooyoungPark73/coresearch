@@ -26,7 +26,7 @@ repository-specific instructions. It is not copied into a persistent prompt.
 | Analytical lenses need separate agents/skills and serialized outputs | One analysis reference; use only the lens that resolves a real uncertainty. |
 | Persistent orchestration needs an active-skill/blocked/gap/claim YAML ledger | Existing artifacts plus an optional short Markdown brief; no schema engine or mirrors. |
 | Research requires an OMX prompt bridge or full project instructions | No installed project/global instructions. Native skill discovery is sufficient. |
-| Install lifecycle requires self-install, aliases, repair, update, rollback, inventory, wizards | Two explicit commands: install one payload; optionally create one brief. Git and ordinary files handle the rest. |
+| Install lifecycle requires self-install, aliases, repair, update, rollback, inventory, wizards | Two explicit commands: install the bundled skills; optionally create one brief. Git and ordinary files handle the rest. |
 | Autonomous research requires framework lane selection and fixed retry counts | Scientific validators and budgets in task context; host job lifecycle; lead decides when to change direction. |
 | Source collection should infer paper identity through multiple fuzzy APIs | The agent resolves identity. A small downloader fetches exact open URLs and records transport provenance. |
 | Every role needs repeated evidence and safety instructions | One short evidence floor, then only task-specific standards in relevant resources. |
@@ -47,7 +47,10 @@ are removed, not retained as compatibility adapters.
 
 The root `AGENTS.md` is only for maintaining this repository. Installation copies
 or links `skills/coresearch` including its relative references, template, and
-source utility; it never copies this root file. Skill names are discovered from
+source utility, plus the separate `skills/gpt-claude` companion; it never copies
+this root file. The two skills install as siblings. `gpt-claude` provides general
+Claude Code consultation and has no dependency on the research skill. Coresearch
+does not import it. Skill names are discovered from
 the actual payload, not a second role manifest. `.codex-plugin/plugin.json`
 contains distribution metadata only.
 
