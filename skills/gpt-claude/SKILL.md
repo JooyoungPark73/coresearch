@@ -1,5 +1,5 @@
 ---
-name: gptclaude
+name: gpt-claude
 description: Consult local Claude Code via claude -p for a second opinion, code review, or scoped delegated task.
 ---
 
