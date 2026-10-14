@@ -8,12 +8,22 @@ context isolation is worth briefing, startup, communication, and integration.
 A small task or a task on the critical path may be faster to finish directly.
 
 Use the host's native workers or configured processes, not a Coresearch runtime.
-GPT-6.1 Sol is a worker candidate for substantial bounded engineering and analysis;
-Claude Code workers, Luna, or other capable models can also fit. Select by the
-actual task, tools, evidence of reliability, and total cost, not a fixed ladder.
-Where the host supports per-worker reasoning settings, Astra may choose each
-worker's effort based on task difficulty, uncertainty, and the cost of an error.
-Do not restrict a capable worker to mechanical edits.
+Choose the subagent model by the demands of its assignment:
+
+- Use Astra for hard tasks or work requiring substantial reasoning, such as
+  developing a novel argument, resolving conflicting evidence, or diagnosing a
+  difficult failure. Astra subagents may reason independently within their scope;
+  the lead retains consequential decisions and final integration.
+- Use GPT-6.1 Sol at Max reasoning effort for other delegated work, such as
+  implementing a settled design, collecting specified evidence, or running and
+  repairing well-defined tests. Sol can own a complete deliverable, not just
+  mechanical edits.
+
+Decide whether to delegate separately from choosing the worker model. Task labels
+alone do not determine difficulty: implementation or review can require Astra.
+The lead may choose Astra workers' effort to fit their assignments; Sol workers
+use Max. If a Sol assignment reveals a hard reasoning problem, return that issue
+to the lead for resolution or reassignment to an Astra subagent.
 
 ## Give ownership, not a stream of micro-instructions
 
@@ -72,12 +82,11 @@ messages alone do not establish better science or engineering.
 
 ## Existing host interfaces
 
-A configured Claude Code installation in a trusted worktree can consume a bounded
+When the user requests Claude Code, a configured installation in a trusted worktree can consume a bounded
 brief and emit a final handoff:
 
 ```bash
 claude -p --model sonnet "$(cat task.md)" > handoff.md
-# Use another configured worker when its capability better fits the assignment.
 ```
 
 The brief is task-local, not persistent repository instruction. This command is
@@ -86,4 +95,7 @@ supported isolation, authentication, and permission controls for untrusted code,
 not permission-bypass flags. Verify model selection and heterogeneous-worker
 support in the actual host. A native multi-agent feature may share one model
 across its agent tree; it does not automatically implement Astra-to-Sol routing.
-Coresearch neither selects models nor provisions that routing.
+Verify the requested effort setting as well. If the required worker model or
+effort is unavailable, report the limitation and use supported direct work rather
+than silently substituting a different worker. Coresearch specifies the selection
+policy; the host must provide and execute model routing.

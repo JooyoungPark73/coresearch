@@ -80,6 +80,11 @@ demand, and use coarse, event-driven delegation instead of periodic model-facing
 check-ins. This extends the existing ownership boundary without adding a runtime.
 Worker choice follows the task; delegation is optional.
 
+The current worker policy uses Astra subagents for hard tasks or assignments
+requiring substantial reasoning, and GPT-6.1 Sol at Max reasoning effort for other
+delegated work. This selection rule does not require delegation on every task.
+The host must support the requested worker model and effort.
+
 The Engineering resource makes SOLID, strategic/tactical DDD, maturity, architectural
 decisions, and scientific contracts available when implementation choices warrant
 them. It does not prescribe a software framework for a small experiment. A changed

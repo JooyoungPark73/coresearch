@@ -45,6 +45,8 @@ workflow and not claims that live agents were exercised by the unit tests.
 | Research prototype becomes shared infrastructure | Revisit domain meaning, ownership, contracts, reproducibility, and recovery. Load Engineering only where it helps; do not impose a framework on a disposable experiment. |
 | An evaluator changes without an API break | Identify changed scientific assumptions, retain prior results, and rerun affected comparisons. A software test pass must not conceal invalidated research evidence. |
 | Substantial worker assignment without blockers | Worker completes local execution, inspection, tests, and repair without periodic lead check-ins; the lead consumes an evidence-bearing completion artifact. |
+| Delegated task requires substantial reasoning or is hard | Lead selects an Astra subagent, including for difficult implementation or review; the lead retains consequential decisions and integration. |
+| Other bounded work is delegated | Lead selects GPT-6.1 Sol at Max reasoning effort. Missing model or effort support is reported, followed by supported direct work. |
 | Expensive run depends on an uncertain pilot | Inspect the pilot at the agreed decision boundary before committing resources. Low communication is not permission to skip scientific validation. |
 | Worker invalidates a shared assumption | Send the changed fact, evidence, and decision needed promptly; continue unrelated safe work. Do not wait for a timer or silently change the shared contract. |
 | Missing completion or unavailable mixed-model routing | Use actual host recovery or supported direct work. Do not infer success from silence, duplicate a live job, or claim an Astra/Sol topology the host cannot supply. |

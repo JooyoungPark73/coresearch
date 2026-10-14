@@ -11,6 +11,12 @@ testing, or review when useful; do trivial work directly. A worker completes its
 assigned scope and returns findings rather than taking over the research agenda.
 Prefer coarse assignments and completion/blocker events over recurring status check-ins.
 
+When delegating, use Astra subagents for hard tasks or work requiring substantial
+reasoning; use GPT-6.1 Sol at Max reasoning effort for other delegated work.
+Choose by the demands of the assignment, not just its label (coding, review, or
+research). Verify that the host supports the requested model and effort; if it
+does not, report the limitation and use supported direct work.
+
 Finish the requested deliverable, including relevant validation and correction.
 Resolve ordinary ambiguity from context; ask only when a consequential decision
 cannot responsibly be inferred. Host permissions and the user's scope still apply.
