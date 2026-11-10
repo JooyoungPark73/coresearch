@@ -36,8 +36,8 @@ workflow and not claims that live agents were exercised by the unit tests.
 | Scenario | Expected behavior and evidence |
 |---|---|
 | One citation correction | Inspect the relevant source and edit the claim directly. No project initialization, worker, whole-repo preload, or stage re-entry. |
-| Broad research idea to experiment | Astra chooses a discriminating experiment. A bounded worker may implement/test it. Actual commands and results support the final interpretation, including negative evidence. |
-| Independent literature collection | Workers get disjoint search scopes and return source locators, verification limits, and compact findings. Astra resolves overlap and contradictory results without ingesting full transcripts. |
+| Broad research idea to experiment | The lead chooses a discriminating experiment. A bounded worker may implement/test it. Actual commands and results support the final interpretation, including negative evidence. |
+| Independent literature collection | Workers get disjoint search scopes and return source locators, verification limits, and compact findings. The lead resolves overlap and contradictory results without ingesting full transcripts. |
 | Manuscript/rebuttal | Reuse the existing draft. Separate proposed changes from implemented ones and unrun experiments from results. Finish revisions and verification within authorization. |
 | Resuming a project | Read the relevant brief/artifacts, not every skill. Preserve rejected directions and uncertainty; update notes only as needed. |
 | No worker or search tool available | Do supported work directly; state any evidence gap rather than invent a worker result, citation, or successful experiment. |
@@ -47,14 +47,17 @@ workflow and not claims that live agents were exercised by the unit tests.
 | Substantial worker assignment without blockers | Worker completes local execution, inspection, tests, and repair without periodic lead check-ins; the lead consumes an evidence-bearing completion artifact. |
 | Substantial separable engineering or analysis | Prefer Sol with effort suited to the assignment. The worker owns execution, validation, and correction, including reasoning within scope; the lead retains consequential decisions and integration. |
 | Clear bounded task with a reliably checkable result | Prefer a lower-cost capable worker when it can meet the requirements. Validate the result against the assignment's acceptance criteria. |
-| Astra offers a justified quality advantage | Select Astra directly or as a worker when expected quality or decomposition cost warrants it; difficulty alone does not force Astra routing. |
+| Astra offers a justified quality advantage | Select an Astra worker when its expected quality advantage warrants the cost; the selected lead retains integration responsibility. Difficulty alone does not force Astra routing. |
 | Worker encounters a reasoning-intensive problem within scope | Continue solving and validating locally. Escalate an actual blocker or authority boundary; do not automatically reassign to Astra. |
 | Preferred worker or effort is unavailable | Choose another supported configuration that meets the requirements or work directly. Report material substitutions and actual routing limitations. |
 | Expensive run depends on an uncertain pilot | Inspect the pilot at the agreed decision boundary before committing resources. Low communication is not permission to skip scientific validation. |
 | Worker invalidates a shared assumption | Send the changed fact, evidence, and decision needed promptly; continue unrelated safe work. Do not wait for a timer or silently change the shared contract. |
 | Missing completion | Use actual host recovery. Do not infer success from silence or duplicate a live job. |
 | Unavailable mixed-model routing | Use a supported configuration that meets the requirements or work directly. Do not claim an Astra/Sol topology the host cannot supply. |
-| Astra is unavailable as the lead | Report the host limitation. Do not substitute Sol or another model as lead or claim that the skill changed the running model. |
+| Astra lead delegates to Sol | Sol owns the bounded assignment; Astra integrates and verifies the findings. |
+| Sol lead delegates to Sol or a lower-cost capable worker | Choose by task, tools, reliability, and total cost. Same-model delegation is valid when parallelism or context isolation helps. Sol retains lead responsibilities. |
+| Sol lead consults an Astra worker | Astra returns evidence and recommendations within scope. Sol owns consequential decisions, integration, and final verification. |
+| Requested lead model is unavailable | Report the host limitation; the user or host selects the running lead. Do not claim that the skill switched the model. |
 | Local paragraph rewrite | Return the revised paragraph, preserving numbers, citations, qualifiers and unaffected text. No full-paper map or experiment audit unless the request needs one. |
 | ML serving runs are faster but use lower task quality | Preserve the observed speed and quality results; reject an equal-quality efficiency conclusion. Identify the matched comparison or explicit tradeoff needed. |
 | A workload study reports a reusable measurement finding | Build the argument around coverage, methodology, finding and transfer limits. Do not invent a proposed system or completed mechanism. |
@@ -74,18 +77,22 @@ Keep inputs, tools, permissions, output requirements, and evaluator fixed.
 Record exact model/version, reasoning setting, prompt revision, cache treatment,
 and resource limits. Equal setting names do not imply equal compute across models.
 
-Keep Astra as the sole lead. Compare the following configurations where the host
-actually supports them:
+Compare the following configurations where the host actually supports them.
+Select each lead through the host; the skill does not switch the running model:
 
 | Configuration | Question tested |
 |---|---|
 | Direct Astra | Does keeping judgment and execution together avoid decomposition loss? |
+| Direct Sol | Does Sol meet the same quality bar at a different total cost without worker coordination? |
+| Sol lead plus Sol or lower-cost workers, event-driven | Does delegation improve time or cost to a valid result over direct Sol? |
+| Sol lead with scoped Astra consultation, event-driven | Does targeted Astra input improve results enough to justify its cost while Sol retains integration? |
 | Astra lead plus Sol workers, event-driven | Do coarse independent assignments add useful parallelism or specialization after briefing and integration? |
 | Same lead/workers and assignments, with scheduled check-ins | Does additional communication prevent enough rework to offset its interruption and coordination cost? |
 
-The last pair isolates communication policy more closely than comparing different
-models and messaging schedules together. It is an experimental control, not the
-recommended production default. Counterbalance execution order and repeat tasks
+For communication comparisons, pair a delegated configuration with the same lead,
+workers, effort, and assignments using scheduled check-ins. Hold model choice
+fixed to isolate communication policy. Scheduled check-ins are an experimental
+control, not the recommended production default. Counterbalance execution order and repeat tasks
 where practical; keep outputs separate to avoid cross-condition leakage. Review
 artifacts without configuration labels when feasible.
 
@@ -99,7 +106,7 @@ cheap run is not a win. Compare quality under a budget and cost to reach a quali
 threshold; choose worker and delegation settings from the resulting tradeoff.
 
 These are evaluation instructions only. Offline bundle tests do not run models or
-establish that Sol is an optimal worker or that check-ins reduce quality. Record
+establish an optimal lead/worker configuration or that check-ins reduce quality. Record
 actual host experiments separately.
 
 ## Final-review boundary
@@ -108,7 +115,7 @@ The redesign can be reviewed structurally: self-contained sibling payloads,
 standard-library Python utilities,
 no orchestration or prompt injection, explicit lead/worker responsibility, and
 research standards available on demand. The tests establish those software
-contracts. Live Astra/Claude delegation, external publisher availability, and
+contracts. Live mixed-model delegation, external publisher availability, and
 host skill-discovery behavior additionally require the user's configured runtime
 and authorized network. Record those runs separately rather than treating an
 offline test pass as proof of them.

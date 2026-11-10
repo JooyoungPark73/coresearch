@@ -8,7 +8,7 @@ OMX-specific runtime references, full/bridge project prompts, and a large
 installer/repair/rollback surface. Those mechanisms mostly managed agent behavior
 and prompt placement rather than producing research evidence.
 
-The redesign starts with Astra's judgment and the host's existing tools. Coresearch
+The redesign starts with the selected lead's judgment and the host's existing tools. Coresearch
 is a portable research skill, not an agent server. There is deliberately no
 `run` command: invoking a model, granting permissions, starting workers, and
 tracking jobs are host responsibilities. This avoids embedding provider APIs,
@@ -22,7 +22,7 @@ repository-specific instructions. It is not copied into a persistent prompt.
 
 | Earlier assumption | Replacement and reason |
 |---|---|
-| Every task needs a stage, field, primary role, and router re-entry | One skill exposes resources. Astra chooses the relevant work directly. |
+| Every task needs a stage, field, primary role, and router re-entry | One skill exposes resources. The lead chooses the relevant work directly. |
 | Analytical lenses need separate agents/skills and serialized outputs | One analysis reference; use only the lens that resolves a real uncertainty. |
 | Persistent orchestration needs an active-skill/blocked/gap/claim YAML ledger | Existing artifacts plus an optional short Markdown brief; no schema engine or mirrors. |
 | Research requires an OMX prompt bridge or full project instructions | No installed project/global instructions. Native skill discovery is sufficient. |
@@ -54,7 +54,7 @@ does not import it. Skill names are discovered from
 the actual payload, not a second role manifest. `.codex-plugin/plugin.json`
 contains distribution metadata only.
 
-Astra decides research strategy and validates the final synthesis. A worker gets
+The lead decides research strategy and validates the final synthesis. A worker gets
 a bounded objective, scope, needed context, artifact, and completion criteria.
 Native workers and configured Claude Code processes are alternatives, not
 additional mandatory infrastructure. A task without available workers proceeds
@@ -75,10 +75,12 @@ for hard deadlines. It does not parse or execute downloaded documents.
 
 ## Research engineering and event-driven coordination
 
-**Decision, updated 2026-11-10:** Retain Astra as the sole lead, expose Engineering on
-demand, and use coarse, event-driven delegation instead of periodic model-facing
-check-ins. This extends the existing ownership boundary without adding a runtime.
-Worker choice follows the task; delegation is optional.
+**Decision, updated 2026-11-10:** Support Astra or GPT-6.1 Sol as the user- or
+host-selected lead, expose Engineering on demand, and use coarse, event-driven
+delegation instead of periodic model-facing check-ins. Coresearch does not switch
+the running model. Lead ownership remains with the selected lead, including when
+an Astra worker advises a Sol lead. Worker choice follows the task; delegation
+is optional.
 
 For suitable delegated assignments, prefer GPT-6.1 Sol or a lower-cost capable
 worker. Select the worker and reasoning effort by task, tools, demonstrated
@@ -100,7 +102,7 @@ root maintenance instructions, discovery metadata, and Python utilities are unch
 
 ### Separate three responsibilities
 
-Astra owns research judgment and substantial direct work as well as synthesis.
+The lead owns research judgment and substantial direct work as well as synthesis.
 Workers own bounded execution, local observation, tests, and correction. The host
 owns scheduling, permissions, hard budgets, process supervision, and completion
 transport. A health event does not require a model conversation unless it changes
@@ -117,8 +119,8 @@ selective inspection. Silence is not a success signal.
 
 ### Alternatives and reconsideration
 
-Direct Astra remains preferable for strongly coupled or difficult work where
-briefing and integration would dominate. Astra plus capable workers is the
+Direct work by the selected lead remains preferable when briefing and integration
+would dominate. The selected lead plus capable workers is the
 default candidate for separable, substantial work, not an obligation to create a
 hierarchy. Nested coordinators and continual lead approval add coordination and
 must justify themselves against those simpler baselines.
@@ -127,9 +129,9 @@ Reconsider worker choices and delegation policy when representative runs show a
 different quality/cost tradeoff, missed early failure, integration rework, or
 changed host capabilities.
 Measure time and spend to a valid deliverable, not just worker tokens or message
-count. The [host protocol](validation.md) keeps Astra as lead and separates
-delegation from check-in policy; no live comparative improvement is claimed by
-this change.
+count. The [host protocol](validation.md) compares Astra and Sol leads and separates
+model choice and delegation from check-in policy; no live comparative improvement
+is claimed by this change.
 
 ### Evidence and limits of the architectural analogy
 

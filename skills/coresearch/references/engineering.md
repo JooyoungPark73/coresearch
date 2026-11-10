@@ -3,7 +3,7 @@
 Use this resource when implementation choices, domain semantics, system boundaries,
 or long-term maintainability affect the research or deliverable. It supplements
 Experiments; it does not turn a research task into a software-process pipeline.
-Astra owns consequential design decisions and integrated results. The host owns
+The lead owns consequential design decisions and integrated results. The host owns
 execution, permissions, workers, and job lifecycle.
 
 ## Design for the actual contribution

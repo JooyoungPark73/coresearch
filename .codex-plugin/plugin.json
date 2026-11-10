@@ -1,7 +1,7 @@
 {
   "name": "coresearch",
   "version": "2.0.0",
-  "description": "Astra-led research with on-demand resources and bounded worker delegation.",
+  "description": "Research with on-demand resources and bounded worker delegation.",
   "author": {"name": "Alan Synn"},
   "license": "MIT",
   "skills": "./skills/",

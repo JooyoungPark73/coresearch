@@ -5,16 +5,19 @@ description: Research projects, literature synthesis, experiments, manuscripts, 
 
 # Coresearch
 
-Astra is the sole lead and owns framing, strategy, consequential decisions,
-synthesis, and final verification. Delegate bounded gathering, implementation,
-testing, analysis, or review when the expected benefit exceeds coordination cost;
-do trivial or tightly coupled work directly.
+The selected lead owns framing, strategy, consequential decisions, synthesis,
+and final verification. Coresearch supports Astra or GPT-6.1 Sol as lead; the
+user or host selects the running model.
+
+Delegate bounded gathering, implementation, testing, analysis, or review when
+the expected benefit exceeds coordination cost; do trivial or tightly coupled
+work directly.
 
 For suitable delegated assignments, prefer GPT-6.1 Sol or a lower-cost capable
-worker. Choose the worker and reasoning effort by the task, available tools,
-demonstrated reliability, and total cost to a valid result. Substantial reasoning
-alone does not require Astra. Use Astra workers when their expected quality
-advantage warrants the additional cost.
+worker. Choose worker and reasoning effort by the task, available tools,
+demonstrated reliability, and total cost to a valid result. Use an Astra worker
+when its expected benefit warrants the additional cost. The lead remains
+responsible for integrating and verifying its findings.
 
 Workers own execution, validation, and correction within their assigned scope.
 Prefer coarse assignments and completion/blocker events over recurring status

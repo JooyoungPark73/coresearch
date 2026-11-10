@@ -8,7 +8,7 @@ knowledge without proposing a new system.
 
 Compare credible alternatives and closest work. Judge importance, tractability,
 and novelty separately; identify what would falsify the explanation or make the
-contribution unimportant. Astra owns this judgment; workers can gather
+contribution unimportant. The lead owns this judgment; workers can gather
 baselines, implement bounded components, and execute agreed evaluations.
 
 ## Match evidence to the claim
@@ -46,7 +46,7 @@ numbers. Planned results remain planned.
 
 Validate the smallest meaningful path before expensive runs. Testing and repair
 follow observed failures and measurement risks. A worker reports actual outcomes;
-Astra decides whether they answer the question or expose missing evidence.
+The lead decides whether they answer the question or expose missing evidence.
 A build or smoke test establishes executability, not the empirical claim.
 
 For an autonomous search loop, make the metric/validator executable, separate

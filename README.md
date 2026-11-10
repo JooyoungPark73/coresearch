@@ -1,7 +1,7 @@
 # Coresearch
 
-An Astra-led research harness: one research skill, on-demand resources, and two
-small utilities. Astra frames the problem, chooses the strategy, synthesizes
+A research harness: one research skill, on-demand resources, and two
+small utilities. The selected lead frames the problem, chooses the strategy, synthesizes
 worker results, and verifies the deliverable. Native agents handle bounded work
 when that helps. Coresearch does not run a second agent framework.
 
@@ -34,8 +34,9 @@ Reload the host's skill discovery as needed and request, for example:
 > Use Coresearch to assess this research idea, implement the most informative
 > feasible experiment, and review what the results actually support.
 
-Select Astra as the sole lead in a host that supports it. Installation does not
-select models, provision workers, or grant tool permissions.
+Select Astra or GPT-6.1 Sol as lead in a host that supports it. The user or host
+selects the running model; installation does not select models, provision workers,
+or grant tool permissions.
 The native Codex plugin manifest is also retained; choose plugin distribution or
 manual installation, not duplicate installations of the same skill.
 
@@ -65,14 +66,14 @@ independent resources, not a pipeline:
 | [Manuscripts](skills/coresearch/references/manuscripts.md) | Writing, figures/slides, venue critique, rebuttal, verification, release |
 | [Delegation](skills/coresearch/references/delegation.md) | Coarse assignments, event-driven handoffs, and native workers, including Sol and Claude Code |
 
-Astra owns consequential decisions and final interpretation. Workers own a clear
+The lead owns consequential decisions and final interpretation. Workers own a clear
 scope, relevant inputs, an expected artifact, and completion criteria. The host
 supplies execution, permissions, and completion events. No model registry,
 polling service, mandatory reviewer chain, or transcript ingestion is added.
 
 ## Lead ownership without constant check-ins
 
-Keep Astra on problem framing, consequential decisions, difficult coupled work,
+Keep the lead on problem framing, consequential decisions, difficult coupled work,
 and final synthesis. Delegate self-contained work when its expected benefit exceeds
 coordination cost. Prefer GPT-6.1 Sol or a lower-cost capable worker, choosing
 reasoning effort to fit the assignment. Use Astra workers when their expected

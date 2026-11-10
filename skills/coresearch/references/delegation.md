@@ -1,7 +1,9 @@
 # Bounded delegation with low communication overhead
 
-Astra is the research and engineering lead. Use the host's native workers or
-configured processes, not a Coresearch runtime.
+The selected lead owns research and engineering decisions and final integration.
+Worker capability does not determine authority: an Astra worker can advise a Sol
+lead without taking over orchestration. Use the host's native workers or configured
+processes, not a Coresearch runtime.
 
 Decide whether to delegate separately from choosing the worker. Delegate an
 independently useful artifact when specialization, parallelism, or context
@@ -12,12 +14,16 @@ Prefer GPT-6.1 Sol for substantial bounded engineering and analysis, including
 implementation, investigation, testing, and review. Prefer a lower-cost capable
 worker when the assignment is clear and its result can be checked reliably.
 Choose based on the actual assignment and evidence of reliability, rather than
-a fixed model ladder.
+a fixed model ladder. A Sol lead may delegate to Sol workers when parallelism or
+context isolation is useful; workers need not always be cheaper than the lead.
 
 Set reasoning effort to fit the assignment; Max is available when warranted,
 not required. Consider the total cost of execution, verification, retries, and
-integration. Use Astra directly or as a worker when its expected quality advantage
-or the cost of decomposition justifies it.
+integration. Keep work with the lead when decomposition and integration would
+outweigh delegation's benefits. Select an Astra worker when its expected quality
+advantage warrants the cost. A worker finding a consequential issue returns
+evidence and recommendations to the lead; it does not silently redefine the
+research agenda.
 
 Workers should resolve problems within their scope, including reasoning-intensive
 ones. Escalate blockers, consequential changes to assumptions or interfaces, and
@@ -98,6 +104,6 @@ not a sandbox; ordinary host hooks and configuration can load. Use the host's
 supported isolation, authentication, and permission controls for untrusted code,
 not permission-bypass flags. Verify model selection and heterogeneous-worker
 support in the actual host. A native multi-agent feature may share one model
-across its agent tree; it does not automatically implement Astra-to-Sol routing.
+across its agent tree; it does not automatically implement mixed-model routing.
 Coresearch specifies the selection policy; the host must provide and execute
 model routing.
