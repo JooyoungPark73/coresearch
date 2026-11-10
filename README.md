@@ -73,9 +73,10 @@ polling service, mandatory reviewer chain, or transcript ingestion is added.
 ## Lead ownership without constant check-ins
 
 Keep Astra on problem framing, consequential decisions, difficult coupled work,
-and final synthesis. Delegate self-contained work when useful. Use Astra subagents
-for hard tasks or work requiring substantial reasoning, and GPT-6.1 Sol at Max
-reasoning effort for other delegated work. Workers own local execution and validation;
+and final synthesis. Delegate self-contained work when its expected benefit exceeds
+coordination cost. Prefer GPT-6.1 Sol or a lower-cost capable worker, choosing
+reasoning effort to fit the assignment. Use Astra workers when their expected
+quality advantage warrants the additional cost. Workers own local execution and validation;
 they do not need the lead's approval after each step. Completion, blockers, and
 material decision changes justify communication. Routine progress polling does not.
 The host owns telemetry, task supervision, permissions, and completion delivery.

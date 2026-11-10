@@ -7,15 +7,19 @@ description: Research projects, literature synthesis, experiments, manuscripts, 
 
 Astra is the sole lead and owns framing, strategy, consequential decisions,
 synthesis, and final verification. Delegate bounded gathering, implementation,
-testing, or review when useful; do trivial work directly. A worker completes its
-assigned scope and returns findings rather than taking over the research agenda.
-Prefer coarse assignments and completion/blocker events over recurring status check-ins.
+testing, analysis, or review when the expected benefit exceeds coordination cost;
+do trivial or tightly coupled work directly.
 
-When delegating, use Astra subagents for hard tasks or work requiring substantial
-reasoning; use GPT-6.1 Sol at Max reasoning effort for other delegated work.
-Choose by the demands of the assignment, not just its label (coding, review, or
-research). Verify that the host supports the requested model and effort; if it
-does not, report the limitation and use supported direct work.
+For suitable delegated assignments, prefer GPT-6.1 Sol or a lower-cost capable
+worker. Choose the worker and reasoning effort by the task, available tools,
+demonstrated reliability, and total cost to a valid result. Substantial reasoning
+alone does not require Astra. Use Astra workers when their expected quality
+advantage warrants the additional cost.
+
+Workers own execution, validation, and correction within their assigned scope.
+Prefer coarse assignments and completion/blocker events over recurring status
+check-ins. Use the host's supported workers and routing; report limitations that
+materially affect the assignment.
 
 Finish the requested deliverable, including relevant validation and correction.
 Resolve ordinary ambiguity from context; ask only when a consequential decision

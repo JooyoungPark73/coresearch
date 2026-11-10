@@ -1,29 +1,33 @@
 # Bounded delegation with low communication overhead
 
-Astra is the research and engineering lead, not a relay for every worker step.
-Keep tightly coupled reasoning, consequential architecture, synthesis, and final
-interpretation with the lead. The lead also does substantive work directly.
-Delegate an independently useful artifact when specialization, parallelism, or
-context isolation is worth briefing, startup, communication, and integration.
-A small task or a task on the critical path may be faster to finish directly.
+Astra is the research and engineering lead. Use the host's native workers or
+configured processes, not a Coresearch runtime.
 
-Use the host's native workers or configured processes, not a Coresearch runtime.
-Choose the subagent model by the demands of its assignment:
+Decide whether to delegate separately from choosing the worker. Delegate an
+independently useful artifact when specialization, parallelism, or context
+isolation is worth briefing, startup, communication, and integration. Keep
+consequential decisions and final integration with the lead.
 
-- Use Astra for hard tasks or work requiring substantial reasoning, such as
-  developing a novel argument, resolving conflicting evidence, or diagnosing a
-  difficult failure. Astra subagents may reason independently within their scope;
-  the lead retains consequential decisions and final integration.
-- Use GPT-6.1 Sol at Max reasoning effort for other delegated work, such as
-  implementing a settled design, collecting specified evidence, or running and
-  repairing well-defined tests. Sol can own a complete deliverable, not just
-  mechanical edits.
+Prefer GPT-6.1 Sol for substantial bounded engineering and analysis, including
+implementation, investigation, testing, and review. Prefer a lower-cost capable
+worker when the assignment is clear and its result can be checked reliably.
+Choose based on the actual assignment and evidence of reliability, rather than
+a fixed model ladder.
 
-Decide whether to delegate separately from choosing the worker model. Task labels
-alone do not determine difficulty: implementation or review can require Astra.
-The lead may choose Astra workers' effort to fit their assignments; Sol workers
-use Max. If a Sol assignment reveals a hard reasoning problem, return that issue
-to the lead for resolution or reassignment to an Astra subagent.
+Set reasoning effort to fit the assignment; Max is available when warranted,
+not required. Consider the total cost of execution, verification, retries, and
+integration. Use Astra directly or as a worker when its expected quality advantage
+or the cost of decomposition justifies it.
+
+Workers should resolve problems within their scope, including reasoning-intensive
+ones. Escalate blockers, consequential changes to assumptions or interfaces, and
+decisions outside their authority. The lead may supply context, rescope, change
+workers or effort, or finish the work directly.
+
+Verify that the host supports the selected worker and effort. If unavailable,
+choose another supported configuration that can meet the assignment's requirements,
+or work directly. Report material substitutions and never claim routing that did
+not occur.
 
 ## Give ownership, not a stream of micro-instructions
 
@@ -95,7 +99,5 @@ supported isolation, authentication, and permission controls for untrusted code,
 not permission-bypass flags. Verify model selection and heterogeneous-worker
 support in the actual host. A native multi-agent feature may share one model
 across its agent tree; it does not automatically implement Astra-to-Sol routing.
-Verify the requested effort setting as well. If the required worker model or
-effort is unavailable, report the limitation and use supported direct work rather
-than silently substituting a different worker. Coresearch specifies the selection
-policy; the host must provide and execute model routing.
+Coresearch specifies the selection policy; the host must provide and execute
+model routing.

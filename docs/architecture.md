@@ -75,15 +75,20 @@ for hard deadlines. It does not parse or execute downloaded documents.
 
 ## Research engineering and event-driven coordination
 
-**Decision, 2026-10-01:** Retain Astra as the sole lead, expose Engineering on
+**Decision, updated 2026-11-10:** Retain Astra as the sole lead, expose Engineering on
 demand, and use coarse, event-driven delegation instead of periodic model-facing
 check-ins. This extends the existing ownership boundary without adding a runtime.
 Worker choice follows the task; delegation is optional.
 
-The current worker policy uses Astra subagents for hard tasks or assignments
-requiring substantial reasoning, and GPT-6.1 Sol at Max reasoning effort for other
-delegated work. This selection rule does not require delegation on every task.
-The host must support the requested worker model and effort.
+For suitable delegated assignments, prefer GPT-6.1 Sol or a lower-cost capable
+worker. Select the worker and reasoning effort by task, tools, demonstrated
+reliability, and total cost to a valid result, including verification and retries.
+Substantial reasoning alone does not require Astra; use Astra workers when their
+expected quality advantage warrants the additional cost. Escalate blockers and
+authority boundaries rather than difficulty alone. This preference does not
+require delegation on every task. When a selected configuration is unavailable,
+use a supported alternative that meets the assignment's requirements or work
+directly, reporting material substitutions.
 
 The Engineering resource makes SOLID, strategic/tactical DDD, maturity, architectural
 decisions, and scientific contracts available when implementation choices warrant

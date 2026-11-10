@@ -45,11 +45,15 @@ workflow and not claims that live agents were exercised by the unit tests.
 | Research prototype becomes shared infrastructure | Revisit domain meaning, ownership, contracts, reproducibility, and recovery. Load Engineering only where it helps; do not impose a framework on a disposable experiment. |
 | An evaluator changes without an API break | Identify changed scientific assumptions, retain prior results, and rerun affected comparisons. A software test pass must not conceal invalidated research evidence. |
 | Substantial worker assignment without blockers | Worker completes local execution, inspection, tests, and repair without periodic lead check-ins; the lead consumes an evidence-bearing completion artifact. |
-| Delegated task requires substantial reasoning or is hard | Lead selects an Astra subagent, including for difficult implementation or review; the lead retains consequential decisions and integration. |
-| Other bounded work is delegated | Lead selects GPT-6.1 Sol at Max reasoning effort. Missing model or effort support is reported, followed by supported direct work. |
+| Substantial separable engineering or analysis | Prefer Sol with effort suited to the assignment. The worker owns execution, validation, and correction, including reasoning within scope; the lead retains consequential decisions and integration. |
+| Clear bounded task with a reliably checkable result | Prefer a lower-cost capable worker when it can meet the requirements. Validate the result against the assignment's acceptance criteria. |
+| Astra offers a justified quality advantage | Select Astra directly or as a worker when expected quality or decomposition cost warrants it; difficulty alone does not force Astra routing. |
+| Worker encounters a reasoning-intensive problem within scope | Continue solving and validating locally. Escalate an actual blocker or authority boundary; do not automatically reassign to Astra. |
+| Preferred worker or effort is unavailable | Choose another supported configuration that meets the requirements or work directly. Report material substitutions and actual routing limitations. |
 | Expensive run depends on an uncertain pilot | Inspect the pilot at the agreed decision boundary before committing resources. Low communication is not permission to skip scientific validation. |
 | Worker invalidates a shared assumption | Send the changed fact, evidence, and decision needed promptly; continue unrelated safe work. Do not wait for a timer or silently change the shared contract. |
-| Missing completion or unavailable mixed-model routing | Use actual host recovery or supported direct work. Do not infer success from silence, duplicate a live job, or claim an Astra/Sol topology the host cannot supply. |
+| Missing completion | Use actual host recovery. Do not infer success from silence or duplicate a live job. |
+| Unavailable mixed-model routing | Use a supported configuration that meets the requirements or work directly. Do not claim an Astra/Sol topology the host cannot supply. |
 | Astra is unavailable as the lead | Report the host limitation. Do not substitute Sol or another model as lead or claim that the skill changed the running model. |
 | Local paragraph rewrite | Return the revised paragraph, preserving numbers, citations, qualifiers and unaffected text. No full-paper map or experiment audit unless the request needs one. |
 | ML serving runs are faster but use lower task quality | Preserve the observed speed and quality results; reject an equal-quality efficiency conclusion. Identify the matched comparison or explicit tradeoff needed. |
