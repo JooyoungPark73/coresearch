@@ -13,9 +13,10 @@ Independent evidence means independent data or groups, not merely more citations
 Use primary sources for precise claims and current official rules for venue advice.
 
 Existing notes, a small table, or a bibliography are sufficient. No compulsory
-source-state schema or minimum paper count is imposed. For a large collection,
-delegate discovery and metadata checks, then inspect the load-bearing evidence
-and adjudicate contradictions at the lead level.
+source-state schema or minimum paper count is imposed. Searches for independent
+questions can run in parallel. When one finding determines what to search for
+next, follow that lead before splitting the work. Astra inspects the evidence
+behind key claims and resolves contradictions across sources.
 
 ## Optional batch PDF retrieval
 

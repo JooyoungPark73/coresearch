@@ -17,6 +17,8 @@ credentials, model identifiers, and another orchestration lifecycle.
 [OpenAI's design guidance](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra)
 informs the separation of short routing metadata, task-local resources, and
 repository-specific instructions. It is not copied into a persistent prompt.
+The lead can delegate independent questions in parallel and match worker
+reasoning effort to investigation depth, following [OpenAI's GPT-6.2 prompting guide](https://learn.chatgpt.com/guides/prompting-gpt-6-2-astra).
 
 ## What survived, and what did not
 

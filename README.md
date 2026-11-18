@@ -127,3 +127,5 @@ The design follows OpenAI's
 [Astra skill and prompt guidance](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra):
 remove inferred workflow machinery, disclose resources when needed, and define
 real decision boundaries and completion rather than reasoning recipes.
+Its approach to reasoning effort and parallel work on independent questions
+draws on [Prompting GPT-6.2 in Codex](https://learn.chatgpt.com/guides/prompting-gpt-6-2-astra).

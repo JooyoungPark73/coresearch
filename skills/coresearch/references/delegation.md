@@ -7,6 +7,8 @@ are also options. Choose by task and available tools, not a fixed model ladder.
 Astra retains architecture, ambiguous/high-impact decisions, synthesis, and final
 verification. Delegation is optional, including for small research tasks.
 
+A quick survey can use lower reasoning effort. Tracing a cause across systems
+or disentangling interacting explanations can warrant higher effort.
 When the user or skill specifies a worker model or reasoning effort, pass the
 requested settings explicitly in the spawn call. If the host requires
 `fork_turns: "none"` for overrides, set it and give the worker a self-contained

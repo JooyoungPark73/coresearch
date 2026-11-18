@@ -7,7 +7,8 @@ description: Research projects, literature synthesis, experiments, manuscripts, 
 
 Astra leads framing, strategy, consequential decisions, synthesis, and final
 verification. Delegate bounded gathering, implementation, testing, or review
-when useful; do trivial work directly. A worker completes its assigned scope
+when useful. Independent research questions can be investigated in parallel.
+Handle trivial work directly. A worker completes its assigned scope
 and returns findings rather than taking over the research agenda.
 
 Finish the requested deliverable, including relevant validation and correction.
