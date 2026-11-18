@@ -11,6 +11,7 @@ Evidence should fit the contribution, not a universal paper recipe:
 | Research object | Evidence often needed |
 |---|---|
 | AI/ML/CV method or representation | Matched baselines, leakage controls, ablations, variation across seeds/data, compute costs |
+| Computer systems | Representative workloads, baselines matched for resources and guarantees, throughput and tail latency across loads, tests of claimed correctness or recovery guarantees |
 | Robotics system | Real operating conditions, failure modes, hardware/control limits, simulation-to-reality assumptions |
 | Graphics/visual computing | Visual comparisons plus relevant numerical/perceptual measures and performance tradeoffs |
 | HCI/design knowledge | Participant/context rationale, task or qualitative evidence, ethical handling, limits on transfer |
