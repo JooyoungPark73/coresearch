@@ -19,6 +19,8 @@ Use existing project artifacts. For work spanning sessions, an optional
 [brief](templates/brief.md) records the question, evidence, decisions, and next
 useful action. A small task needs neither initialization nor a state ledger.
 
+Before spawning any worker, read [Delegation](references/delegation.md)
+
 ## On demand
 
 Read only a reference that adds something needed for the current task; these are
